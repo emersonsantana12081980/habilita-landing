@@ -1,0 +1,366 @@
+@import "tailwindcss";
+@theme {
+  --font-sans: "Segoe UI", Arial, sans-serif;
+}
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    scroll-padding-top: 105px;
+  }
+  body {
+    margin: 0;
+    color: #0f2139;
+    background: white;
+    -webkit-font-smoothing: antialiased;
+  }
+  button,
+  a,
+  summary {
+    -webkit-tap-highlight-color: transparent;
+  }
+  button,
+  summary {
+    cursor: pointer;
+  }
+  button:disabled {
+    cursor: not-allowed;
+  }
+  button,
+  a,
+  input,
+  select,
+  summary {
+    outline-offset: 5px;
+  }
+  button:focus-visible,
+  a:focus-visible,
+  summary:focus-visible {
+    outline: 2px solid #16a34a;
+  }
+  label {
+    display: block;
+    font-size: 12px;
+    font-weight: 600;
+    color: #475569;
+  }
+  label input:not([type="checkbox"]),
+  label select {
+    display: block;
+    width: 100%;
+    margin-top: 8px;
+    border: 1px solid #dbe2ea;
+    border-radius: 8px;
+    background: white;
+    padding: 11px 12px;
+    font-size: 14px;
+    color: #0f172a;
+    font-weight: 400;
+  }
+  h2 {
+    margin-top: 12px;
+    font-size: clamp(26px, 3vw, 34px);
+    font-weight: 750;
+    line-height: 1.22;
+    letter-spacing: -0.035em;
+  }
+}
+@layer components {
+  .container {
+    @apply mx-auto w-full max-w-[1184px] px-5 sm:px-8;
+  }
+  .btn {
+    @apply inline-flex min-h-11 items-center justify-center gap-2.5 rounded-lg px-5 py-3.5 text-sm font-semibold transition duration-200;
+  }
+  .btn-green {
+    @apply bg-green-600 text-white hover:bg-green-700 hover:shadow-md;
+  }
+  .btn-outline {
+    @apply border border-slate-200 bg-white text-slate-700 hover:border-green-500;
+  }
+  .hero {
+    padding-top: 84px;
+    background:
+      radial-gradient(ellipse at 83% 40%, #eaf4ee 0, transparent 52%), #fafcfb;
+  }
+  .launch-badge {
+    @apply inline-flex items-center gap-2 rounded-full border border-yellow-200 bg-yellow-100/80 px-3 py-2 text-[9px] font-bold tracking-[.08em] text-yellow-900;
+  }
+  .check-circle {
+    @apply inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-green-100 text-green-700;
+  }
+  .eyebrow {
+    @apply text-[10px] font-bold tracking-[.16em] text-green-600;
+  }
+  .section-subtitle {
+    @apply mt-4 text-sm leading-6 text-slate-500;
+  }
+  .section-space {
+    @apply py-16 md:py-20;
+  }
+  .feature-card {
+    @apply rounded-xl border border-slate-200 bg-white p-6 transition-shadow hover:shadow-lg hover:shadow-slate-900/5 sm:p-7;
+  }
+  .icon-tile {
+    @apply inline-flex h-12 w-12 items-center justify-center rounded-xl bg-green-50 text-green-600;
+  }
+  .admin-card {
+    @apply rounded-2xl border border-slate-200 bg-white p-6;
+  }
+  .admin-title {
+    @apply m-0 flex items-center gap-3 text-lg font-bold tracking-tight;
+  }
+}
+.brand-symbol {
+  position: relative;
+  display: block;
+  width: 43px;
+  height: 43px;
+  overflow: hidden;
+  flex-shrink: 0;
+  clip-path: inset(0 0 3px 0);
+}
+.brand-symbol img {
+  position: absolute;
+  width: 120px;
+  max-width: none;
+  height: 80px;
+  left: -39px;
+  top: -9px;
+}
+.hero-photo {
+  background: #0e213b;
+}
+.vehicle-frame {
+  aspect-ratio: 2.51 / 1;
+  overflow: hidden;
+}
+.vehicle-frame > img {
+  width: 100%;
+  height: auto;
+  max-width: none;
+}
+.license-card {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  overflow: hidden;
+  padding: 7px;
+  border: 1px solid #475865;
+  border-radius: 28px;
+  background: linear-gradient(145deg, #172630, #080f14 70%, #0b1c18);
+  box-shadow: 0 12px 30px #0f172a14;
+}
+.license-visual {
+  position: relative;
+  height: 244px;
+  overflow: hidden;
+  border-radius: 21px 21px 38% 8% / 21px 21px 18px 18px;
+  border-bottom: 5px solid #facc15;
+  background: #fff;
+}
+.license-motorcycle {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: center bottom;
+  padding-top: 38px;
+}
+.license-car-frame {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 14px;
+  aspect-ratio: 2.51/1;
+  overflow: hidden;
+}
+.license-car-frame img {
+  width: 100%;
+  height: auto;
+}
+.license-visual-ab .license-car-frame {
+  bottom: 44px;
+  left: 8px;
+  right: 8px;
+}
+.license-combined-motorcycle {
+  position: absolute;
+  bottom: 0;
+  right: -15px;
+  width: 65%;
+  height: 58%;
+  object-fit: contain;
+  mix-blend-mode: multiply;
+}
+.license-badge {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  min-width: 91px;
+  padding: 9px 18px 8px 12px;
+  border-radius: 12px 12px 18px 10px;
+  background: linear-gradient(120deg, #ffe600, #facc15);
+  clip-path: polygon(0 0, 100% 0, 86% 100%, 0 100%);
+  color: #0b1419;
+}
+.license-badge span {
+  display: block;
+  font-size: 10px;
+  font-weight: 900;
+  font-style: italic;
+}
+.license-badge strong {
+  display: block;
+  font-size: 38px;
+  font-weight: 900;
+  font-style: italic;
+  line-height: 1;
+  letter-spacing: -0.06em;
+}
+.license-title {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: clamp(25px, 2.3vw, 31px);
+  font-weight: 900;
+  font-style: italic;
+  letter-spacing: -0.025em;
+  line-height: 1.12;
+  color: white;
+}
+.license-cta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 58px;
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #34df69;
+  border-radius: 14px;
+  color: white;
+  background: linear-gradient(135deg, #16c655, #068429);
+  font-size: 12px;
+  font-weight: 900;
+  box-shadow: inset 0 1px 0 #ffffff50;
+  transition: filter 0.2s;
+}
+.license-cta:hover {
+  filter: brightness(1.12);
+}
+@media (min-width: 640px) and (max-width: 1023px) {
+  .license-card {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+  .license-visual {
+    height: 100%;
+    min-height: 370px;
+    border-radius: 21px;
+  }
+  .license-motorcycle {
+    padding-top: 0;
+  }
+  .license-car-frame {
+    bottom: 100px;
+  }
+  .license-visual-ab .license-car-frame {
+    bottom: 135px;
+  }
+  .license-combined-motorcycle {
+    bottom: 55px;
+  }
+}
+.booking-dialog {
+  margin: auto;
+  width: min(520px, calc(100% - 32px));
+  max-height: 90dvh;
+  border: none;
+  border-radius: 20px;
+  color: #0f2139;
+  box-shadow: 0 30px 100px #0003;
+  overscroll-behavior: contain;
+}
+.booking-dialog::backdrop {
+  background: #07142699;
+  backdrop-filter: blur(4px);
+}
+.pulse-cta {
+  animation: gentle-pulse 3s ease-in-out infinite;
+}
+.hero-title {
+  font-size: clamp(34px, 4.45vw, 62px);
+  overflow-wrap: anywhere;
+}
+.skip-link {
+  position: fixed;
+  top: 8px;
+  left: 8px;
+  z-index: 100;
+  padding: 12px 20px;
+  border-radius: 8px;
+  background: #0e213b;
+  color: white;
+  transform: translateY(-160%);
+}
+.skip-link:focus {
+  transform: translateY(0);
+}
+.chat-widget {
+  bottom: 20px;
+}
+.chat-panel {
+  max-height: calc(100dvh - 110px);
+}
+.mobile-contact-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 35;
+  border-top: 1px solid #e2e8f0;
+  background: #ffffffed;
+  backdrop-filter: blur(12px);
+  padding: 10px 16px max(10px, env(safe-area-inset-bottom));
+}
+@keyframes gentle-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 #16a34a12;
+  }
+  50% {
+    box-shadow: 0 0 0 6px #16a34a0a;
+  }
+}
+@media (max-width: 639px) {
+  .hero-title {
+    font-size: clamp(34px, 10.5vw, 49px);
+  }
+  .chat-widget {
+    bottom: calc(90px + env(safe-area-inset-bottom));
+  }
+  .chat-panel {
+    max-height: calc(100dvh - 180px - env(safe-area-inset-bottom));
+  }
+  label input:not([type="checkbox"]),
+  label select,
+  input {
+    font-size: 16px;
+  }
+  .brand-symbol {
+    width: 37px;
+  }
+  footer {
+    padding-bottom: 110px !important;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  .pulse-cta {
+    animation: none;
+  }
+  * {
+    transition: none !important;
+  }
+}
