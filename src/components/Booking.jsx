@@ -1,7 +1,8 @@
 import React, { useEffect, useRef, useState } from "react";
 import { X, CalendarDays, CheckCircle2 } from "lucide-react";
-import { money, normalizePhone } from "../store";
+import { normalizePhone } from "../store";
 import { teachesCategory } from "../store-data";
+import { PackageDetails } from "./PackageDetails";
 export function Booking({
   pack,
   data,
@@ -183,10 +184,10 @@ export function Booking({
         ) : (
           <>
             <h2 id="booking-title">{pack.name}</h2>
-            <p className="mt-3 text-sm text-slate-500">
-              Categoria {pack.category} · {pack.lessons} aulas ·{" "}
-              {money(pack.price)}
+            <p className="my-4 text-sm text-slate-500">
+              Categoria {pack.category.replace("+", "/")}
             </p>
+            <PackageDetails pack={pack} />
             <p className="mt-5 rounded-lg bg-amber-50 p-3 text-xs leading-5 text-amber-900">
               Agendamento demonstrativo. Nenhuma cobrança será realizada. A
               confirmação acontece diretamente com o instrutor.

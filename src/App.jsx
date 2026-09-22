@@ -15,12 +15,13 @@ import {
   Minus,
   Route,
 } from "lucide-react";
-import { useStore, whatsappUrl, money } from "./store";
+import { useStore, whatsappUrl } from "./store";
 import { AdminPanel } from "./components/AdminPanel";
 import { Booking } from "./components/Booking";
 import { Brand } from "./components/Brand";
 import { CategorySection } from "./components/CategorySection";
 import { SpecialistChat } from "./components/SpecialistChat";
+import { PackageDetails } from "./components/PackageDetails";
 import { InstructorSection } from "./components/InstructorSection";
 
 export function App() {
@@ -278,7 +279,11 @@ export function App() {
             ))}
           </div>
         </section>
-        <CategorySection contact={contact} />
+        <CategorySection
+          contact={contact}
+          packages={data.packages}
+          book={setBooking}
+        />
         <InstructorSection
           instructors={data.instructors}
           city={data.city}
@@ -302,10 +307,9 @@ export function App() {
                   <article key={p.id} className="feature-card flex flex-col">
                     <span className="eyebrow">CATEGORIA {p.category}</span>
                     <h3 className="mt-4 text-xl font-bold">{p.name}</h3>
-                    <p className="mt-3 text-sm text-slate-500">
-                      {p.lessons} aulas práticas personalizadas
-                    </p>
-                    <p className="my-7 text-3xl font-bold">{money(p.price)}</p>
+                    <div className="mb-6 mt-5">
+                      <PackageDetails pack={p} />
+                    </div>
                     <button
                       className="btn btn-green mt-auto"
                       onClick={() => setBooking(p)}

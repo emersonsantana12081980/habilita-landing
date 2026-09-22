@@ -1,13 +1,11 @@
 import React from "react";
 import {
-  CarFront,
-  Clock3,
-  Route,
-  ShieldCheck,
   MessageCircle,
   ChevronRight,
+  ChevronDown,
+  CalendarDays,
 } from "lucide-react";
-import { MotorcycleIcon } from "./MotorcycleIcon";
+import { PackageDetails } from "./PackageDetails";
 
 const motorcycle = "/aa1d39d3-8028-46ab-8bad-addfc1300336.png";
 const categories = [
@@ -16,11 +14,6 @@ const categories = [
     title: "DE MOTO",
     description:
       "Treinamento prático para ganhar equilíbrio, confiança e domínio da moto.",
-    benefits: [
-      [MotorcycleIcon, "Moto pronta para o exame"],
-      [Route, "Treino de equilíbrio e percurso"],
-      [Clock3, "Horários flexíveis na pista"],
-    ],
     message:
       "Olá! Tenho interesse na categoria A (moto). Quero saber mais sobre as aulas e os horários.",
   },
@@ -29,11 +22,6 @@ const categories = [
     title: "DE CARRO",
     description:
       "Aprenda a dirigir com segurança, da primeira baliza ao trânsito da cidade.",
-    benefits: [
-      [CarFront, "Carro pronto para o exame"],
-      [ShieldCheck, "Comando duplo de segurança"],
-      [Route, "Treino de baliza e trânsito real"],
-    ],
     message:
       "Olá! Tenho interesse na categoria B (carro). Quero saber mais sobre as aulas e os horários.",
   },
@@ -42,11 +30,6 @@ const categories = [
     title: "CARRO E MOTO",
     description:
       "Duas categorias, novas possibilidades. Sua preparação completa em um só lugar.",
-    benefits: [
-      [CarFront, "Carro e moto para o exame"],
-      [Route, "Preparação nas duas categorias"],
-      [Clock3, "Um plano que cabe na sua rotina"],
-    ],
     message:
       "Olá! Tenho interesse na categoria A/B (carro e moto). Quero conhecer o pacote combinado e os horários.",
   },
@@ -96,7 +79,7 @@ function VehiclePhoto({ category }) {
   );
 }
 
-export function CategorySection({ contact }) {
+export function CategorySection({ contact, packages, book }) {
   return (
     <section id="categorias" className="bg-[#f3f5f7] py-14 sm:py-20">
       <div className="container">
@@ -108,57 +91,81 @@ export function CategorySection({ contact }) {
             <h2>Carro, moto ou os dois?</h2>
           </div>
           <p className="max-w-80 text-sm leading-6 text-slate-500">
-            Do primeiro treino ao exame, uma preparação que acompanha o seu
-            objetivo.
+            Toque em uma categoria para ver as aulas, os benefícios e as opções
+            de pagamento.
           </p>
         </div>
-        <div className="mt-9 grid items-stretch gap-6 lg:grid-cols-3">
-          {categories.map((category) => (
-            <article
-              key={category.id}
-              className="license-card"
-              aria-labelledby={`category-${category.id.replace("/", "-")}`}
-            >
-              <VehiclePhoto category={category.id} />
-              <div className="flex flex-1 flex-col px-5 pb-6 pt-6 sm:px-7 lg:px-5">
-                <h3
-                  id={`category-${category.id.replace("/", "-")}`}
-                  className="license-title"
+        <div className="mt-9 grid items-start gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          {categories.map((category) => {
+            const offers = packages.filter(
+              (p) => p.active && p.category === category.id.replace("/", "+"),
+            );
+            return (
+              <details
+                key={category.id}
+                className="license-card group"
+                data-category={category.id}
+              >
+                <summary
+                  className="license-summary"
+                  aria-label={`Ver pacotes da categoria ${category.id}`}
                 >
-                  <span>HABILITAÇÃO</span>
-                  <span className="text-yellow-300">{category.title}</span>
-                </h3>
-                <p className="mt-3 min-h-18 text-sm leading-6 text-slate-300">
-                  {category.description}
-                </p>
-                <ul className="mb-6 mt-4">
-                  {category.benefits.map(([Icon, label]) => (
-                    <li
-                      key={label}
-                      className="flex min-h-16 items-center gap-3 border-b border-white/10 py-3 last:border-0"
-                    >
-                      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-green-400/50 bg-green-600 text-white">
-                        <Icon size={22} strokeWidth={2} />
-                      </span>
-                      <span className="text-sm font-semibold leading-5 text-slate-100">
-                        {label}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-                <button
-                  className="license-cta mt-auto"
-                  onClick={() => contact(category.message)}
-                >
-                  <MessageCircle size={23} className="shrink-0" />
-                  <span className="border-l border-white/35 pl-3">
-                    QUERO CATEGORIA {category.id}
-                  </span>
-                  <ChevronRight size={20} className="ml-auto shrink-0" />
-                </button>
-              </div>
-            </article>
-          ))}
+                  <VehiclePhoto category={category.id} />
+                  <div className="flex items-center justify-between gap-3 px-5 py-6">
+                    <h3 className="license-title">
+                      <span>HABILITAÇÃO</span>
+                      <span className="text-yellow-300">{category.title}</span>
+                    </h3>
+                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-yellow-300/50 text-yellow-300 transition-transform group-open:rotate-180">
+                      <ChevronDown size={22} />
+                    </span>
+                  </div>
+                </summary>
+                <div className="border-t border-white/10 px-5 pb-5">
+                  <p className="my-5 text-sm leading-6 text-slate-300">
+                    {category.description}
+                  </p>
+                  {offers.length ? (
+                    offers.map((pack) => (
+                      <div
+                        key={pack.id}
+                        className="mb-5 border-b border-white/10 pb-5 last:mb-0 last:border-0 last:pb-0"
+                      >
+                        <h4 className="mb-4 text-base font-bold text-white">
+                          {pack.name}
+                        </h4>
+                        <PackageDetails pack={pack} dark />
+                        <button
+                          className="license-cta mt-6"
+                          onClick={() => book(pack)}
+                        >
+                          <CalendarDays size={21} />
+                          <span>GARANTIR MEU PACOTE</span>
+                          <ChevronRight
+                            size={20}
+                            className="ml-auto shrink-0"
+                          />
+                        </button>
+                      </div>
+                    ))
+                  ) : (
+                    <>
+                      <p className="mb-5 text-sm text-slate-300">
+                        Consulte os pacotes disponíveis com o instrutor.
+                      </p>
+                      <button
+                        className="license-cta"
+                        onClick={() => contact(category.message)}
+                      >
+                        <MessageCircle size={21} /> CONSULTAR NO WHATSAPP{" "}
+                        <ChevronRight size={20} />
+                      </button>
+                    </>
+                  )}
+                </div>
+              </details>
+            );
+          })}
         </div>
       </div>
     </section>

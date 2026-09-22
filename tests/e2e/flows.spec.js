@@ -3,6 +3,13 @@ import { mockChatvolt } from "./chatvolt.fixture";
 
 test.beforeEach(async ({ page }) => {
   await mockChatvolt(page);
+  await page.addInitScript(() => {
+    if (!localStorage.getItem("habilita-plus-v1"))
+      localStorage.setItem(
+        "habilita-plus-v1",
+        JSON.stringify({ packageSeedVersion: 1, packages: [] }),
+      );
+  });
 });
 
 test("página inicial, navegação e atendimento", async ({ page }, testInfo) => {
@@ -143,6 +150,7 @@ test("recupera armazenamento inválido sem interromper a página", async ({
       "habilita-plus-v1",
       JSON.stringify({
         city: null,
+        packageSeedVersion: 1,
         packages: null,
         slots: {},
         reservations: [null],

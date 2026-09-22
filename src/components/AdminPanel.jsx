@@ -13,7 +13,19 @@ import {
 import { Brand } from "./Brand";
 import { money, normalizePhone } from "../store";
 import { InstructorManager } from "./InstructorManager";
-const empty = { name: "", category: "B", lessons: 5, price: "", active: true };
+const empty = {
+  name: "",
+  category: "B",
+  lessons: 2,
+  carLessons: 2,
+  motorcycleLessons: 2,
+  price: "",
+  active: true,
+  examVehicle: false,
+  freeRetest: false,
+  cardInstallments: 0,
+  boletoInstallments: 0,
+};
 export function AdminPanel({ data, update, error }) {
   const [pack, setPack] = useState(empty);
   const [settings, setSettings] = useState({
@@ -28,7 +40,15 @@ export function AdminPanel({ data, update, error }) {
     const item = {
       ...pack,
       name: pack.name.trim(),
-      lessons: Number(pack.lessons),
+      lessons:
+        pack.category === "A+B"
+          ? Number(pack.carLessons) + Number(pack.motorcycleLessons)
+          : Number(pack.lessons),
+      carLessons: pack.category === "A+B" ? Number(pack.carLessons) : undefined,
+      motorcycleLessons:
+        pack.category === "A+B" ? Number(pack.motorcycleLessons) : undefined,
+      cardInstallments: Number(pack.cardInstallments || 0),
+      boletoInstallments: Number(pack.boletoInstallments || 0),
       price: Number(pack.price),
       id: pack.id || crypto.randomUUID(),
     };
@@ -39,6 +59,15 @@ export function AdminPanel({ data, update, error }) {
       item.lessons < 1
     ) {
       setStatus("Preencha o nome, o preço e uma quantidade inteira de aulas.");
+      return;
+    }
+    if (
+      pack.category === "A+B" &&
+      ![item.carLessons, item.motorcycleLessons].every(
+        (n) => Number.isInteger(n) && n > 0,
+      )
+    ) {
+      setStatus("Informe a quantidade de aulas de carro e de moto.");
       return;
     }
     const next = pack.id
@@ -149,7 +178,12 @@ export function AdminPanel({ data, update, error }) {
                   aria-label="Categoria"
                   value={pack.category}
                   onChange={(e) =>
-                    setPack({ ...pack, category: e.target.value })
+                    setPack({
+                      ...pack,
+                      category: e.target.value,
+                      carLessons: pack.carLessons || 2,
+                      motorcycleLessons: pack.motorcycleLessons || 2,
+                    })
                   }
                 >
                   <option>A</option>
@@ -157,19 +191,51 @@ export function AdminPanel({ data, update, error }) {
                   <option>A+B</option>
                 </select>
               </label>
-              <label>
-                Quantidade de aulas
-                <input
-                  type="number"
-                  min="1"
-                  max="200"
-                  required
-                  value={pack.lessons}
-                  onChange={(e) =>
-                    setPack({ ...pack, lessons: e.target.value })
-                  }
-                />
-              </label>
+              {pack.category !== "A+B" && (
+                <label>
+                  Quantidade de aulas
+                  <input
+                    type="number"
+                    min="1"
+                    max="200"
+                    required
+                    value={pack.lessons}
+                    onChange={(e) =>
+                      setPack({ ...pack, lessons: e.target.value })
+                    }
+                  />
+                </label>
+              )}
+              {pack.category === "A+B" && (
+                <>
+                  <label>
+                    Aulas de carro
+                    <input
+                      required
+                      type="number"
+                      min="1"
+                      max="200"
+                      value={pack.carLessons ?? ""}
+                      onChange={(e) =>
+                        setPack({ ...pack, carLessons: e.target.value })
+                      }
+                    />
+                  </label>
+                  <label>
+                    Aulas de moto
+                    <input
+                      required
+                      type="number"
+                      min="1"
+                      max="200"
+                      value={pack.motorcycleLessons ?? ""}
+                      onChange={(e) =>
+                        setPack({ ...pack, motorcycleLessons: e.target.value })
+                      }
+                    />
+                  </label>
+                </>
+              )}
               <label>
                 Preço (R$)
                 <input
@@ -182,6 +248,56 @@ export function AdminPanel({ data, update, error }) {
                   onChange={(e) => setPack({ ...pack, price: e.target.value })}
                 />
               </label>
+              <div className="space-y-3 sm:col-span-2">
+                <label className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    checked={Boolean(pack.examVehicle)}
+                    onChange={(e) =>
+                      setPack({ ...pack, examVehicle: e.target.checked })
+                    }
+                  />{" "}
+                  Veículo para o exame incluso
+                </label>
+                <label className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    checked={Boolean(pack.freeRetest)}
+                    onChange={(e) =>
+                      setPack({ ...pack, freeRetest: e.target.checked })
+                    }
+                  />{" "}
+                  Reteste grátis
+                </label>
+              </div>
+              <label>
+                Parcelas no cartão
+                <input
+                  type="number"
+                  min="0"
+                  max="12"
+                  value={pack.cardInstallments || 0}
+                  onChange={(e) =>
+                    setPack({ ...pack, cardInstallments: e.target.value })
+                  }
+                />
+              </label>
+              <label>
+                Parcelas no boleto
+                <input
+                  type="number"
+                  min="0"
+                  max="24"
+                  value={pack.boletoInstallments || 0}
+                  onChange={(e) =>
+                    setPack({ ...pack, boletoInstallments: e.target.value })
+                  }
+                />
+              </label>
+              <p className="text-xs text-slate-500 sm:col-span-2">
+                Preço à vista. Use 0 para não oferecer uma modalidade de
+                parcelamento. Cobranças não são geradas nesta demonstração.
+              </p>
               <label htmlFor="package-status">
                 Status
                 <select

@@ -1,5 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { lessonLabel } from "../src/data/packages.js";
 import {
   normalizePhone,
   normalizeState,
@@ -7,6 +8,29 @@ import {
   teachesCategory,
   safePhotoUrl,
 } from "../src/store-data.js";
+
+test("pacotes iniciais preservam edições e exclusões e detalham aulas combinadas", () => {
+  const state = normalizeState({ packages: [] });
+  assert.deepEqual(
+    state.packages.map((p) => p.price),
+    [299, 169.9, 399.99],
+  );
+  assert.equal(
+    lessonLabel(state.packages[2]),
+    "02 aulas de carro + 02 aulas de moto",
+  );
+  assert.equal(normalizeState(state).packages.length, 3);
+  const edited = {
+    ...state,
+    packages: state.packages.map((p) => ({ ...p, price: 100, active: false })),
+  };
+  assert.equal(normalizeState(edited).packages[0].price, 100);
+  assert.equal(normalizeState(edited).packages[0].active, false);
+  assert.deepEqual(normalizeState({ ...state, packages: [] }).packages, []);
+  const existing = { ...state.packages[0], id: "outro-id", price: 250 };
+  assert.equal(normalizeState({ packages: [existing] }).packages.length, 3);
+  assert.equal(normalizeState({ packages: [existing] }).packages[0].price, 250);
+});
 
 test("instrutores: compatibilidade de categorias e migração", () => {
   assert.deepEqual(
@@ -92,6 +116,7 @@ test("atualiza contato vazio legado e preserva configurações explícitas", () 
 
 test("dados danificados retornam um estado utilizável", () => {
   const state = normalizeState({
+    packageSeedVersion: 1,
     city: " ",
     packages: [null, {}, { name: "incompleto" }],
     slots: {},

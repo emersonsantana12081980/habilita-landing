@@ -1,4 +1,5 @@
 import { DEFAULT_INSTRUCTORS } from "./data/instructors.js";
+import { DEFAULT_PACKAGES } from "./data/packages.js";
 
 export const STORAGE_KEY = "habilita-plus-v1";
 export const DEFAULT_WHATSAPP = "12996225250";
@@ -16,6 +17,20 @@ export function normalizeState(value) {
     value && typeof value === "object" && !Array.isArray(value) ? value : {};
   const configuredPhone =
     typeof source.whatsapp === "string" ? source.whatsapp : DEFAULT_WHATSAPP;
+  const packages = Array.isArray(source.packages) ? [...source.packages] : [];
+  if (source.packageSeedVersion !== 1) {
+    for (const example of DEFAULT_PACKAGES) {
+      if (
+        !packages.some(
+          (p) =>
+            p?.id === example.id ||
+            (typeof p?.name === "string" &&
+              p.name.trim().toLowerCase() === example.name.toLowerCase()),
+        )
+      )
+        packages.push({ ...example });
+    }
+  }
   const instructors = Array.isArray(source.instructors)
     ? [...source.instructors]
     : [];
@@ -37,6 +52,7 @@ export function normalizeState(value) {
   return {
     schemaVersion: 2,
     instructorSeedVersion: 1,
+    packageSeedVersion: 1,
     city:
       typeof source.city === "string" && source.city.trim()
         ? source.city.trim()
@@ -65,18 +81,34 @@ export function normalizeState(value) {
         photo: safePhotoUrl(i.photo),
         active: i.active === true,
       })),
-    packages: Array.isArray(source.packages)
-      ? source.packages.filter(
-          (p) =>
-            p &&
-            typeof p.id === "string" &&
-            typeof p.name === "string" &&
-            ["A", "B", "A+B"].includes(p.category) &&
-            Number(p.price) > 0 &&
-            Number.isInteger(Number(p.lessons)) &&
-            Number(p.lessons) > 0,
-        )
-      : [],
+    packages: packages
+      .filter(
+        (p) =>
+          p &&
+          typeof p.id === "string" &&
+          typeof p.name === "string" &&
+          ["A", "B", "A+B"].includes(p.category) &&
+          Number(p.price) > 0 &&
+          Number.isInteger(Number(p.lessons)) &&
+          Number(p.lessons) > 0,
+      )
+      .map((p) => ({
+        ...p,
+        examVehicle: p.examVehicle === true,
+        freeRetest: p.freeRetest === true,
+        cardInstallments:
+          Number.isInteger(p.cardInstallments) &&
+          p.cardInstallments >= 0 &&
+          p.cardInstallments <= 12
+            ? p.cardInstallments
+            : 0,
+        boletoInstallments:
+          Number.isInteger(p.boletoInstallments) &&
+          p.boletoInstallments >= 0 &&
+          p.boletoInstallments <= 24
+            ? p.boletoInstallments
+            : 0,
+      })),
     slots: Array.isArray(source.slots)
       ? source.slots.filter(
           (s) =>

@@ -5,7 +5,12 @@ test.beforeEach(async ({ page }) => {
     if (!localStorage.getItem("habilita-plus-v1"))
       localStorage.setItem(
         "habilita-plus-v1",
-        JSON.stringify({ instructorSeedVersion: 1, instructors: [] }),
+        JSON.stringify({
+          instructorSeedVersion: 1,
+          instructors: [],
+          packageSeedVersion: 1,
+          packages: [],
+        }),
       );
   });
 });

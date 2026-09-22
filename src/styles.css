@@ -140,7 +140,7 @@
   max-width: none;
 }
 .license-card {
-  display: flex;
+  display: block;
   flex-direction: column;
   min-width: 0;
   overflow: hidden;
@@ -149,6 +149,18 @@
   border-radius: 28px;
   background: linear-gradient(145deg, #172630, #080f14 70%, #0b1c18);
   box-shadow: 0 12px 30px #0f172a14;
+}
+.license-summary {
+  display: block;
+  list-style: none;
+  border-radius: 21px;
+}
+.license-summary::-webkit-details-marker {
+  display: none;
+}
+.license-summary:focus-visible {
+  outline: 2px solid #facc15;
+  outline-offset: 2px;
 }
 .license-visual {
   position: relative;
@@ -246,29 +258,6 @@
 }
 .license-cta:hover {
   filter: brightness(1.12);
-}
-@media (min-width: 640px) and (max-width: 1023px) {
-  .license-card {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-  }
-  .license-visual {
-    height: 100%;
-    min-height: 370px;
-    border-radius: 21px;
-  }
-  .license-motorcycle {
-    padding-top: 0;
-  }
-  .license-car-frame {
-    bottom: 100px;
-  }
-  .license-visual-ab .license-car-frame {
-    bottom: 135px;
-  }
-  .license-combined-motorcycle {
-    bottom: 55px;
-  }
 }
 .booking-dialog {
   margin: auto;

@@ -25,7 +25,9 @@ npm run preview
 - Seção pública `/#instrutores` com filtro por categoria e escolha do instrutor. O agendamento oferece apenas perfis compatíveis e guarda o nome escolhido no histórico e na mensagem de WhatsApp.
 - Liberação/bloqueio de horários e solicitação demonstrativa de agendamento.
 - Persistência em localStorage e sincronização entre abas da mesma origem.
-- Estado inicial sem pacotes. WhatsApp padrão: **(12) 99622-5250**, alterável no painel. O contato vazio da versão inicial é atualizado automaticamente; números já configurados são preservados.
+- Pacotes iniciais em `src/data/packages.js`: carro (2 aulas, R$ 299,00), moto (2 aulas, R$ 169,90) e carro + moto (2 aulas de cada, R$ 399,99). Incluem veículo para exame, reteste grátis e opções de 3x no cartão e 6x no boleto, conforme o exemplo fornecido. Não há cálculo de juros ou cobrança real.
+- Os cards de categoria começam recolhidos, com foto, título e controle de expansão. Ao abrir, mostram os pacotes ativos daquela categoria e permitem solicitar o agendamento. O painel edita os mesmos dados exibidos nas categorias, na seção de pacotes e no agendamento. Exclusões, inativação e alterações são preservadas após recarregar.
+- WhatsApp padrão: **(12) 99622-5250**, alterável no painel. O contato vazio da versão inicial é atualizado automaticamente; números já configurados são preservados.
 - Atendimento Chatvolt pelo botão flutuante **Chame especialista**, com o agente `cmkoa8q6501ypkh1566oeotza`. O embed oficial é carregado ao clicar no botão; pode ser desativado nas configurações do painel. As respostas são configuradas no Chatvolt, não no código da página.
 
 ## Limites desta versão
