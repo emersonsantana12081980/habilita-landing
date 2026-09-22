@@ -1,3 +1,5 @@
+import { DEFAULT_INSTRUCTORS } from "./data/instructors.js";
+
 export const STORAGE_KEY = "habilita-plus-v1";
 export const DEFAULT_WHATSAPP = "12996225250";
 
@@ -14,8 +16,27 @@ export function normalizeState(value) {
     value && typeof value === "object" && !Array.isArray(value) ? value : {};
   const configuredPhone =
     typeof source.whatsapp === "string" ? source.whatsapp : DEFAULT_WHATSAPP;
+  const instructors = Array.isArray(source.instructors)
+    ? [...source.instructors]
+    : [];
+  if (source.instructorSeedVersion !== 1) {
+    for (const example of DEFAULT_INSTRUCTORS) {
+      if (
+        !instructors.some(
+          (i) =>
+            i?.id === example.id ||
+            (typeof i?.name === "string" &&
+              i.name.trim().toLocaleLowerCase("pt-BR")) ===
+              example.name.toLocaleLowerCase("pt-BR"),
+        )
+      ) {
+        instructors.push({ ...example });
+      }
+    }
+  }
   return {
     schemaVersion: 2,
+    instructorSeedVersion: 1,
     city:
       typeof source.city === "string" && source.city.trim()
         ? source.city.trim()
@@ -26,6 +47,24 @@ export function normalizeState(value) {
         ? DEFAULT_WHATSAPP
         : configuredPhone,
     ai: typeof source.ai === "boolean" ? source.ai : true,
+    instructors: instructors
+      .filter(
+        (i) =>
+          i &&
+          typeof i.id === "string" &&
+          typeof i.name === "string" &&
+          i.name.trim() &&
+          ["A", "B", "A+B"].includes(i.category),
+      )
+      .map((i) => ({
+        id: i.id,
+        name: i.name.trim(),
+        category: i.category,
+        city: typeof i.city === "string" ? i.city : "",
+        bio: typeof i.bio === "string" ? i.bio : "",
+        photo: safePhotoUrl(i.photo),
+        active: i.active === true,
+      })),
     packages: Array.isArray(source.packages)
       ? source.packages.filter(
           (p) =>
@@ -57,6 +96,28 @@ export function normalizeState(value) {
         )
       : [],
   };
+}
+
+export function safePhotoUrl(value) {
+  if (
+    typeof value === "string" &&
+    /^\/[a-zA-Z0-9_/-]+\.(?:png|jpe?g|webp)$/i.test(value) &&
+    !value.startsWith("//")
+  )
+    return value;
+  try {
+    const url = new URL(value);
+    return url.protocol === "https:" ? url.href : "";
+  } catch {
+    return "";
+  }
+}
+
+export function teachesCategory(instructor, category) {
+  return (
+    instructor.active &&
+    (instructor.category === "A+B" || instructor.category === category)
+  );
 }
 
 export function whatsappUrl(

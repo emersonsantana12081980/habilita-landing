@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { Brand } from "./Brand";
 import { money, normalizePhone } from "../store";
+import { InstructorManager } from "./InstructorManager";
 const empty = { name: "", category: "B", lessons: 5, price: "", active: true };
 export function AdminPanel({ data, update, error }) {
   const [pack, setPack] = useState(empty);
@@ -76,6 +77,13 @@ export function AdminPanel({ data, update, error }) {
         <h1 className="mt-3 text-3xl font-bold tracking-tight">
           Seu negócio, no seu controle.
         </h1>
+        <a
+          href="#admin-instrutores"
+          className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-green-700"
+        >
+          Cadastrar e gerenciar instrutores{" "}
+          <ArrowLeft size={15} className="rotate-180" />
+        </a>
         <p className="mt-3 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
           Modo de demonstração: dados salvos apenas neste navegador. Este painel
           não possui autenticação; não use dados pessoais reais antes de
@@ -301,7 +309,7 @@ export function AdminPanel({ data, update, error }) {
                       setSettings({ ...settings, ai: e.target.checked })
                     }
                   />{" "}
-                  Exibir assistente demonstrativo
+                  Exibir atendimento Chatvolt
                 </label>
                 <button className="btn btn-green">
                   <Save size={16} /> Salvar configurações
@@ -391,6 +399,7 @@ export function AdminPanel({ data, update, error }) {
             </section>
           </div>
         </div>
+        <InstructorManager data={data} update={update} />
         <section className="admin-card mt-7">
           <h2 className="admin-title">Solicitações demonstrativas</h2>
           <p className="my-4 text-xs text-slate-500">
@@ -411,6 +420,9 @@ export function AdminPanel({ data, update, error }) {
                   <br />
                   <span className="text-slate-500">
                     {r.packageName} · {new Date(r.date).toLocaleString("pt-BR")}
+                  </span>
+                  <span className="mt-1 block text-xs text-slate-500">
+                    Instrutor: {r.instructorName || "Sem preferência"}
                   </span>
                 </span>
                 <span className="text-amber-700">Aguardando contato</span>

@@ -4,7 +4,66 @@ import {
   normalizePhone,
   normalizeState,
   whatsappUrl,
+  teachesCategory,
+  safePhotoUrl,
 } from "../src/store-data.js";
+
+test("instrutores: compatibilidade de categorias e migração", () => {
+  assert.deepEqual(
+    normalizeState({ schemaVersion: 2, instructorSeedVersion: 1 }).instructors,
+    [],
+  );
+  assert.equal(teachesCategory({ active: true, category: "A+B" }, "A"), true);
+  assert.equal(teachesCategory({ active: true, category: "A+B" }, "B"), true);
+  assert.equal(teachesCategory({ active: true, category: "A" }, "A+B"), false);
+  assert.equal(teachesCategory({ active: false, category: "A+B" }, "B"), false);
+  const state = normalizeState({
+    instructorSeedVersion: 1,
+    instructors: [
+      null,
+      {},
+      {
+        id: "1",
+        name: " Ana ",
+        category: "B",
+        active: true,
+        photo: "javascript:alert(1)",
+      },
+    ],
+  });
+  assert.equal(state.instructors.length, 1);
+  assert.equal(state.instructors[0].name, "Ana");
+  assert.equal(state.instructors[0].photo, "");
+  assert.equal(
+    safePhotoUrl("https://example.com/photo.jpg"),
+    "https://example.com/photo.jpg",
+  );
+});
+
+test("perfil inicial aparece uma vez e respeita edições e exclusões", () => {
+  const first = normalizeState({ instructors: [] });
+  assert.equal(first.instructors[0].name, "Emerson Santana");
+  assert.equal(first.instructors[0].photo.startsWith("/"), true);
+  assert.equal(normalizeState(first).instructors.length, 1);
+  assert.equal(
+    normalizeState({ ...first, instructors: [] }).instructors.length,
+    0,
+  );
+  const edited = {
+    ...first,
+    instructors: [{ ...first.instructors[0], bio: "Editado", active: false }],
+  };
+  assert.equal(normalizeState(edited).instructors[0].bio, "Editado");
+  assert.equal(normalizeState(edited).instructors[0].active, false);
+  assert.equal(
+    normalizeState({
+      instructors: [{ ...first.instructors[0], id: "outro-id" }],
+    }).instructors.length,
+    1,
+  );
+  assert.equal(safePhotoUrl("//example.com/photo.jpg"), "");
+  assert.equal(safePhotoUrl("/../photo.jpg"), "");
+});
 
 test("números nacionais, internacionais e DDD 55", () => {
   assert.equal(normalizePhone("(12) 99622-5250"), "5512996225250");

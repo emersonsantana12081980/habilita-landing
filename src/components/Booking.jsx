@@ -1,7 +1,15 @@
 import React, { useEffect, useRef, useState } from "react";
 import { X, CalendarDays, CheckCircle2 } from "lucide-react";
 import { money, normalizePhone } from "../store";
-export function Booking({ pack, data, update, close, contact }) {
+import { teachesCategory } from "../store-data";
+export function Booking({
+  pack,
+  data,
+  update,
+  close,
+  contact,
+  initialInstructorId = "",
+}) {
   const dialog = useRef(null);
   const [selected, setSelected] = useState("");
   const [name, setName] = useState("");
@@ -9,6 +17,21 @@ export function Booking({ pack, data, update, close, contact }) {
   const [done, setDone] = useState(false);
   const [error, setError] = useState("");
   const [requestedDate, setRequestedDate] = useState("");
+  const [instructorId, setInstructorId] = useState(
+    () =>
+      data.instructors.find(
+        (i) =>
+          i.id === initialInstructorId && teachesCategory(i, pack.category),
+      )?.id || "",
+  );
+  const [requestedInstructor, setRequestedInstructor] = useState(null);
+  const compatibleInstructors = data.instructors.filter((i) =>
+    teachesCategory(i, pack.category),
+  );
+  const chosenInstructor = compatibleInstructors.find(
+    (i) => i.id === instructorId,
+  );
+  const invalidInstructor = Boolean(instructorId && !chosenInstructor);
   useEffect(() => {
     const modal = dialog.current;
     const previouslyFocused = document.activeElement;
@@ -36,7 +59,16 @@ export function Booking({ pack, data, update, close, contact }) {
     }
     let requestedSlot;
     let conflict = false;
+    let instructorConflict = false;
+    let instructorSnapshot = null;
     const saved = update((current) => {
+      const instructor = current.instructors.find(
+        (i) => i.id === instructorId && teachesCategory(i, pack.category),
+      );
+      if (instructorId && !instructor) {
+        instructorConflict = true;
+        return null;
+      }
       const s = current.slots.find(
         (s) => s.id === selected && s.active && new Date(s.date) > new Date(),
       );
@@ -48,6 +80,9 @@ export function Booking({ pack, data, update, close, contact }) {
         return null;
       }
       requestedSlot = s;
+      instructorSnapshot = instructor
+        ? { id: instructor.id, name: instructor.name }
+        : null;
       return {
         reservations: [
           ...current.reservations,
@@ -57,6 +92,8 @@ export function Booking({ pack, data, update, close, contact }) {
             phone,
             packageName: pack.name,
             date: s.date,
+            instructorId: instructor?.id || "",
+            instructorName: instructor?.name || "",
           },
         ],
         slots: current.slots.map((x) =>
@@ -66,15 +103,22 @@ export function Booking({ pack, data, update, close, contact }) {
     });
     if (saved) {
       setRequestedDate(requestedSlot.date);
+      setRequestedInstructor(instructorSnapshot);
       setDone(true);
     } else
       setError(
-        conflict
-          ? "Este pacote ou horário não está mais disponível. Feche a janela e escolha outra opção."
-          : "Não foi possível salvar sua solicitação.",
+        instructorConflict
+          ? "Este instrutor não está mais disponível para esta categoria. Escolha outro ou continue sem preferência."
+          : conflict
+            ? "Este pacote ou horário não está mais disponível. Feche a janela e escolha outra opção."
+            : "Não foi possível salvar sua solicitação.",
       );
   }
   function contactInstructor(message) {
+    if (!done && invalidInstructor) {
+      setError("Escolha um instrutor disponível ou continue sem preferência.");
+      return;
+    }
     if (!normalizePhone(data.whatsapp)) {
       setError(
         "O contato de atendimento será disponibilizado em breve. Tente novamente mais tarde.",
@@ -82,7 +126,7 @@ export function Booking({ pack, data, update, close, contact }) {
       return;
     }
     setError("");
-    contact(message);
+    contact(message, done ? requestedInstructor : chosenInstructor || null);
   }
   return (
     <dialog
@@ -110,6 +154,9 @@ export function Booking({ pack, data, update, close, contact }) {
             <h2 id="booking-title">Solicitação salva neste navegador.</h2>
             <p className="mt-4 rounded-xl bg-green-50 p-4 text-sm font-semibold text-green-800">
               {pack.name}
+              <span className="mt-2 block text-sm font-normal">
+                Instrutor: {requestedInstructor?.name || "Sem preferência"}
+              </span>
               <br />
               <span className="mt-1 inline-block font-normal">
                 {new Date(requestedDate).toLocaleString("pt-BR", {
@@ -144,6 +191,49 @@ export function Booking({ pack, data, update, close, contact }) {
               Agendamento demonstrativo. Nenhuma cobrança será realizada. A
               confirmação acontece diretamente com o instrutor.
             </p>
+            <div className="mt-5">
+              <label>
+                Instrutor de preferência
+                <select
+                  aria-label="Instrutor de preferência"
+                  value={instructorId}
+                  onChange={(e) => {
+                    setInstructorId(e.target.value);
+                    setError("");
+                  }}
+                >
+                  <option value="">
+                    Sem preferência — a equipe me orienta
+                  </option>
+                  {invalidInstructor && (
+                    <option value={instructorId} disabled>
+                      Instrutor indisponível — altere a escolha
+                    </option>
+                  )}
+                  {compatibleInstructors.map((i) => (
+                    <option key={i.id} value={i.id}>
+                      {i.name} · {i.category.replace("+", "/")}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <p className="mt-2 text-xs leading-5 text-slate-500">
+                {compatibleInstructors.length
+                  ? "Exibimos quem atende à categoria do pacote. A agenda é compartilhada; a equipe confirma a disponibilidade do instrutor."
+                  : "Ainda não há instrutores cadastrados para esta categoria. Você pode solicitar a aula sem preferência."}
+              </p>
+              {initialInstructorId &&
+                !data.instructors.some(
+                  (i) =>
+                    i.id === initialInstructorId &&
+                    teachesCategory(i, pack.category),
+                ) && (
+                  <p className="mt-2 text-xs text-amber-800">
+                    O instrutor escolhido na página não atende este pacote ou
+                    não está mais disponível. Selecione outra opção.
+                  </p>
+                )}
+            </div>
             {slots.length ? (
               <form onSubmit={submit} className="mt-5 space-y-4">
                 <p
@@ -197,7 +287,7 @@ export function Booking({ pack, data, update, close, contact }) {
                   />
                 </label>
                 <button
-                  disabled={!selected}
+                  disabled={!selected || invalidInstructor}
                   className="btn btn-green w-full disabled:opacity-40"
                 >
                   Solicitar horário

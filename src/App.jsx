@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   ArrowUpRight,
   ArrowRight,
@@ -13,23 +13,39 @@ import {
   X,
   Plus,
   Minus,
-  Send,
   Route,
-  Sparkles,
 } from "lucide-react";
 import { useStore, whatsappUrl, money } from "./store";
 import { AdminPanel } from "./components/AdminPanel";
 import { Booking } from "./components/Booking";
 import { Brand } from "./components/Brand";
 import { CategorySection } from "./components/CategorySection";
+import { SpecialistChat } from "./components/SpecialistChat";
+import { InstructorSection } from "./components/InstructorSection";
 
 export function App() {
   const [data, update, error] = useStore();
   const [booking, setBooking] = useState(null);
   const [menu, setMenu] = useState(false);
   const [notice, setNotice] = useState("");
-  const contact = (message) => {
-    const url = whatsappUrl(data.whatsapp, message);
+  const [selectedInstructorId, setSelectedInstructorId] = useState("");
+  const selectedInstructor = data.instructors.find(
+    (i) => i.id === selectedInstructorId && i.active,
+  );
+  useEffect(() => {
+    if (selectedInstructorId && !selectedInstructor)
+      setSelectedInstructorId("");
+  }, [selectedInstructorId, selectedInstructor]);
+  const contact = (message, instructor = selectedInstructor) => {
+    const text =
+      message || "Olá! Quero saber mais sobre as aulas da HABILITA+.";
+    const url = whatsappUrl(
+      data.whatsapp,
+      text +
+        (instructor
+          ? ` Minha preferência de instrutor: ${instructor.name}.`
+          : ""),
+    );
     if (url) {
       window.open(url, "_blank", "noopener,noreferrer");
     } else {
@@ -50,10 +66,11 @@ export function App() {
           <Brand />
           <nav
             aria-label="Navegação principal"
-            className="hidden items-center gap-8 text-sm font-medium lg:flex"
+            className="hidden items-center gap-4 text-xs font-medium lg:flex xl:gap-6"
           >
             <a href="#vantagens">Por que Habilita+?</a>
             <a href="#categorias">Categorias</a>
+            <a href="#instrutores">Instrutores</a>
             <a href="#pacotes">Nossos pacotes</a>
             <a href="#duvidas">Dúvidas frequentes</a>
           </nav>
@@ -89,6 +106,7 @@ export function App() {
             {[
               ["vantagens", "Por que Habilita+?"],
               ["categorias", "Categorias"],
+              ["instrutores", "Instrutores"],
               ["pacotes", "Nossos pacotes"],
               ["duvidas", "Dúvidas frequentes"],
             ].map(([id, label]) => (
@@ -261,6 +279,13 @@ export function App() {
           </div>
         </section>
         <CategorySection contact={contact} />
+        <InstructorSection
+          instructors={data.instructors}
+          city={data.city}
+          selectedId={selectedInstructorId}
+          select={setSelectedInstructorId}
+          contact={contact}
+        />
         <section id="pacotes" className="container section-space">
           <div className="text-center">
             <p className="eyebrow">SEU OBJETIVO, SEU PLANO</p>
@@ -439,9 +464,10 @@ export function App() {
           <ArrowUpRight size={17} />
         </button>
       </div>
-      {data.ai && <Chat data={data} contact={contact} />}{" "}
+      {data.ai && <SpecialistChat contact={contact} />}{" "}
       {booking && (
         <Booking
+          initialInstructorId={selectedInstructorId}
           pack={booking}
           data={data}
           update={update}
@@ -461,153 +487,5 @@ export function App() {
         </div>
       )}
     </>
-  );
-}
-function Chat({ data, contact }) {
-  const [open, setOpen] = useState(false);
-  const [input, setInput] = useState("");
-  const messageList = useRef(null);
-  const inputRef = useRef(null);
-  const toggleRef = useRef(null);
-  const [messages, setMessages] = useState([
-    {
-      role: "bot",
-      text: "Olá! Sou o assistente demonstrativo da HABILITA+. Posso ajudar com categorias, pacotes e agendamento. Como posso ajudar?",
-    },
-  ]);
-  useEffect(() => {
-    if (open && messageList.current)
-      messageList.current.scrollTop = messageList.current.scrollHeight;
-  }, [messages, open]);
-  useEffect(() => {
-    if (open) inputRef.current?.focus();
-  }, [open]);
-  function closeChat() {
-    setOpen(false);
-    toggleRef.current?.focus();
-  }
-  function send(e) {
-    e.preventDefault();
-    if (!input.trim()) return;
-    const q = input.toLowerCase();
-    let answer =
-      "Para orientações específicas, fale com o instrutor. Você também pode consultar os pacotes e solicitar seu horário aqui na página.";
-    if (/preço|valor|pacote/.test(q)) {
-      const packs = data.packages.filter((p) => p.active);
-      answer = packs.length
-        ? packs
-            .map((p) => `${p.name}: ${money(p.price)} (${p.lessons} aulas).`)
-            .join(" ") + " Selecione seu pacote na página para agendar."
-        : "Os pacotes são combinados com o instrutor pelo WhatsApp. Conte seu objetivo para receber uma proposta.";
-    } else if (/categoria|moto|carro/.test(q))
-      answer =
-        "Temos preparação para categoria A (moto) e B (carro), em " +
-        data.city +
-        ". Consulte nossos pacotes ou fale com o instrutor para escolher sua modalidade.";
-    else if (/horário|agend|aula/.test(q))
-      answer =
-        "Selecione um pacote para consultar os horários disponíveis ou combine sua aula com o instrutor no WhatsApp.";
-    else if (/ladv|taxa|regra|document/.test(q))
-      answer =
-        "Documentos, taxas e requisitos devem ser confirmados nos canais oficiais do Detran e com seu instrutor. Esta simulação não consulta informações oficiais atualizadas.";
-    setMessages((m) => [
-      ...m,
-      { role: "user", text: input.trim() },
-      { role: "bot", text: answer },
-    ]);
-    setInput("");
-  }
-  return (
-    <div
-      className="chat-widget fixed right-4 z-40 sm:right-5"
-      onKeyDown={(event) => {
-        if (event.key === "Escape") closeChat();
-      }}
-    >
-      {open && (
-        <section
-          aria-label="Chat de atendimento"
-          id="chat-panel"
-          className="chat-panel mb-3 flex w-[min(360px,calc(100vw-32px))] flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl"
-        >
-          <div className="flex items-center gap-3 bg-[#0e213b] p-4 text-white">
-            <Sparkles size={20} />
-            <div className="flex-1">
-              <p className="text-sm font-semibold">Assistente HABILITA+</p>
-              <p className="mt-1 text-[10px] text-slate-300">
-                Simulação local · Sem IA conectada
-              </p>
-            </div>
-            <button
-              className="flex h-10 w-10 items-center justify-center rounded-lg hover:bg-white/10"
-              aria-label="Fechar chat"
-              onClick={closeChat}
-            >
-              <X size={18} />
-            </button>
-          </div>
-          <div
-            ref={messageList}
-            className="min-h-0 max-h-72 space-y-3 overflow-y-auto overscroll-contain p-4"
-            aria-live="polite"
-          >
-            {messages.map((m, i) => (
-              <p
-                key={i}
-                className={
-                  "rounded-xl p-3 text-xs leading-5 " +
-                  (m.role === "user"
-                    ? "ml-8 bg-green-100"
-                    : "mr-5 bg-slate-100")
-                }
-              >
-                {m.text}
-              </p>
-            ))}
-          </div>
-          <button
-            onClick={() => contact()}
-            className="mx-4 mb-3 text-left text-xs font-semibold text-green-700"
-          >
-            Falar com o instrutor ↗
-          </button>
-          <form
-            onSubmit={send}
-            className="flex gap-2 border-t border-slate-100 p-3"
-          >
-            <input
-              aria-label="Sua pergunta"
-              ref={inputRef}
-              maxLength={500}
-              placeholder="Escreva sua dúvida…"
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              className="min-w-0 flex-1 rounded-lg bg-slate-50 px-3 py-2 text-sm"
-            />
-            <button
-              aria-label="Enviar mensagem"
-              disabled={!input.trim()}
-              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-green-600 text-white disabled:opacity-40"
-            >
-              <Send size={18} />
-            </button>
-          </form>
-        </section>
-      )}
-      <button
-        ref={toggleRef}
-        onClick={() => setOpen(!open)}
-        aria-label={open ? "Fechar atendimento" : "Abrir atendimento"}
-        aria-expanded={open}
-        aria-controls="chat-panel"
-        className="relative ml-auto flex items-center gap-2 rounded-full bg-[#0e213b] p-4 text-white shadow-lg shadow-slate-900/20"
-      >
-        <MessageCircle size={23} />
-        <span className="hidden pr-1 text-xs font-semibold sm:inline">
-          Precisa de ajuda?
-        </span>
-        <span className="absolute right-1 top-1 h-2.5 w-2.5 rounded-full border-2 border-white bg-green-400" />
-      </button>
-    </div>
   );
 }

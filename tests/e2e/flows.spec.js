@@ -1,4 +1,9 @@
 import { test, expect } from "@playwright/test";
+import { mockChatvolt } from "./chatvolt.fixture";
+
+test.beforeEach(async ({ page }) => {
+  await mockChatvolt(page);
+});
 
 test("página inicial, navegação e atendimento", async ({ page }, testInfo) => {
   const errors = [];
@@ -27,7 +32,18 @@ test("página inicial, navegação e atendimento", async ({ page }, testInfo) =>
     path: `artifacts/${testInfo.project.name}-landing.png`,
     fullPage: true,
   });
-  await page.screenshot({ path: `artifacts/${testInfo.project.name}-inicio.png` });
+  await page.screenshot({
+    path: `artifacts/${testInfo.project.name}-inicio.png`,
+  });
+  await expect(
+    page.getByRole("heading", { name: "Emerson Santana", exact: true }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("img", { name: "Foto de Emerson Santana", exact: true }),
+  ).toBeVisible();
+  await page
+    .locator("#instrutores")
+    .screenshot({ path: `artifacts/${testInfo.project.name}-emerson.png` });
   await page.evaluate(() => {
     window.open = (url) => {
       window.lastContactUrl = url;
@@ -41,14 +57,13 @@ test("página inicial, navegação e atendimento", async ({ page }, testInfo) =>
   await expect(
     page.getByText("Você pode consultar os horários disponibilizados"),
   ).toBeVisible();
-  await page.getByRole("button", { name: "Abrir atendimento" }).click();
-  await page
-    .getByRole("textbox", { name: "Sua pergunta" })
-    .fill("Quais são os pacotes?");
-  await page.getByRole("button", { name: "Enviar mensagem" }).click();
+  await page.getByRole("button", { name: "Chame especialista" }).click();
   await expect(
-    page.getByText("Os pacotes são combinados com o instrutor"),
+    page.getByRole("dialog", { name: "Atendimento Chatvolt" }),
   ).toBeVisible();
+  expect(await page.evaluate(() => window.chatvoltOptions.agentId)).toBe(
+    "cmkoa8q6501ypkh1566oeotza",
+  );
   expect(errors).toEqual([]);
 });
 
@@ -103,10 +118,10 @@ test("layout sem rolagem lateral em celulares e tablets", async ({
       ).toHaveAttribute("aria-expanded", "false");
       await expect(page).toHaveURL(/#pacotes$/);
     }
-    await page.getByRole("button", { name: "Abrir atendimento" }).click();
+    await page.getByRole("button", { name: "Chame especialista" }).click();
     await expect(
-      page.getByRole("textbox", { name: "Sua pergunta" }),
-    ).toBeFocused();
+      page.getByRole("dialog", { name: "Atendimento Chatvolt" }),
+    ).toBeVisible();
     expect(
       await page.evaluate(
         () => document.documentElement.scrollWidth <= innerWidth,
@@ -114,7 +129,7 @@ test("layout sem rolagem lateral em celulares e tablets", async ({
     ).toBe(true);
     await page.keyboard.press("Escape");
     await expect(
-      page.getByRole("button", { name: "Abrir atendimento" }),
+      page.getByRole("button", { name: "Chame especialista" }),
     ).toBeFocused();
   }
 });
