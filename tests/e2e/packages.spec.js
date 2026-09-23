@@ -16,11 +16,9 @@ test("ofertas iniciais recolhidas, expansão e agendamento", async ({
       }),
     ),
   );
-  await page
-    .locator("#categorias")
-    .screenshot({
-      path: `artifacts/${testInfo.project.name}-categorias-fechadas.png`,
-    });
+  await page.locator("#categorias").screenshot({
+    path: `artifacts/${testInfo.project.name}-categorias-fechadas.png`,
+  });
   const car = page.locator('details[data-category="B"]');
   await car.locator("summary").focus();
   await page.keyboard.press("Enter");
@@ -53,11 +51,9 @@ test("ofertas iniciais recolhidas, expansão e agendamento", async ({
     both.getByText("02 aulas de carro + 02 aulas de moto", { exact: true }),
   ).toBeVisible();
   await expect(both.getByText("R$ 399,99", { exact: true })).toBeVisible();
-  await page
-    .locator("#categorias")
-    .screenshot({
-      path: `artifacts/${testInfo.project.name}-categorias-abertas.png`,
-    });
+  await page.locator("#categorias").screenshot({
+    path: `artifacts/${testInfo.project.name}-categorias-abertas.png`,
+  });
   expect(
     await page.evaluate(
       () => document.documentElement.scrollWidth <= innerWidth,

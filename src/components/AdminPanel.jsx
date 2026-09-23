@@ -13,6 +13,7 @@ import {
 import { Brand } from "./Brand";
 import { money, normalizePhone } from "../store";
 import { InstructorManager } from "./InstructorManager";
+import { TestimonialManager } from "./Testimonials";
 const empty = {
   name: "",
   category: "B",
@@ -23,6 +24,7 @@ const empty = {
   active: true,
   examVehicle: false,
   freeRetest: false,
+  retestTerms: "",
   cardInstallments: 0,
   boletoInstallments: 0,
 };
@@ -270,6 +272,20 @@ export function AdminPanel({ data, update, error }) {
                   Reteste grátis
                 </label>
               </div>
+              {pack.freeRetest && (
+                <label className="sm:col-span-2">
+                  Condições do reteste grátis
+                  <textarea
+                    maxLength={1500}
+                    rows={4}
+                    value={pack.retestTerms || ""}
+                    placeholder="Descreva o que está incluso, o prazo e as taxas ou custos por conta do aluno."
+                    onChange={(e) =>
+                      setPack({ ...pack, retestTerms: e.target.value })
+                    }
+                  />
+                </label>
+              )}
               <label>
                 Parcelas no cartão
                 <input
@@ -516,6 +532,7 @@ export function AdminPanel({ data, update, error }) {
           </div>
         </div>
         <InstructorManager data={data} update={update} />
+        <TestimonialManager testimonials={data.testimonials} update={update} />
         <section className="admin-card mt-7">
           <h2 className="admin-title">Solicitações demonstrativas</h2>
           <p className="my-4 text-xs text-slate-500">

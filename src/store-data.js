@@ -63,6 +63,26 @@ export function normalizeState(value) {
         ? DEFAULT_WHATSAPP
         : configuredPhone,
     ai: typeof source.ai === "boolean" ? source.ai : true,
+    testimonials: (Array.isArray(source.testimonials)
+      ? source.testimonials
+      : []
+    )
+      .filter(
+        (t) =>
+          t &&
+          typeof t.id === "string" &&
+          typeof t.name === "string" &&
+          t.name.trim() &&
+          typeof t.text === "string" &&
+          t.text.trim(),
+      )
+      .map((t) => ({
+        id: t.id,
+        name: t.name.trim().slice(0, 80),
+        text: t.text.trim().slice(0, 1000),
+        authorized: t.authorized === true,
+        active: t.active === true,
+      })),
     instructors: instructors
       .filter(
         (i) =>
@@ -96,6 +116,10 @@ export function normalizeState(value) {
         ...p,
         examVehicle: p.examVehicle === true,
         freeRetest: p.freeRetest === true,
+        retestTerms:
+          typeof p.retestTerms === "string"
+            ? p.retestTerms.trim().slice(0, 1500)
+            : "",
         cardInstallments:
           Number.isInteger(p.cardInstallments) &&
           p.cardInstallments >= 0 &&
@@ -164,3 +188,6 @@ export function whatsappUrl(
 
 export const money = (value) =>
   Number(value).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+
+export const packageMessage = (pack) =>
+  `Olá! Tenho interesse no ${pack.name}, de ${money(pack.price)} à vista, categoria ${pack.category.replace("+", "/")}. Quero saber os horários e as condições de contratação${pack.freeRetest ? ", incluindo o reteste grátis" : ""}.`;

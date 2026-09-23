@@ -22,6 +22,8 @@ import { Brand } from "./components/Brand";
 import { CategorySection } from "./components/CategorySection";
 import { SpecialistChat } from "./components/SpecialistChat";
 import { PackageDetails } from "./components/PackageDetails";
+import { packageMessage } from "./store-data";
+import { Testimonials } from "./components/Testimonials";
 import { InstructorSection } from "./components/InstructorSection";
 
 export function App() {
@@ -316,6 +318,12 @@ export function App() {
                     >
                       Agendar / garantir pacote <ArrowRight size={16} />
                     </button>
+                    <button
+                      className="btn btn-outline mt-3"
+                      onClick={() => contact(packageMessage(p))}
+                    >
+                      <MessageCircle size={17} /> Quero este pacote no WhatsApp
+                    </button>
                   </article>
                 ))}
             </div>
@@ -344,6 +352,7 @@ export function App() {
             </div>
           )}
         </section>
+        <Testimonials testimonials={data.testimonials} />
         <section className="container pb-16">
           <div className="rounded-[24px] bg-[#0e213b] px-7 py-12 text-white md:px-12">
             <div className="grid gap-10 lg:grid-cols-[1fr_1.3fr]">

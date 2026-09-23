@@ -26,6 +26,17 @@ export function PackageDetails({ pack, dark = false }) {
             </li>
           ))}
       </ul>
+      {pack.freeRetest && (
+        <div
+          className={`mt-4 rounded-xl border p-3 text-xs leading-5 ${dark ? "border-white/15 text-slate-300" : "border-slate-200 text-slate-600"}`}
+        >
+          <p className="font-bold">Condições do reteste grátis</p>
+          <p className="mt-1 whitespace-pre-line">
+            {pack.retestTerms ||
+              "Antes de contratar, confirme com o instrutor o que está incluído no reteste, o prazo de utilização e eventuais taxas ou custos adicionais."}
+          </p>
+        </div>
+      )}
       <div
         className={`my-5 border-t pt-5 ${dark ? "border-white/15" : "border-slate-100"}`}
       >

@@ -54,3 +54,8 @@ npm run test:e2e
 Os testes de navegador usam o Google Chrome instalado, iniciam o Vite automaticamente e cobrem desktop e celular: pacotes, edição/exclusão, sincronização entre abas, configurações, disponibilidade, solicitação de aula, chat e navegação. As capturas ficam em `artifacts/`, e falhas geram rastros em `test-results/`. A suíte normal simula o módulo Chatvolt e intercepta o link de WhatsApp; nenhuma mensagem é enviada. A verificação opcional com `CHATVOLT_LIVE=1` abre o agente real, sem enviar mensagens.
 
 No PowerShell com restrição a scripts, use `npm.cmd` no lugar de `npm`.
+# Melhorias de contato e conteúdo
+
+Os cards de categoria mostram o preço à vista e o comando “Ver pacote e valores”. O WhatsApp de cada pacote recebe uma mensagem com nome, categoria e preço atuais. As condições do reteste podem ser editadas por pacote; quando não preenchidas, o site pede confirmação com o instrutor, sem presumir prazos ou taxas.
+
+O painel permite cadastrar, editar e excluir depoimentos reais. Apenas relatos ativos e marcados como autorizados aparecem perto dos pacotes. Não há depoimentos fictícios pré-cadastrados. Como os dados ainda usam localStorage, alterações no painel são locais ao navegador e não são publicadas para outros visitantes.

@@ -6,6 +6,7 @@ import {
   CalendarDays,
 } from "lucide-react";
 import { PackageDetails } from "./PackageDetails";
+import { money, packageMessage } from "../store-data";
 
 const motorcycle = "/aa1d39d3-8028-46ab-8bad-addfc1300336.png";
 const categories = [
@@ -120,6 +121,22 @@ export function CategorySection({ contact, packages, book }) {
                       <ChevronDown size={22} />
                     </span>
                   </div>
+                  <div className="px-5 pb-6">
+                    {offers.length > 0 && (
+                      <p className="mb-4 text-lg font-bold text-yellow-300">
+                        {offers.length > 1 ? "A partir de " : "À vista "}
+                        {money(Math.min(...offers.map((p) => Number(p.price))))}
+                      </p>
+                    )}
+                    <span className="flex justify-center rounded-xl border border-yellow-300/50 px-4 py-3 text-sm font-bold text-yellow-300">
+                      <span className="group-open:hidden">
+                        Ver pacote e valores
+                      </span>
+                      <span className="hidden group-open:inline">
+                        Recolher detalhes
+                      </span>
+                    </span>
+                  </div>
                 </summary>
                 <div className="border-t border-white/10 px-5 pb-5">
                   <p className="my-5 text-sm leading-6 text-slate-300">
@@ -135,6 +152,13 @@ export function CategorySection({ contact, packages, book }) {
                           {pack.name}
                         </h4>
                         <PackageDetails pack={pack} dark />
+                        <button
+                          className="license-cta mt-6"
+                          onClick={() => contact(packageMessage(pack))}
+                        >
+                          <MessageCircle size={21} /> Quero este pacote no
+                          WhatsApp
+                        </button>
                         <button
                           className="license-cta mt-6"
                           onClick={() => book(pack)}
