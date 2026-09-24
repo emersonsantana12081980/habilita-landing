@@ -14,6 +14,10 @@ import { Brand } from "./Brand";
 import { money, normalizePhone } from "../store";
 import { InstructorManager } from "./InstructorManager";
 import { TestimonialManager } from "./Testimonials";
+import {
+  googleBookingUrl,
+  DEFAULT_GOOGLE_BOOKING_URL,
+} from "../google-calendar";
 const empty = {
   name: "",
   category: "B",
@@ -34,6 +38,7 @@ export function AdminPanel({ data, update, error }) {
     city: data.city,
     whatsapp: data.whatsapp,
     ai: data.ai,
+    googleBookingUrl: data.googleBookingUrl,
   });
   const [slot, setSlot] = useState("");
   const [status, setStatus] = useState("");
@@ -82,6 +87,15 @@ export function AdminPanel({ data, update, error }) {
   }
   function saveSettings(e) {
     e.preventDefault();
+    if (
+      settings.googleBookingUrl.trim() &&
+      !googleBookingUrl(settings.googleBookingUrl)
+    ) {
+      setStatus(
+        "Use o link da página de agendamento do Google, não o link de uma agenda pública.",
+      );
+      return;
+    }
     if (!settings.city.trim()) {
       setStatus("Informe a cidade de atendimento.");
       return;
@@ -443,6 +457,36 @@ export function AdminPanel({ data, update, error }) {
                   />{" "}
                   Exibir atendimento Chatvolt
                 </label>
+                <label>
+                  Link de agendamento do Google Agenda
+                  <input
+                    type="url"
+                    value={settings.googleBookingUrl}
+                    disabled={Boolean(DEFAULT_GOOGLE_BOOKING_URL)}
+                    placeholder="https://calendar.app.google/..."
+                    onChange={(e) =>
+                      setSettings({
+                        ...settings,
+                        googleBookingUrl: e.target.value,
+                      })
+                    }
+                  />
+                </label>
+                <p className="text-xs leading-5 text-slate-500">
+                  {DEFAULT_GOOGLE_BOOKING_URL
+                    ? "Link publicado na configuração do site. Para trocar para todos os visitantes, atualize VITE_GOOGLE_BOOKING_URL e publique novamente."
+                    : "Este campo permite testar o link neste navegador. Para ativar para todos os visitantes, configure VITE_GOOGLE_BOOKING_URL na Vercel e publique novamente."}{" "}
+                  Os horários e as reservas são gerenciados no Google, não na
+                  disponibilidade demonstrativa abaixo.
+                </p>
+                <a
+                  className="text-sm font-semibold text-green-700"
+                  href="https://support.google.com/calendar/answer/10729749?hl=pt-BR"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  Como criar sua página de agendamento
+                </a>
                 <button className="btn btn-green">
                   <Save size={16} /> Salvar configurações
                 </button>

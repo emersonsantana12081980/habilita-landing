@@ -56,6 +56,18 @@ Os testes de navegador usam o Google Chrome instalado, iniciam o Vite automatica
 No PowerShell com restrição a scripts, use `npm.cmd` no lugar de `npm`.
 # Melhorias de contato e conteúdo
 
+## Google Agenda sem banco próprio
+
+A página fornecida pelo instrutor (`https://calendar.app.google/C6k6Voem3xcnGDSe6`) está configurada como padrão em `src/google-calendar.js`, usando o endereço completo de destino para incorporação. Não é necessário configurar uma variável na Vercel para essa página. `VITE_GOOGLE_BOOKING_URL` pode substituir o padrão em futuras alterações; valor vazio desativa o padrão e permite testar pelo painel. Os testes automatizados usam esse modo sem configuração global.
+
+Configure `VITE_GOOGLE_BOOKING_URL` na Vercel com o link público **da página de agendamento** e faça um novo deploy. Não use o link de calendário público, ID da agenda, senha ou chave de API. A variável contém somente um link público. Para testar localmente, use o campo nas configurações do painel; ele não publica a configuração para outros visitantes. A configuração de produção tem prioridade sobre o teste local.
+
+Crie a página no Google Agenda pelo computador em Criar > Agendamento de horários. Defina duração, dias, fuso horário, local, antecedência e intervalos. Mantenha a verificação de disponibilidade e registre os bloqueios de instrutor/veículo na agenda consultada. Adicione campos para WhatsApp, pacote e categoria no formulário do Google. Copie o link em Páginas de agendamento de horário > Copiar link.
+
+Quando configurado, o fluxo de pacote usa a página do Google e não grava solicitações locais. Links completos de `calendar.google.com/calendar/appointments/schedules/` podem ser incorporados; links curtos `calendar.app.google` abrem em nova aba. O Google gerencia disponibilidade, reserva e cancelamento. O site não lê eventos privados, não recebe confirmação automática de reserva, não associa automaticamente o pacote e não confirma pagamento. Cada reserva corresponde a um horário. Uma página compartilhada não faz distribuição automática entre instrutores/veículos; configure os recursos no Google antes de oferecer reservas.
+
+Guia oficial: https://support.google.com/calendar/answer/10729749?hl=pt-BR
+
 Os cards de categoria mostram o preço à vista e o comando “Ver pacote e valores”. O WhatsApp de cada pacote recebe uma mensagem com nome, categoria e preço atuais. As condições do reteste podem ser editadas por pacote; quando não preenchidas, o site pede confirmação com o instrutor, sem presumir prazos ou taxas.
 
 O painel permite cadastrar, editar e excluir depoimentos reais. Apenas relatos ativos e marcados como autorizados aparecem perto dos pacotes. Não há depoimentos fictícios pré-cadastrados. Como os dados ainda usam localStorage, alterações no painel são locais ao navegador e não são publicadas para outros visitantes.

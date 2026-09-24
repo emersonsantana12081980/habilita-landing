@@ -1,5 +1,9 @@
 import { DEFAULT_INSTRUCTORS } from "./data/instructors.js";
 import { DEFAULT_PACKAGES } from "./data/packages.js";
+import {
+  googleBookingUrl,
+  DEFAULT_GOOGLE_BOOKING_URL,
+} from "./google-calendar.js";
 
 export const STORAGE_KEY = "habilita-plus-v1";
 export const DEFAULT_WHATSAPP = "12996225250";
@@ -63,6 +67,8 @@ export function normalizeState(value) {
         ? DEFAULT_WHATSAPP
         : configuredPhone,
     ai: typeof source.ai === "boolean" ? source.ai : true,
+    googleBookingUrl:
+      DEFAULT_GOOGLE_BOOKING_URL || googleBookingUrl(source.googleBookingUrl),
     testimonials: (Array.isArray(source.testimonials)
       ? source.testimonials
       : []

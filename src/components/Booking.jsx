@@ -3,6 +3,7 @@ import { X, CalendarDays, CheckCircle2 } from "lucide-react";
 import { normalizePhone } from "../store";
 import { teachesCategory } from "../store-data";
 import { PackageDetails } from "./PackageDetails";
+import { GoogleBooking } from "./GoogleBooking";
 export function Booking({
   pack,
   data,
@@ -188,129 +189,135 @@ export function Booking({
               Categoria {pack.category.replace("+", "/")}
             </p>
             <PackageDetails pack={pack} />
-            <p className="mt-5 rounded-lg bg-amber-50 p-3 text-xs leading-5 text-amber-900">
-              Agendamento demonstrativo. Nenhuma cobrança será realizada. A
-              confirmação acontece diretamente com o instrutor.
-            </p>
-            <div className="mt-5">
-              <label>
-                Instrutor de preferência
-                <select
-                  aria-label="Instrutor de preferência"
-                  value={instructorId}
-                  onChange={(e) => {
-                    setInstructorId(e.target.value);
-                    setError("");
-                  }}
-                >
-                  <option value="">
-                    Sem preferência — a equipe me orienta
-                  </option>
-                  {invalidInstructor && (
-                    <option value={instructorId} disabled>
-                      Instrutor indisponível — altere a escolha
-                    </option>
-                  )}
-                  {compatibleInstructors.map((i) => (
-                    <option key={i.id} value={i.id}>
-                      {i.name} · {i.category.replace("+", "/")}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <p className="mt-2 text-xs leading-5 text-slate-500">
-                {compatibleInstructors.length
-                  ? "Exibimos quem atende à categoria do pacote. A agenda é compartilhada; a equipe confirma a disponibilidade do instrutor."
-                  : "Ainda não há instrutores cadastrados para esta categoria. Você pode solicitar a aula sem preferência."}
-              </p>
-              {initialInstructorId &&
-                !data.instructors.some(
-                  (i) =>
-                    i.id === initialInstructorId &&
-                    teachesCategory(i, pack.category),
-                ) && (
-                  <p className="mt-2 text-xs text-amber-800">
-                    O instrutor escolhido na página não atende este pacote ou
-                    não está mais disponível. Selecione outra opção.
-                  </p>
-                )}
-            </div>
-            {slots.length ? (
-              <form onSubmit={submit} className="mt-5 space-y-4">
-                <p
-                  id="slot-label"
-                  className="text-xs font-semibold text-slate-600"
-                >
-                  Escolha um horário
+            {data.googleBookingUrl ? (
+              <GoogleBooking url={data.googleBookingUrl} pack={pack} />
+            ) : (
+              <>
+                <p className="mt-5 rounded-lg bg-amber-50 p-3 text-xs leading-5 text-amber-900">
+                  Agendamento demonstrativo. Nenhuma cobrança será realizada. A
+                  confirmação acontece diretamente com o instrutor.
                 </p>
-                <div
-                  className="grid grid-cols-2 gap-2"
-                  role="group"
-                  aria-labelledby="slot-label"
-                >
-                  {slots.map((s) => (
+                <div className="mt-5">
+                  <label>
+                    Instrutor de preferência
+                    <select
+                      aria-label="Instrutor de preferência"
+                      value={instructorId}
+                      onChange={(e) => {
+                        setInstructorId(e.target.value);
+                        setError("");
+                      }}
+                    >
+                      <option value="">
+                        Sem preferência — a equipe me orienta
+                      </option>
+                      {invalidInstructor && (
+                        <option value={instructorId} disabled>
+                          Instrutor indisponível — altere a escolha
+                        </option>
+                      )}
+                      {compatibleInstructors.map((i) => (
+                        <option key={i.id} value={i.id}>
+                          {i.name} · {i.category.replace("+", "/")}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <p className="mt-2 text-xs leading-5 text-slate-500">
+                    {compatibleInstructors.length
+                      ? "Exibimos quem atende à categoria do pacote. A agenda é compartilhada; a equipe confirma a disponibilidade do instrutor."
+                      : "Ainda não há instrutores cadastrados para esta categoria. Você pode solicitar a aula sem preferência."}
+                  </p>
+                  {initialInstructorId &&
+                    !data.instructors.some(
+                      (i) =>
+                        i.id === initialInstructorId &&
+                        teachesCategory(i, pack.category),
+                    ) && (
+                      <p className="mt-2 text-xs text-amber-800">
+                        O instrutor escolhido na página não atende este pacote
+                        ou não está mais disponível. Selecione outra opção.
+                      </p>
+                    )}
+                </div>
+                {slots.length ? (
+                  <form onSubmit={submit} className="mt-5 space-y-4">
+                    <p
+                      id="slot-label"
+                      className="text-xs font-semibold text-slate-600"
+                    >
+                      Escolha um horário
+                    </p>
+                    <div
+                      className="grid grid-cols-2 gap-2"
+                      role="group"
+                      aria-labelledby="slot-label"
+                    >
+                      {slots.map((s) => (
+                        <button
+                          key={s.id}
+                          type="button"
+                          aria-pressed={selected === s.id}
+                          onClick={() => setSelected(s.id)}
+                          className={
+                            "rounded-lg border p-3 text-xs " +
+                            (selected === s.id
+                              ? "border-green-600 bg-green-50 text-green-800"
+                              : "border-slate-200")
+                          }
+                        >
+                          {new Date(s.date).toLocaleString("pt-BR", {
+                            dateStyle: "short",
+                            timeStyle: "short",
+                          })}
+                        </button>
+                      ))}
+                    </div>
+                    <label>
+                      Nome de demonstração
+                      <input
+                        required
+                        maxLength={80}
+                        value={name}
+                        onChange={(e) => setName(e.target.value)}
+                      />
+                    </label>
+                    <label>
+                      Telefone de demonstração
+                      <input
+                        required
+                        type="tel"
+                        maxLength={20}
+                        value={phone}
+                        onChange={(e) => setPhone(e.target.value)}
+                      />
+                    </label>
                     <button
-                      key={s.id}
-                      type="button"
-                      aria-pressed={selected === s.id}
-                      onClick={() => setSelected(s.id)}
-                      className={
-                        "rounded-lg border p-3 text-xs " +
-                        (selected === s.id
-                          ? "border-green-600 bg-green-50 text-green-800"
-                          : "border-slate-200")
+                      disabled={!selected || invalidInstructor}
+                      className="btn btn-green w-full disabled:opacity-40"
+                    >
+                      Solicitar horário
+                    </button>
+                  </form>
+                ) : (
+                  <div className="mt-6">
+                    <p className="mb-5 text-sm text-slate-500">
+                      Ainda não há horários disponíveis na agenda. Combine o
+                      melhor horário diretamente com o instrutor.
+                    </p>
+                    <button
+                      className="btn btn-green w-full"
+                      onClick={() =>
+                        contactInstructor(
+                          "Olá! Quero agendar o pacote " + pack.name,
+                        )
                       }
                     >
-                      {new Date(s.date).toLocaleString("pt-BR", {
-                        dateStyle: "short",
-                        timeStyle: "short",
-                      })}
+                      Consultar pelo WhatsApp
                     </button>
-                  ))}
-                </div>
-                <label>
-                  Nome de demonstração
-                  <input
-                    required
-                    maxLength={80}
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                  />
-                </label>
-                <label>
-                  Telefone de demonstração
-                  <input
-                    required
-                    type="tel"
-                    maxLength={20}
-                    value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
-                  />
-                </label>
-                <button
-                  disabled={!selected || invalidInstructor}
-                  className="btn btn-green w-full disabled:opacity-40"
-                >
-                  Solicitar horário
-                </button>
-              </form>
-            ) : (
-              <div className="mt-6">
-                <p className="mb-5 text-sm text-slate-500">
-                  Ainda não há horários disponíveis na agenda. Combine o melhor
-                  horário diretamente com o instrutor.
-                </p>
-                <button
-                  className="btn btn-green w-full"
-                  onClick={() =>
-                    contactInstructor(
-                      "Olá! Quero agendar o pacote " + pack.name,
-                    )
-                  }
-                >
-                  Consultar pelo WhatsApp
-                </button>
-              </div>
+                  </div>
+                )}
+              </>
             )}
           </>
         )}
