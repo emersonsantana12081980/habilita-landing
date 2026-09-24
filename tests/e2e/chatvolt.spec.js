@@ -13,7 +13,7 @@ test("falha no Chatvolt oferece WhatsApp e permite desativação no painel", asy
   await expect(
     page.getByRole("button", { name: "Falar pelo WhatsApp", exact: true }),
   ).toBeVisible();
-  await page.goto("/admin");
+  await page.goto("/admin?view=site");
   await page.getByLabel("Exibir atendimento Chatvolt").uncheck();
   await page.getByRole("button", { name: "Salvar configurações" }).click();
   await page.goto("/");

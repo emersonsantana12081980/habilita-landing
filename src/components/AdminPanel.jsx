@@ -14,6 +14,7 @@ import { Brand } from "./Brand";
 import { money, normalizePhone } from "../store";
 import { InstructorManager } from "./InstructorManager";
 import { TestimonialManager } from "./Testimonials";
+import { InstructorWorkspace } from "./InstructorWorkspace";
 import {
   googleBookingUrl,
   DEFAULT_GOOGLE_BOOKING_URL,
@@ -33,6 +34,13 @@ const empty = {
   boletoInstallments: 0,
 };
 export function AdminPanel({ data, update, error }) {
+  return new URLSearchParams(window.location.search).get("view") === "site" ? (
+    <SiteAdminPanel data={data} update={update} error={error} />
+  ) : (
+    <InstructorWorkspace data={data} update={update} error={error} />
+  );
+}
+function SiteAdminPanel({ data, update, error }) {
   const [pack, setPack] = useState(empty);
   const [settings, setSettings] = useState({
     city: data.city,
@@ -112,6 +120,9 @@ export function AdminPanel({ data, update, error }) {
       <header className="border-b border-slate-200 bg-white">
         <div className="container flex min-h-24 flex-wrap items-center justify-between gap-4 py-4">
           <Brand />
+          <a href="/admin" className="btn btn-outline">
+            Gestão do instrutor
+          </a>
           <a href="/" className="btn btn-outline">
             <ArrowLeft size={16} /> Ver página pública
           </a>

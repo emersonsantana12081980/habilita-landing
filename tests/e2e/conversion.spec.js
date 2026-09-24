@@ -29,7 +29,7 @@ test("regras editáveis e depoimentos dependem de autorização", async ({
 }) => {
   await page.goto("/");
   await expect(page.locator("#depoimentos")).toHaveCount(0);
-  await page.goto("/admin");
+  await page.goto("/admin?view=site");
   await page
     .getByRole("button", { name: "Editar Pacote Carro", exact: true })
     .click();
@@ -50,7 +50,7 @@ test("regras editáveis e depoimentos dependem de autorização", async ({
   await expect(page.locator('details[data-category="B"]')).toContainText(
     "Condição de teste: prazo de 30 dias.",
   );
-  await page.goto("/admin");
+  await page.goto("/admin?view=site");
   await page
     .getByRole("button", { name: "Editar depoimento de Aluno de teste" })
     .click();
@@ -60,7 +60,7 @@ test("regras editáveis e depoimentos dependem de autorização", async ({
   await expect(page.locator("#depoimentos")).toContainText(
     "Relato apenas para teste automatizado.",
   );
-  await page.goto("/admin");
+  await page.goto("/admin?view=site");
   page.once("dialog", (d) => d.accept());
   await page
     .getByRole("button", { name: "Excluir depoimento de Aluno de teste" })

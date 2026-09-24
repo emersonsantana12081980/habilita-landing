@@ -77,7 +77,7 @@ test("página inicial, navegação e atendimento", async ({ page }, testInfo) =>
 test("validações e contato indisponível dentro do agendamento", async ({
   page,
 }) => {
-  await page.goto("/admin");
+  await page.goto("/admin?view=site");
   await page.getByLabel("WhatsApp com DDD").fill("123");
   await page.getByRole("button", { name: "Salvar configurações" }).click();
   await expect(page.getByRole("status")).toContainText("Informe um WhatsApp");
@@ -170,7 +170,7 @@ test("pacotes, sincronização entre abas e solicitação de horário", async ({
   page,
   context,
 }, testInfo) => {
-  await page.goto("/admin");
+  await page.goto("/admin?view=site");
   await page.getByLabel("Nome do pacote").fill("Reforço de carro");
   await page.getByLabel("Preço (R$)").fill("450");
   await page.getByRole("button", { name: "Salvar pacote" }).click();

@@ -11,6 +11,17 @@ npm run dev
 
 Abra a URL exibida pelo Vite. A página pública fica em `/` e o painel em `/admin`.
 
+## Gerenciador do instrutor (demonstração local)
+
+`/admin` abre a gestão de **Hoje, Clientes, Agenda e Expediente**. O painel anterior de pacotes, instrutores e configurações do site continua em `/admin?view=site`.
+
+1. Cadastre um cliente fictício com WhatsApp, categoria e pacote (ou quantidade manual de aulas).
+2. Ajuste o expediente: exemplo inicial de segunda a sexta, 08h–18h, aulas de 50 minutos e intervalo de 10 minutos. O fuso utilizado é o do dispositivo.
+3. Na Agenda, escolha dia, cliente, categoria, instrutor e veículo. Só aparecem horários futuros livres, dentro do expediente e com saldo suficiente. O sistema considera sobreposição e intervalo do cliente, instrutor e veículo.
+4. A lista do dia permite cancelar; após o término permite marcar realizada ou falta. Agendadas reservam saldo, realizadas e faltas consomem uma aula, canceladas liberam saldo e horário. O histórico permanece ao arquivar clientes. Os totais contratados são uma cópia do pacote no cadastro e não mudam quando a oferta pública é editada.
+
+Esta agenda é independente do Google e das solicitações demonstrativas antigas. Veículos iniciais: Fiat Mobi (B) e moto de instrução (A). Não há pagamento, envio de mensagens, login ou banco nesta etapa. Somente dados fictícios. A persistência usa localStorage e não garante exclusão mútua entre gravações simultâneas em abas diferentes; uso real exige reservas transacionais no servidor. Não há sincronização entre dispositivos. A página de vendas não foi alterada nesta etapa.
+
 ```sh
 npm run build
 npm run preview

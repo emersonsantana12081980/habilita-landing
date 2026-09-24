@@ -35,7 +35,7 @@ test("cadastro, seleção, agendamento e histórico de instrutores", async ({
   page,
   context,
 }, testInfo) => {
-  await page.goto("/admin");
+  await page.goto("/admin?view=site");
   await addInstructor(page, "Ana Teste", "B");
   await addInstructor(page, "Bruno Teste", "A");
   await addInstructor(page, "Carla Teste", "A+B", false);
@@ -143,7 +143,7 @@ test("instrutor removido com o agendamento aberto exige nova escolha", async ({
   page,
   context,
 }) => {
-  await page.goto("/admin");
+  await page.goto("/admin?view=site");
   await addInstructor(page, "Instrutor Temporário");
   await page.getByLabel("Nome do pacote").fill("Aula de carro");
   await page.getByLabel("Preço (R$)").fill("100");

@@ -1,5 +1,6 @@
 import { DEFAULT_INSTRUCTORS } from "./data/instructors.js";
 import { DEFAULT_PACKAGES } from "./data/packages.js";
+import { normalizeManagement } from "./management.js";
 import {
   googleBookingUrl,
   DEFAULT_GOOGLE_BOOKING_URL,
@@ -54,6 +55,7 @@ export function normalizeState(value) {
     }
   }
   return {
+    ...normalizeManagement(source),
     schemaVersion: 2,
     instructorSeedVersion: 1,
     packageSeedVersion: 1,

@@ -65,7 +65,7 @@ test("edições do pacote refletem nas categorias sem restaurar ofertas excluíd
   page,
   context,
 }) => {
-  await page.goto("/admin");
+  await page.goto("/admin?view=site");
   await expect(page.getByText("Pacotes cadastrados (3)")).toBeVisible();
   const publicPage = await context.newPage();
   await publicPage.goto("/");

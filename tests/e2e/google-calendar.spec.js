@@ -3,7 +3,7 @@ import { test, expect } from "@playwright/test";
 test("agenda do Google substitui solicitações locais sem expor reservas", async ({
   page,
 }) => {
-  await page.goto("/admin");
+  await page.goto("/admin?view=site");
   await page
     .getByLabel("Link de agendamento do Google Agenda")
     .fill("https://calendar.google.com/calendar/embed?src=private");
