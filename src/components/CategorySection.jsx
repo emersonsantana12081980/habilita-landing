@@ -164,7 +164,7 @@ export function CategorySection({ contact, packages, book }) {
                           onClick={() => book(pack)}
                         >
                           <CalendarDays size={21} />
-                          <span>GARANTIR MEU PACOTE</span>
+                          <span>ESCOLHER ESTE PACOTE</span>
                           <ChevronRight
                             size={20}
                             className="ml-auto shrink-0"

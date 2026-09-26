@@ -32,15 +32,13 @@ test("ofertas iniciais recolhidas, expansão e agendamento", async ({
     "6x no boleto",
   ])
     await expect(car.getByText(text, { exact: true })).toBeVisible();
-  await car.getByRole("button", { name: "GARANTIR MEU PACOTE" }).click();
+  await car.getByRole("button", { name: "ESCOLHER ESTE PACOTE" }).click();
+  await expect(page).toHaveURL(/\/cadastro\?pacote=pacote-carro-exemplo/);
   await expect(
-    page.getByRole("dialog", { name: "Pacote Carro" }),
+    page.getByRole("heading", { name: "Criar cadastro grátis" }),
   ).toBeVisible();
-  await expect(
-    page.getByRole("dialog").getByText("R$ 299,00", { exact: true }),
-  ).toBeVisible();
-  await page.getByRole("button", { name: "Fechar agendamento" }).click();
-  await car.locator("summary").click();
+  await expect(page.getByText("R$ 299,00 à vista")).toBeVisible();
+  await page.goto("/#categorias");
   await expect(car).not.toHaveAttribute("open", "");
   const moto = page.locator('details[data-category="A"]');
   await moto.locator("summary").click();

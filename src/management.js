@@ -97,7 +97,7 @@ export function conflicts(lessons, candidate) {
         Date.parse(l.start),
   );
 }
-export function freeTimes(data, selection, now = new Date()) {
+export function freeTimes(data, selection, now = new Date(), preview = false) {
   const { day, clientId, instructorId, category, vehicleId } = selection;
   const c = data.clients.find((c) => c.id === clientId && c.active);
   const i = data.instructors.find(
@@ -115,7 +115,7 @@ export function freeTimes(data, selection, now = new Date()) {
     !v ||
     !["A", "B"].includes(category) ||
     !c.category.includes(category) ||
-    balance(c, data.lessons, category).available <= 0 ||
+    (!preview && balance(c, data.lessons, category).available <= 0) ||
     !/^\d{4}-\d{2}-\d{2}$/.test(day || "")
   )
     return [];

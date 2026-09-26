@@ -17,7 +17,7 @@ import {
 } from "lucide-react";
 import { useStore, whatsappUrl } from "./store";
 import { AdminPanel } from "./components/AdminPanel";
-import { Booking } from "./components/Booking";
+import { StudentPortal } from "./components/StudentPortal";
 import { Brand } from "./components/Brand";
 import { CategorySection } from "./components/CategorySection";
 import { SpecialistChat } from "./components/SpecialistChat";
@@ -28,7 +28,6 @@ import { InstructorSection } from "./components/InstructorSection";
 
 export function App() {
   const [data, update, error] = useStore();
-  const [booking, setBooking] = useState(null);
   const [menu, setMenu] = useState(false);
   const [notice, setNotice] = useState("");
   const [selectedInstructorId, setSelectedInstructorId] = useState("");
@@ -59,6 +58,15 @@ export function App() {
   };
   if (window.location.pathname.replace(/\/$/, "") === "/admin")
     return <AdminPanel data={data} update={update} error={error} />;
+  if (
+    ["/aluno", "/cadastro"].includes(
+      window.location.pathname.replace(/\/$/, ""),
+    )
+  )
+    return <StudentPortal data={data} update={update} error={error} />;
+  const choosePackage = (pack) => {
+    window.location.href = `/cadastro?pacote=${encodeURIComponent(pack.id)}${selectedInstructorId ? `&instrutor=${encodeURIComponent(selectedInstructorId)}` : ""}`;
+  };
   return (
     <>
       <a href="#conteudo" className="skip-link">
@@ -76,6 +84,9 @@ export function App() {
             <a href="#instrutores">Instrutores</a>
             <a href="#pacotes">Nossos pacotes</a>
             <a href="#duvidas">Dúvidas frequentes</a>
+            <a href="/aluno" className="font-bold text-green-700">
+              Área do aluno
+            </a>
           </nav>
           <button
             className="btn btn-green hidden sm:flex"
@@ -106,6 +117,12 @@ export function App() {
               if (event.key === "Escape") setMenu(false);
             }}
           >
+            <a
+              href="/aluno"
+              className="rounded-lg bg-green-50 px-3 py-3 text-sm font-bold text-green-700"
+            >
+              Entrar na área do aluno
+            </a>
             {[
               ["vantagens", "Por que Habilita+?"],
               ["categorias", "Categorias"],
@@ -168,6 +185,12 @@ export function App() {
                 <MessageCircle size={20} /> Chame agora no WhatsApp{" "}
                 <ArrowUpRight size={19} />
               </button>
+              <a
+                href="/cadastro"
+                className="btn btn-outline mt-3 w-full sm:ml-3 sm:w-auto"
+              >
+                Criar minha conta grátis
+              </a>
               <div className="mt-5 flex flex-wrap items-center gap-2 text-xs text-slate-500">
                 <MapPin size={14} className="text-green-600" /> Em {data.city} e
                 região <span className="mx-1 text-slate-300">•</span> Categorias
@@ -284,7 +307,7 @@ export function App() {
         <CategorySection
           contact={contact}
           packages={data.packages}
-          book={setBooking}
+          book={choosePackage}
         />
         <InstructorSection
           instructors={data.instructors}
@@ -314,9 +337,9 @@ export function App() {
                     </div>
                     <button
                       className="btn btn-green mt-auto"
-                      onClick={() => setBooking(p)}
+                      onClick={() => choosePackage(p)}
                     >
-                      Agendar / garantir pacote <ArrowRight size={16} />
+                      Escolher pacote <ArrowRight size={16} />
                     </button>
                     <button
                       className="btn btn-outline mt-3"
@@ -478,16 +501,6 @@ export function App() {
         </button>
       </div>
       {data.ai && <SpecialistChat contact={contact} />}{" "}
-      {booking && (
-        <Booking
-          initialInstructorId={selectedInstructorId}
-          pack={booking}
-          data={data}
-          update={update}
-          close={() => setBooking(null)}
-          contact={contact}
-        />
-      )}{" "}
       {notice && (
         <div
           className="fixed bottom-24 left-4 right-4 z-50 mx-auto flex max-w-lg items-start gap-4 rounded-xl border border-slate-200 bg-white p-5 shadow-xl sm:bottom-6"

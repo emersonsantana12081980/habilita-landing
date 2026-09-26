@@ -11,7 +11,26 @@ npm run dev
 
 Abra a URL exibida pelo Vite. A página pública fica em `/` e o painel em `/admin`.
 
+## Área do aluno (prévia local, sem autenticação)
+
+O fluxo público agora é **venda → `/cadastro?pacote=ID` → cadastro gratuito → solicitação de pacote → liberação manual → agendamento com crédito → aviso no painel**. Não há calendário ou janela de agendamento na página de vendas. “Criar minha conta grátis” abre `/cadastro`; “Área do aluno” abre somente o login em `/aluno`. Após entrar: Início, Meus pacotes, Minhas aulas e Meu perfil, com botão separado para agendar.
+
+- Use apenas dados fictícios. O cadastro cria um cliente com zero créditos. O login demonstrativo usa o e-mail cadastrado e a senha compartilhada `habilita-demo`, exibida na tela. A senha digitada não é persistida. Não há verificação de e-mail, login seguro ou Supabase nesta etapa. A sessão fica no sessionStorage; sair remove a sessão. Não há seletor público de cadastros. “Esqueci minha senha” informa a limitação e não envia e-mail. Isso não é controle de acesso para produção.
+- Meu perfil permite editar nome e WhatsApp, preservando créditos e histórico. O e-mail permanece somente leitura. Mudança/recuperação de senha real depende da futura autenticação.
+- O aluno solicita um pacote sem pagar. O pedido guarda nome, preço e quantidade de aulas naquele momento. Em `/admin` → **Pedidos de alunos**, o instrutor revisa, informa um motivo e libera ou recusa. A aprovação soma os créditos uma única vez por pedido e preserva o histórico; não lança recebimento financeiro automaticamente.
+- A agenda pode ser consultada sem saldo. Confirmar exige um crédito livre da categoria, cadastro ativo, instrutor compatível e veículo disponível. Ao agendar, o crédito é reservado e uma notificação aparece no painel. Realização/falta consome a aula; cancelamento pelo instrutor devolve o crédito. Remarcação/cancelamento pelo aluno é solicitado via WhatsApp, sem alteração automática.
+- A área mostra as próprias aulas e pedidos do cadastro selecionado. Esse filtro é apenas visual: todos os dados da demonstração estão no localStorage, acessível no dispositivo. A notificação sincroniza entre abas da mesma origem, não entre celulares. Nenhum cadastro, aula ou pagamento real deve ser usado antes do backend.
+- O mesmo Chatvolt está disponível na área do aluno, respeitando a opção de atendimento do painel. O botão WhatsApp abre uma mensagem manual.
+
+### Conexão de produção pendente
+
+Será necessário criar/configurar o projeto Supabase e implementar autenticação, permissões por aluno/instrutor, migração dos dados e operações transacionais no servidor. O aluno não poderá editar créditos, liberar pedidos ou consultar aulas de terceiros. O agendamento deverá reservar crédito e horário atomicamente, com bloqueio de conflitos de aluno, instrutor e veículo. A notificação deverá ser persistida no banco. A futura API de pagamento deverá liberar créditos somente após confirmação autenticada e idempotente do provedor. A prévia atual não implementa essas garantias e não deve ser publicada como sistema de produção.
+
 ## Gerenciador do instrutor (demonstração local)
+
+A aba **Faturamento** registra vendas vinculadas a clientes, com valor negociado e até 12 parcelas mensais. Valores são armazenados em centavos; parcelas preservam o total e ajustam vencimentos ao último dia de meses curtos. O preço atual do pacote é apenas sugestão ao criar a venda; cadastros existentes não geram dívidas automaticamente.
+
+O resumo separa vendas pela data da venda e recebimentos pela data do pagamento, no mês selecionado. Saldo e atraso incluem todos os períodos (vencimento hoje não está em atraso). É possível registrar pagamentos parciais, consultar histórico, estornar registros e cancelar vendas sem recebimentos ativos. Estornos preservam o histórico, reabrem saldo e não devolvem dinheiro por banco. Valores brutos, sem cálculo de taxas, juros, despesas ou lucro. Não há cobrança real, nota fiscal ou integração bancária. Vendas não alteram o saldo de aulas. Dados financeiros também ficam apenas no navegador.
 
 `/admin` abre a gestão de **Hoje, Clientes, Agenda e Expediente**. O painel anterior de pacotes, instrutores e configurações do site continua em `/admin?view=site`.
 
@@ -67,7 +86,7 @@ Os testes de navegador usam o Google Chrome instalado, iniciam o Vite automatica
 No PowerShell com restrição a scripts, use `npm.cmd` no lugar de `npm`.
 # Melhorias de contato e conteúdo
 
-## Google Agenda sem banco próprio
+## Google Agenda (integração anterior, fora do fluxo público atual)
 
 A página fornecida pelo instrutor (`https://calendar.app.google/C6k6Voem3xcnGDSe6`) está configurada como padrão em `src/google-calendar.js`, usando o endereço completo de destino para incorporação. Não é necessário configurar uma variável na Vercel para essa página. `VITE_GOOGLE_BOOKING_URL` pode substituir o padrão em futuras alterações; valor vazio desativa o padrão e permite testar pelo painel. Os testes automatizados usam esse modo sem configuração global.
 
@@ -75,7 +94,7 @@ Configure `VITE_GOOGLE_BOOKING_URL` na Vercel com o link público **da página d
 
 Crie a página no Google Agenda pelo computador em Criar > Agendamento de horários. Defina duração, dias, fuso horário, local, antecedência e intervalos. Mantenha a verificação de disponibilidade e registre os bloqueios de instrutor/veículo na agenda consultada. Adicione campos para WhatsApp, pacote e categoria no formulário do Google. Copie o link em Páginas de agendamento de horário > Copiar link.
 
-Quando configurado, o fluxo de pacote usa a página do Google e não grava solicitações locais. Links completos de `calendar.google.com/calendar/appointments/schedules/` podem ser incorporados; links curtos `calendar.app.google` abrem em nova aba. O Google gerencia disponibilidade, reserva e cancelamento. O site não lê eventos privados, não recebe confirmação automática de reserva, não associa automaticamente o pacote e não confirma pagamento. Cada reserva corresponde a um horário. Uma página compartilhada não faz distribuição automática entre instrutores/veículos; configure os recursos no Google antes de oferecer reservas.
+Os componentes anteriores e a configuração foram preservados, mas não são chamados pela página pública atual. O agendamento agora ocorre na área do aluno e usa a agenda local do gerenciador. Não existe sincronização entre essa agenda e o Google.
 
 Guia oficial: https://support.google.com/calendar/answer/10729749?hl=pt-BR
 

@@ -9,8 +9,11 @@ import {
   CarFront,
   Check,
   Search,
+  Wallet,
 } from "lucide-react";
 import { Brand } from "./Brand";
+import { FinanceManager } from "./FinanceManager";
+import { StudentRequests, StudentNotifications } from "./StudentRequests";
 import { normalizePhone } from "../store-data";
 import {
   balance,
@@ -282,12 +285,18 @@ export function InstructorWorkspace({ data, update, error }) {
         </p>
         <nav
           aria-label="Gestão do instrutor"
-          className="my-6 grid grid-cols-2 gap-2 sm:flex"
+          className="my-6 grid grid-cols-2 gap-2 sm:flex sm:flex-wrap"
         >
           {[
             ["today", "Hoje", Clock3],
             ["clients", "Clientes", Users],
             ["agenda", "Agenda", CalendarDays],
+            ["finance", "Faturamento", Wallet],
+            [
+              "students",
+              `Pedidos de alunos${data.packageRequests.filter((r) => r.status === "pending").length ? ` (${data.packageRequests.filter((r) => r.status === "pending").length})` : ""}`,
+              Users,
+            ],
             ["hours", "Expediente", Settings],
           ].map(([id, label, Icon]) => (
             <button
@@ -312,6 +321,15 @@ export function InstructorWorkspace({ data, update, error }) {
             {error || message}
           </p>
         )}
+        <StudentNotifications
+          data={data}
+          update={update}
+          openLesson={(n) => {
+            navigate("agenda");
+            setDay(localDay(new Date(n.start)));
+          }}
+        />
+        {tab === "students" && <StudentRequests data={data} update={update} />}
         {tab === "today" && (
           <>
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
@@ -371,7 +389,7 @@ export function InstructorWorkspace({ data, update, error }) {
                   <CalendarDays size={17} /> Agendar aula
                 </button>
                 <p className="mt-5 text-xs text-slate-500">
-                  Financeiro e pagamento serão adicionados em uma próxima etapa.
+                  Acompanhe vendas e recebimentos na aba Faturamento.
                 </p>
               </section>
             </div>
@@ -882,6 +900,7 @@ export function InstructorWorkspace({ data, update, error }) {
             </section>
           </div>
         )}
+        {tab === "finance" && <FinanceManager data={data} update={update} />}
         {tab === "hours" && (
           <div className="grid items-start gap-6 lg:grid-cols-2">
             <section className="admin-card">
