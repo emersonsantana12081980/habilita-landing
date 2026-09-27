@@ -18,6 +18,9 @@ import {
 import { useStore, whatsappUrl } from "./store";
 import { AdminPanel } from "./components/AdminPanel";
 import { StudentPortal } from "./components/StudentPortal";
+import { CloudStudentPortal } from "./components/CloudStudentPortal";
+import { CloudAdminPanel } from "./components/CloudAdminPanel";
+import { cloudEnabled } from "./lib/supabase";
 import { Brand } from "./components/Brand";
 import { CategorySection } from "./components/CategorySection";
 import { SpecialistChat } from "./components/SpecialistChat";
@@ -57,13 +60,18 @@ export function App() {
     }
   };
   if (window.location.pathname.replace(/\/$/, "") === "/admin")
-    return <AdminPanel data={data} update={update} error={error} />;
+    if (cloudEnabled) return <CloudAdminPanel />;
+    else return <AdminPanel data={data} update={update} error={error} />;
   if (
     ["/aluno", "/cadastro"].includes(
       window.location.pathname.replace(/\/$/, ""),
     )
   )
-    return <StudentPortal data={data} update={update} error={error} />;
+    return cloudEnabled ? (
+      <CloudStudentPortal />
+    ) : (
+      <StudentPortal data={data} update={update} error={error} />
+    );
   const choosePackage = (pack) => {
     window.location.href = `/cadastro?pacote=${encodeURIComponent(pack.id)}${selectedInstructorId ? `&instrutor=${encodeURIComponent(selectedInstructorId)}` : ""}`;
   };
