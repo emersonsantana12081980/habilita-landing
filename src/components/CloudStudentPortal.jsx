@@ -1,5 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Brand } from "./Brand";
+import { CloudProfileEditor } from "./CloudProfileEditor";
+import { BookingRules } from "./BookingRules";
 import { SpecialistChat } from "./SpecialistChat";
 import { supabase } from "../lib/supabase";
 import { money, whatsappUrl } from "../store-data";
@@ -41,7 +43,8 @@ function errorText(error) {
 }
 
 export function CloudStudentPortal() {
-  const requestedPackage = new URLSearchParams(location.search).get("pacote") || "";
+  const requestedPackage =
+    new URLSearchParams(location.search).get("pacote") || "";
   const signup = location.pathname.replace(/\/$/, "") === "/cadastro";
   const [session, setSession] = useState(null);
   const [ready, setReady] = useState(false);
@@ -78,11 +81,11 @@ export function CloudStudentPortal() {
     }
     const { data: listener } = supabase.auth.onAuthStateChange(
       (event, next) => {
-      if (identity.current !== next?.user.id) {
-        version.current++;
-        identity.current = next?.user.id;
-        setData(empty);
-      }
+        if (identity.current !== next?.user.id) {
+          version.current++;
+          identity.current = next?.user.id;
+          setData(empty);
+        }
         slotsVersion.current++;
         setSlots(null);
         setSession(next);
@@ -578,6 +581,7 @@ export function CloudStudentPortal() {
                     )}
                   </>
                 )}
+                {tab === "Minhas aulas" && <BookingRules readOnly/>}
                 {tab === "Minhas aulas" &&
                   (data.lessons.length ? (
                     data.lessons.map((l) => (
@@ -586,6 +590,33 @@ export function CloudStudentPortal() {
                           Categoria {l.category} · {date(l.starts_at)}
                         </h2>
                         <p>{statusLabel[l.status]}</p>
+                        {l.status === "scheduled" && (
+                          <button
+                            disabled={busy}
+                            className="mt-3 text-red-700 underline"
+                            onClick={() => {
+                              if (
+                                !window.confirm(
+                                  "Cancelar esta aula e devolver o crédito disponível?",
+                                )
+                              )
+                                return;
+                              action(async () => {
+                                const { error } = await supabase.rpc(
+                                  "cancel_my_lesson",
+                                  { p_lesson: l.id },
+                                );
+                                if (error) throw error;
+                                await refresh(session.user.id);
+                                setMessage(
+                                  "Aula cancelada. Crédito disponível novamente.",
+                                );
+                              });
+                            }}
+                          >
+                            Cancelar aula
+                          </button>
+                        )}
                         <p className="mt-2 text-sm text-slate-600">
                           Para solicitar alterações, fale com a equipe.
                         </p>
@@ -595,19 +626,15 @@ export function CloudStudentPortal() {
                     <p>Suas aulas aparecerão aqui após o agendamento.</p>
                   ))}
                 {tab === "Meu perfil" && (
-                  <div className="admin-card space-y-3">
-                    <h2 className="text-xl font-bold">Seus dados</h2>
-                    <p>{data.student.name}</p>
-                    <p>{session.user.email}</p>
-                    <p>{data.student.phone}</p>
-                    <p>Categoria {data.student.category}</p>
-                    <p className="text-sm text-slate-600">
-                      Para corrigir seus dados, fale com a equipe.
-                    </p>
-                  </div>
+                  <CloudProfileEditor
+                    student={data.student}
+                    email={session.user.email}
+                    onSaved={() => refresh(session.user.id)}
+                  />
                 )}
                 {tab === "Agendar aula" && (
                   <div className="admin-card">
+                    <BookingRules readOnly/>
                     <h2 className="text-xl font-bold">
                       Escolha um horário livre
                     </h2>
@@ -699,7 +726,9 @@ export function CloudStudentPortal() {
         </a>
       </div>
       {data.settings?.ai_enabled !== false && (
-        <SpecialistChat contact={() => window.open(contact, "_blank", "noopener,noreferrer")} />
+        <SpecialistChat
+          contact={() => window.open(contact, "_blank", "noopener,noreferrer")}
+        />
       )}
     </main>
   );

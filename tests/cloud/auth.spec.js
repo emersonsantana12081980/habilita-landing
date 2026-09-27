@@ -5,6 +5,9 @@ const jwt = () => [Buffer.from(JSON.stringify({ alg: "HS256", typ: "JWT" })).toS
 async function mock(page, broken = false, admin = false) {
   const calls = [];
   let rules = [], exceptions = [];
+  let studentName='Aluno Teste';
+  let packages=[{id:'package1',slug:'carro',name:'Pacote Carro',category:'B',lessons_a:0,lessons_b:2,price_cents:29900,exam_vehicle:true,free_retest:true,retest_terms:'',card_installments:3,boleto_installments:6,active:true}];
+  let bookingSettings={id:true,minimum_notice_hours:2,cancellation_notice_hours:24,daily_limit:2};
   await page.route("https://test.supabase.co/**", async route => {
     const req = route.request(), path = new URL(req.url()).pathname;
     calls.push({ path, body: req.postDataJSON() });
@@ -15,7 +18,10 @@ async function mock(page, broken = false, admin = false) {
     } else if (path.endsWith("/signup")) body = user;
     else if (path.endsWith("/user")) body = user;
     else if (path.includes("/rest/v1/")) {
-      if (path.endsWith('/schedule_rules')) {
+      if(path.endsWith('/booking_settings')){if(req.method()==='PATCH')bookingSettings={...bookingSettings,...req.postDataJSON()};body=bookingSettings;}
+      else if(path.endsWith('/packages')){if(req.method()==='PATCH')packages=[{...packages[0],...req.postDataJSON()}];body=packages;}
+      else if(path.endsWith('/students')&&req.method()==='PATCH'){studentName=req.postDataJSON().name;body=null;}
+      else if (path.endsWith('/schedule_rules')) {
         if (req.method() === 'POST') rules = [{...req.postDataJSON(),id:'rule1'}];
         body = rules;
       }
@@ -26,7 +32,7 @@ async function mock(page, broken = false, admin = false) {
       else if (path.endsWith('/rpc/my_access_role')) body = admin ? 'admin' : 'student';
       else if (path.endsWith('/rpc/resolve_package') || path.endsWith('/rpc/publish_slot')) body = null;
       else if (broken) { status = 403; body = { message: "Access unavailable" }; }
-      else if (admin && path.endsWith('/students') && !new URL(req.url()).searchParams.has('user_id')) body = [{id:'student1',name:'Aluno Teste',category:'B',active:true,phone:'11999999999'}];
+      else if (admin && path.endsWith('/students') && !new URL(req.url()).searchParams.has('user_id')) body = [{id:'student1',name:studentName,category:'B',active:true,phone:'11999999999'}];
       else if (admin && path.endsWith('/instructors')) body = [{id:'instructor1',name:'Emerson',category:'A+B',active:true}];
       else if (admin && path.endsWith('/vehicles')) body = [{id:'vehicle1',name:'Fiat Mobi',category:'B',active:true}];
       else if (admin && path.endsWith('/package_requests')) body = [{id:'request1',student_id:'student1',package_name:'Pacote Carro',price_cents:29900,lessons_a:0,lessons_b:2,status:'pending'}];
@@ -99,6 +105,35 @@ test('consulta de horários travada não bloqueia a configuração semanal', asy
   await expect(page.getByRole('heading',{name:'Agendar para um aluno'})).toBeVisible();
   await page.getByRole('button',{name:'Configurar agenda',exact:true}).click();
   await expect(page.getByRole('button',{name:'Salvar e ativar rotina'})).toBeVisible();
+});
+
+test('calendário semanal, edição de aluno, catálogo público e regras persistidas',async({page})=>{
+ const calls=await mock(page,false,true);
+ await page.goto('/admin');
+ await page.getByLabel('E-mail administrativo').fill('admin@example.com');
+ await page.getByLabel('Senha',{exact:true}).fill('senha-teste-123');
+ await page.getByRole('button',{name:'Entrar no painel',exact:true}).click();
+ await expect(page.getByRole('heading',{name:'Visão semanal'})).toBeVisible();
+ await page.getByRole('button',{name:'Alunos',exact:true}).click();
+ await page.getByRole('button',{name:'Editar aluno',exact:true}).click();
+ await page.getByLabel('Nome',{exact:true}).fill('Aluno Atualizado');
+ await page.getByRole('button',{name:'Salvar aluno'}).click();
+ await expect(page.getByRole('heading',{name:'Aluno Atualizado'})).toBeVisible();
+ expect(calls.find(c=>c.path.endsWith('/students')&&c.body?.name==='Aluno Atualizado').body).not.toHaveProperty('credits');
+ await page.getByRole('button',{name:'Ver histórico'}).click();
+ await expect(page.getByText('Nenhuma aula registrada.')).toBeVisible();
+ await page.getByRole('button',{name:'Regras',exact:true}).click();
+ await page.getByLabel('Máximo de aulas por aluno/dia').fill('3');
+ await page.getByRole('button',{name:'Salvar regras'}).click();
+ await expect(page.getByText('Regras salvas.',{exact:false})).toBeVisible();
+ expect(calls.find(c=>c.path.endsWith('/booking_settings')&&c.body).body.daily_limit).toBe(3);
+ await page.getByRole('button',{name:'Catálogo',exact:true}).click();
+ await page.getByRole('button',{name:'Editar',exact:true}).click();
+ await page.getByLabel('Nome',{exact:true}).fill('Pacote atualizado no banco');
+ await page.getByRole('button',{name:'Salvar no site'}).click();
+ await expect(page.getByText('Catálogo atualizado no banco.')).toBeVisible();
+ await page.goto('/');
+ await expect(page.locator('#pacotes').getByText('Pacote atualizado no banco',{exact:true})).toBeVisible();
 });
 
 test('administrador consulta alunos, decide pedidos e publica horário pelo servidor', async ({page}) => {

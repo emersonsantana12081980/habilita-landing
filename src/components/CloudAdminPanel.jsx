@@ -4,6 +4,10 @@ import { supabase } from "../lib/supabase";
 import { money } from "../store-data";
 import { slotRequest } from "../admin-slot";
 import { ScheduleSettings } from "./ScheduleSettings";
+import { WeeklyCalendar } from "./WeeklyCalendar";
+import { StudentEditor } from "./StudentEditor";
+import { CatalogManager } from "./CatalogManager";
+import { BookingRules } from "./BookingRules";
 
 const empty = {
   students: [],
@@ -45,6 +49,8 @@ export function CloudAdminPanel() {
   const [password, setPassword] = useState("");
   const [data, setData] = useState(empty);
   const [tab, setTab] = useState("Agenda");
+  const [editingStudent, setEditingStudent] = useState(undefined);
+  const [historyStudent, setHistoryStudent] = useState(null);
   const [day, setDay] = useState(today);
   const [message, setMessage] = useState("");
   const [busy, setBusy] = useState(false);
@@ -150,7 +156,8 @@ export function CloudAdminPanel() {
   // A geração da agenda não bloqueia alunos, pedidos nem configurações.
   useEffect(() => {
     if (
-      loading || access !== "admin" ||
+      loading ||
+      access !== "admin" ||
       !day ||
       !["Agenda", "Horários avulsos"].includes(tab)
     )
@@ -356,6 +363,8 @@ export function CloudAdminPanel() {
                 "Pedidos",
                 "Configurar agenda",
                 "Horários avulsos",
+                "Catálogo",
+                "Regras",
               ].map((t) => (
                 <button
                   key={t}
@@ -439,24 +448,91 @@ export function CloudAdminPanel() {
                   </label>
                 )}
                 {tab === "Alunos" && (
-                  <div className="grid gap-4 md:grid-cols-2">
-                    {data.students.map((s) => (
-                      <article className="admin-card" key={s.id}>
-                        <h2 className="text-xl font-bold">{s.name}</h2>
-                        <p>
-                          {s.phone} · Categoria {s.category}
-                        </p>
-                        <p className="mt-3">
-                          Créditos livres: moto {balance(s.id, "A")} · carro{" "}
-                          {balance(s.id, "B")}
-                        </p>
-                        <p className="text-sm text-slate-500">
-                          {s.active ? "Cadastro ativo" : "Cadastro inativo"}
-                        </p>
-                      </article>
-                    ))}
-                    {!data.students.length && <p>Nenhum aluno cadastrado.</p>}
-                  </div>
+                  <>
+                    <button
+                      className="btn btn-green mb-4"
+                      onClick={() => setEditingStudent(null)}
+                    >
+                      Cadastrar aluno
+                    </button>
+                    {editingStudent !== undefined && (
+                      <StudentEditor
+                        key={editingStudent?.id || "new"}
+                        student={editingStudent}
+                        onSaved={() => {
+                          setEditingStudent(undefined);
+                          load();
+                        }}
+                      />
+                    )}
+                    {historyStudent && (
+                      <section className="admin-card mb-4">
+                        <h2 className="text-xl font-bold">
+                          Histórico de {historyStudent.name}
+                        </h2>
+                        <button
+                          className="my-3 underline"
+                          onClick={() => setHistoryStudent(null)}
+                        >
+                          Fechar histórico
+                        </button>
+                        {data.lessons
+                          .filter((l) => l.student_id === historyStudent.id)
+                          .map((l) => (
+                            <p key={l.id}>
+                              {dayOf(l.starts_at)} · {time(l.starts_at)} ·{" "}
+                              {l.category} · {labels[l.status]}
+                            </p>
+                          ))}
+                        {!data.lessons.some(
+                          (l) => l.student_id === historyStudent.id,
+                        ) && <p>Nenhuma aula registrada.</p>}
+                      </section>
+                    )}
+                    <div className="grid gap-4 md:grid-cols-2">
+                      {data.students.map((s) => (
+                        <article className="admin-card" key={s.id}>
+                          <h2 className="text-xl font-bold">{s.name}</h2>
+                          <p>
+                            {s.phone} · Categoria {s.category}
+                          </p>
+                          <p className="mt-3">
+                            Créditos livres: moto {balance(s.id, "A")} · carro{" "}
+                            {balance(s.id, "B")}
+                          </p>
+                          <p className="text-sm text-slate-500">
+                            {s.active ? "Cadastro ativo" : "Cadastro inativo"}
+                          </p>
+                          <div className="mt-3 flex gap-4">
+                            <button
+                              className="text-green-700 underline"
+                              onClick={() => setEditingStudent(s)}
+                            >
+                              Editar aluno
+                            </button>
+                            <button
+                              className="underline"
+                              onClick={() => setHistoryStudent(s)}
+                            >
+                              Ver histórico
+                            </button>
+                          </div>
+                        </article>
+                      ))}
+                      {!data.students.length && <p>Nenhum aluno cadastrado.</p>}
+                    </div>
+                  </>
+                )}
+                {tab === "Catálogo" && <CatalogManager />}
+                {tab === "Regras" && <BookingRules />}
+                {tab === "Agenda" && day && (
+                  <WeeklyCalendar
+                    day={day}
+                    onDay={setDay}
+                    students={data.students}
+                    instructors={data.instructors}
+                    lessons={data.lessons}
+                  />
                 )}
                 {tab === "Pedidos" && (
                   <div className="space-y-4">

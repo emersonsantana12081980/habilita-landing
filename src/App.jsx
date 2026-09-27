@@ -509,6 +509,7 @@ export function App() {
         </button>
       </div>
       {data.ai && <SpecialistChat contact={contact} />}{" "}
+      {cloudEnabled && error && <p role="status" className="container my-4 rounded-xl bg-amber-50 p-4">{error}</p>}
       {notice && (
         <div
           className="fixed bottom-24 left-4 right-4 z-50 mx-auto flex max-w-lg items-start gap-4 rounded-xl border border-slate-200 bg-white p-5 shadow-xl sm:bottom-6"
