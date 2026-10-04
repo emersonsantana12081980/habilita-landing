@@ -1,3 +1,4 @@
+import { RequestBoard } from "./RequestBoard";
 import React, { useEffect, useRef, useState } from "react";
 import { Brand } from "./Brand";
 import { supabase } from "../lib/supabase";
@@ -6,6 +7,7 @@ import { slotRequest } from "../admin-slot";
 import { ScheduleSettings } from "./ScheduleSettings";
 import { WeeklyCalendar } from "./WeeklyCalendar";
 import { StudentEditor } from "./StudentEditor";
+import { StudentList } from "./StudentList";
 import { CatalogManager } from "./CatalogManager";
 import { BookingRules } from "./BookingRules";
 import { LessonEditor } from "./LessonEditor";
@@ -499,38 +501,21 @@ export function CloudAdminPanel() {
                         ) && <p>Nenhuma aula registrada.</p>}
                       </section>
                     )}
-                    <div className="grid gap-4 md:grid-cols-2">
-                      {data.students.map((s) => (
-                        <article className="admin-card" key={s.id}>
-                          <h2 className="text-xl font-bold">{s.name}</h2>
-                          <p>
-                            {s.phone} · Categoria {s.category}
-                          </p>
-                          <p className="mt-3">
-                            Créditos livres: moto {balance(s.id, "A")} · carro{" "}
-                            {balance(s.id, "B")}
-                          </p>
-                          <p className="text-sm text-slate-500">
-                            {s.active ? "Cadastro ativo" : "Cadastro inativo"}
-                          </p>
-                          <div className="mt-3 flex gap-4">
-                            <button
-                              className="text-green-700 underline"
-                              onClick={() => setEditingStudent(s)}
-                            >
-                              Editar aluno
-                            </button>
-                            <button
-                              className="underline"
-                              onClick={() => setHistoryStudent(s)}
-                            >
-                              Ver histórico
-                            </button>
-                          </div>
-                        </article>
-                      ))}
-                      {!data.students.length && <p>Nenhum aluno cadastrado.</p>}
-                    </div>
+                    <StudentList
+                      students={data.students}
+                      balance={balance}
+                      onEdit={setEditingStudent}
+                      onHistory={setHistoryStudent}
+                      onStatus={(student, active) => {
+                        setEditingStudent(undefined);
+                        setHistoryStudent(null);
+                        act(async () => {
+                          const result = await supabase.from("students")
+                            .update({ active }).eq("id", student.id).select("id").single();
+                          return result;
+                        }, active ? "Cadastro restaurado." : "Cadastro enviado ao arquivo morto. Histórico e créditos preservados.");
+                      }}
+                    />
                   </>
                 )}
                 {tab === "Catálogo" && <CatalogManager />}
@@ -569,102 +554,7 @@ export function CloudAdminPanel() {
                   />
                 )}
                 {tab === "Pedidos" && (
-                  <div className="space-y-4">
-                    {[...data.requests]
-                      .sort(
-                        (a, b) =>
-                          Number(b.status === "pending") -
-                          Number(a.status === "pending"),
-                      )
-                      .map((r) => (
-                        <article className="admin-card" key={r.id}>
-                          <h2 className="text-xl font-bold">
-                            {name(data.students, r.student_id)}
-                          </h2>
-                          <p>
-                            {r.package_name} · {money(r.price_cents / 100)} ·{" "}
-                            {labels[r.status]}
-                          </p>
-                          <p>
-                            {r.lessons_a} aulas de moto + {r.lessons_b} aulas de
-                            carro
-                          </p>
-                          {r.original_price_cents && (
-                            <p className="mt-2 text-sm text-slate-600">
-                              Original: {money(r.original_price_cents / 100)} ·
-                              Desconto: {money(r.discount_cents / 100)}
-                              {r.coupon_code &&
-                                ` · Cupom: ${r.coupon_code}`} ·{" "}
-                              {r.payment_method === "card"
-                                ? `${r.installment_count}x no cartão`
-                                : "À vista"}
-                              {r.pricing_demo && " · Valores fictícios"}
-                            </p>
-                          )}
-                          {r.status === "pending" ? (
-                            <form
-                              className="mt-4 space-y-3"
-                              onSubmit={(e) => {
-                                e.preventDefault();
-                                act(
-                                  () =>
-                                    supabase.rpc("resolve_package", {
-                                      p_request: r.id,
-                                      p_approve: true,
-                                      p_reason: reasons[r.id],
-                                    }),
-                                  "Pacote aprovado e créditos liberados.",
-                                );
-                              }}
-                            >
-                              <label>
-                                Motivo da decisão
-                                <input
-                                  required
-                                  value={reasons[r.id] || ""}
-                                  onChange={(e) =>
-                                    setReasons((v) => ({
-                                      ...v,
-                                      [r.id]: e.target.value,
-                                    }))
-                                  }
-                                />
-                              </label>
-                              <p className="text-sm text-slate-500">
-                                Liberação manual. Isso não registra recebimento
-                                nem cobra o aluno.
-                              </p>
-                              <div className="flex flex-wrap gap-3">
-                                <button className="btn btn-green">
-                                  Aprovar e liberar créditos
-                                </button>
-                                <button
-                                  type="button"
-                                  className="rounded-xl border px-4"
-                                  disabled={!reasons[r.id]?.trim()}
-                                  onClick={() =>
-                                    act(
-                                      () =>
-                                        supabase.rpc("resolve_package", {
-                                          p_request: r.id,
-                                          p_approve: false,
-                                          p_reason: reasons[r.id],
-                                        }),
-                                      "Pedido recusado.",
-                                    )
-                                  }
-                                >
-                                  Recusar
-                                </button>
-                              </div>
-                            </form>
-                          ) : (
-                            <p className="mt-3">{r.reason}</p>
-                          )}
-                        </article>
-                      ))}
-                    {!data.requests.length && <p>Nenhum pedido recebido.</p>}
-                  </div>
+                  <RequestBoard requests={data.requests} students={data.students} reasons={reasons} setReasons={setReasons} act={act} />
                 )}
                 {tab === "Configurar agenda" && (
                   <ScheduleSettings

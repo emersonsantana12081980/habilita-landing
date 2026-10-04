@@ -2,6 +2,46 @@ import { test, expect } from "@playwright/test";
 const uid = "00000000-0000-4000-8000-000000000001";
 const user = { id: uid, aud: "authenticated", role: "authenticated", email: "aluno@example.com", email_confirmed_at: "2026-01-01T00:00:00Z", user_metadata: {}, app_metadata: {}, created_at: "2026-01-01T00:00:00Z" };
 const jwt = () => [Buffer.from(JSON.stringify({ alg: "HS256", typ: "JWT" })).toString("base64url"), Buffer.from(JSON.stringify({ sub: uid, aud: "authenticated", role: "authenticated", exp: Math.floor(Date.now()/1000)+3600 })).toString("base64url"), "testsignature"].join(".");
+test('kanban move pedido para análise e finaliza aprovado ou recusado', async ({ page }) => {
+  await mock(page, false, true);
+  let rows = ['one','two'].map(id=>({id,student_id:'student1',package_name:`Pacote ${id}`,price_cents:29900,lessons_a:0,lessons_b:2,status:'pending'}));
+  await page.route('**/rest/v1/package_requests*',r=>r.fulfill({json:rows}));
+  await page.route('**/rest/v1/rpc/start_package_review',r=>{
+    rows=rows.map(v=>v.id===r.request().postDataJSON().p_request?{...v,review_started_at:new Date().toISOString()}:v);
+    return r.fulfill({json:null});
+  });
+  await page.route('**/rest/v1/rpc/resolve_package',r=>{
+    const p=r.request().postDataJSON();rows=rows.map(v=>v.id===p.p_request?{...v,status:p.p_approve?'approved':'rejected',reason:p.p_reason}:v);
+    return r.fulfill({json:null});
+  });
+  await page.goto('/admin');
+  await page.getByLabel('E-mail administrativo',{exact:true}).fill('admin@example.com');
+  await page.getByLabel('Senha',{exact:true}).fill('senha-teste-123');
+  await page.getByRole('button',{name:'Entrar no painel',exact:true}).click();
+  await page.getByRole('button',{name:'Pedidos (2)',exact:true}).click();
+  for (const approved of [true,false]) {
+    await page.getByRole('region',{name:'Solicitado',exact:true}).getByRole('button',{name:'Iniciar análise'}).first().click();
+    const review=page.getByRole('region',{name:'Em análise',exact:true});
+    await expect(review.getByRole('article')).toHaveCount(1);
+    await review.getByLabel('Motivo da decisão').fill('Conferido pela equipe');
+    await review.getByRole('button',{name:approved?'Aprovar e liberar créditos':'Recusar',exact:true}).click();
+    await expect(page.getByRole('region',{name:'Pedido finalizado'}).getByText(approved?'Finalizado · Aprovado':'Finalizado · Recusado',{exact:true})).toBeVisible();
+  }
+});
+
+test('pedidos do aluno ficam recolhidos e separados das ofertas', async ({page})=>{
+  await mock(page);
+  await page.route('**/rest/v1/package_requests*',r=>r.fulfill({json:[{id:'r1',student_id:'student1',package_name:'Pedido em andamento',price_cents:29900,status:'pending',review_started_at:new Date().toISOString()}]}));
+  await page.goto('/aluno');
+  await page.getByLabel('E-mail',{exact:true}).fill('aluno@example.com');
+  await page.getByLabel('Senha',{exact:true}).fill('senha-teste-123');
+  await page.getByRole('button',{name:'Entrar',exact:true}).click();
+  await page.getByRole('button',{name:'Meus pacotes',exact:true}).click();
+  await expect(page.getByText('Pedido em andamento',{exact:true})).not.toBeVisible();
+  await page.getByText('Meus pedidos (1) · acompanhar',{exact:true}).click();
+  await expect(page.getByText('Pedido em andamento',{exact:true})).toBeVisible();
+  await expect(page.getByText('Em análise',{exact:true})).toBeVisible();
+});
 test('edição individual trata conflito e salva sem criar outra aula', async ({ page }) => {
   await mock(page, false, true);
   const day = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Sao_Paulo' }).format(new Date());
@@ -273,6 +313,7 @@ test('administrador consulta alunos, decide pedidos e publica horário pelo serv
   await page.getByRole('button',{name:'Alunos',exact:true}).click();
   await expect(page.getByRole('heading',{name:'Aluno Teste',exact:true})).toBeVisible();
   await page.getByRole('button',{name:'Pedidos (1)',exact:true}).click();
+  await page.getByText('Decidir pedido',{exact:true}).click();
   await page.getByLabel('Motivo da decisão').fill('Liberação manual autorizada');
   await page.getByRole('button',{name:'Aprovar e liberar créditos'}).click();
   await expect(page.getByRole('status')).toContainText('Pacote aprovado');
@@ -306,4 +347,53 @@ test('administrador consulta alunos, decide pedidos e publica horário pelo serv
   await page.getByRole('button',{name:'Sair da administração'}).click();
   await expect(page.getByRole('heading',{name:'Acesso administrativo'})).toBeVisible();
   await expect(page).toHaveURL(/\/admin$/);
+});
+
+
+test('lista de alunos filtra, arquiva e restaura sem excluir histórico', async ({ page }) => {
+  await mock(page, false, true);
+  let students = [
+    {id:'student1',name:'João Silva',phone:'12999998888',category:'B',active:true},
+    {id:'student2',name:'Maria Antiga',phone:'12988887777',category:'A',active:false},
+  ];
+  let changes = 0;
+  await page.route('**/rest/v1/students*', async route => {
+    const req=route.request();
+    expect(req.method()).not.toBe('DELETE');
+    if(req.method()==='PATCH') {
+      const id=new URL(req.url()).searchParams.get('id').replace('eq.','');
+      const patch=req.postDataJSON();expect(Object.keys(patch)).toEqual(['active']);
+      students=students.map(s=>s.id===id?{...s,...patch}:s);changes++;
+      return route.fulfill({json:{id}});
+    }
+    return route.fulfill({json:students});
+  });
+  await page.goto('/admin');
+  await page.getByLabel('E-mail administrativo',{exact:true}).fill('admin@example.com');
+  await page.getByLabel('Senha',{exact:true}).fill('senha-teste-123');
+  await page.getByRole('button',{name:'Entrar no painel',exact:true}).click();
+  await page.getByRole('button',{name:'Alunos',exact:true}).click();
+  const list=page.getByRole('region',{name:'Lista de alunos'});
+  await expect(list.getByText('João Silva',{exact:true})).toBeVisible();
+  await expect(list.getByText('Maria Antiga',{exact:true})).toHaveCount(0);
+  await page.getByLabel('Buscar aluno').fill('joao');
+  await expect(list.getByRole('listitem')).toHaveCount(1);
+  await page.getByLabel('Categoria do aluno').selectOption('A');
+  await expect(list.getByText('Nenhum aluno encontrado com estes filtros.')).toBeVisible();
+  await page.getByLabel('Categoria do aluno').selectOption('');
+  page.once('dialog',d=>d.dismiss());
+  await list.getByRole('button',{name:'Enviar ao arquivo morto'}).click();
+  expect(changes).toBe(0);
+  page.once('dialog',d=>d.accept());
+  await list.getByRole('button',{name:'Enviar ao arquivo morto'}).click();
+  await expect(page.getByText('Cadastro enviado ao arquivo morto. Histórico e créditos preservados.')).toBeVisible();
+  await expect(list.getByRole('listitem')).toHaveCount(0);
+  await page.getByLabel('Situação do cadastro').selectOption('archived');
+  await page.getByLabel('Buscar aluno').fill('(12) 99999-8888');
+  await expect(list.getByRole('listitem')).toHaveCount(1);
+  page.once('dialog',d=>d.accept());
+  await list.getByRole('button',{name:'Restaurar cadastro'}).click();
+  await expect(page.getByText('Cadastro restaurado.',{exact:true})).toBeVisible();
+  await expect(list.getByText('João Silva',{exact:true})).toBeVisible();
+  expect(changes).toBe(2);
 });

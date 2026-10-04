@@ -1,3 +1,4 @@
+import { StudentRequests } from "./RequestBoard";
 import { StudentPackageOffer } from "./StudentPackageOffer";
 import { StudentLessons } from "./StudentLessons";
 import { trackLanding } from "../lib/landing-events";
@@ -525,6 +526,7 @@ export function CloudStudentPortal() {
                 )}
                 {tab === "Meus pacotes" && (
                   <>
+                    <StudentRequests requests={data.requests} />
                     <p className="mb-5 text-sm text-slate-600">
                       Solicitar não gera cobrança. A equipe confirma as
                       condições e libera os créditos após análise.
@@ -547,39 +549,7 @@ export function CloudStudentPortal() {
                         />
                       ))}
                     </div>
-                    <h2 className="mb-3 mt-7 text-xl font-bold">
-                      Minhas solicitações
-                    </h2>
-                    {data.requests.length ? (
-                      data.requests.map((r) => (
-                        <div className="admin-card mb-3" key={r.id}>
-                          <p className="font-bold">{r.package_name}</p>
-                          <p>{statusLabel[r.status]}</p>
-                          <p className="mt-2 text-sm">
-                            Total solicitado: {money(r.price_cents / 100)}
-                            {r.payment_method === "card"
-                              ? ` · ${r.installment_count}x no cartão`
-                              : " · à vista"}
-                          </p>
-                          {r.coupon_code && (
-                            <p className="mt-1 text-sm text-green-800">
-                              Cupom {r.coupon_code} · desconto de{" "}
-                              {money(r.discount_cents / 100)}
-                            </p>
-                          )}
-                          {r.pricing_demo && (
-                            <p className="mt-1 text-xs text-amber-900">
-                              Valores fictícios para visualização
-                            </p>
-                          )}
-                          {r.reason && (
-                            <p className="mt-2 text-sm">{r.reason}</p>
-                          )}
-                        </div>
-                      ))
-                    ) : (
-                      <p>Nenhuma solicitação por enquanto.</p>
-                    )}
+
                   </>
                 )}
                 {tab === "Minhas aulas" && <BookingRules readOnly />}
