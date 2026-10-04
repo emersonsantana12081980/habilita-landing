@@ -87,6 +87,15 @@ padrão nem promoção por e-mail, formulário ou metadata.
 Para instrutor, atribua papel `instructor` e vincule seu UUID a
 `instructors.user_id`, também pelo SQL Editor como administrador do banco.
 
+Edição individual de aulas: execute uma vez
+`migrations/202609270002_reschedule_lesson.sql` após as migrações anteriores.
+O administrador pode remarcar uma aula agendada para outra vaga da mesma
+categoria. A operação mantém o aluno, o identificador e o crédito reservado,
+verifica conflitos do aluno/instrutor/veículo e registra a mudança em
+`lesson_changes`. Em caso de conflito, a transação mantém a aula original.
+O arquivo `tests/reschedule.sql` valida a remarcação com dados temporários
+e desfaz tudo ao terminar; execute-o inteiro no SQL Editor.
+
 Referências oficiais:
 - https://supabase.com/docs/guides/database/postgres/row-level-security
 - https://supabase.com/docs/guides/database/functions

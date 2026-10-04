@@ -2,6 +2,35 @@ import { test, expect } from "@playwright/test";
 const uid = "00000000-0000-4000-8000-000000000001";
 const user = { id: uid, aud: "authenticated", role: "authenticated", email: "aluno@example.com", email_confirmed_at: "2026-01-01T00:00:00Z", user_metadata: {}, app_metadata: {}, created_at: "2026-01-01T00:00:00Z" };
 const jwt = () => [Buffer.from(JSON.stringify({ alg: "HS256", typ: "JWT" })).toString("base64url"), Buffer.from(JSON.stringify({ sub: uid, aud: "authenticated", role: "authenticated", exp: Math.floor(Date.now()/1000)+3600 })).toString("base64url"), "testsignature"].join(".");
+test('edição individual trata conflito e salva sem criar outra aula', async ({ page }) => {
+  await mock(page, false, true);
+  const day = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Sao_Paulo' }).format(new Date());
+  let lesson = { id:'lesson1',student_id:'student1',instructor_id:'instructor1',vehicle_id:'vehicle1',category:'B',status:'scheduled',starts_at:day+'T08:00:00-03:00',ends_at:day+'T08:50:00-03:00' };
+  let attempts = 0;
+  await page.route('**/rest/v1/lessons*', route => route.fulfill({json:[lesson]}));
+  await page.route('**/rest/v1/rpc/reschedule_options', route => route.fulfill({json:[{id:'slot2',instructor_id:'instructor1',vehicle_id:'vehicle1',starts_at:day+'T14:00:00-03:00',ends_at:day+'T14:50:00-03:00'}]}));
+  await page.route('**/rest/v1/rpc/reschedule_lesson', route => {
+    expect(route.request().postDataJSON()).toEqual({p_lesson:'lesson1',p_slot:'slot2'});
+    attempts++;
+    if(attempts===1)return route.fulfill({status:400,json:{code:'P0001',message:'Horário indisponível. A aula original foi mantida.'}});
+    lesson={...lesson,starts_at:day+'T14:00:00-03:00',ends_at:day+'T14:50:00-03:00'};
+    return route.fulfill({json:null});
+  });
+  await page.goto('/admin');
+  await page.getByLabel('E-mail administrativo', {exact:true}).fill('admin@example.com');
+  await page.getByLabel('Senha', {exact:true}).fill('senha-teste-123');
+  await page.getByRole('button',{name:'Entrar no painel',exact:true}).click();
+  await page.getByRole('button',{name:'Editar agendamento',exact:true}).click();
+  await page.getByLabel('Novo horário e instrutor').selectOption('slot2');
+  await page.getByRole('button',{name:'Salvar alteração',exact:true}).click();
+  await expect(page.getByText('Horário indisponível. A aula original foi mantida.',{exact:true})).toBeVisible();
+  await expect(page.getByRole('heading',{name:'08:00 · Aluno Teste'})).toBeVisible();
+  await page.getByLabel('Novo horário e instrutor').selectOption('slot2');
+  await page.getByRole('button',{name:'Salvar alteração',exact:true}).click();
+  await expect(page.getByRole('heading',{name:'14:00 · Aluno Teste'})).toBeVisible();
+  await expect(page.getByRole('button',{name:'Cancelar aula',exact:true})).toHaveCount(1);
+  expect(attempts).toBe(2);
+});
 async function mock(page, broken = false, admin = false) {
   const calls = [];
   let rules = [], exceptions = [];

@@ -8,6 +8,7 @@ import { WeeklyCalendar } from "./WeeklyCalendar";
 import { StudentEditor } from "./StudentEditor";
 import { CatalogManager } from "./CatalogManager";
 import { BookingRules } from "./BookingRules";
+import { LessonEditor } from "./LessonEditor";
 
 const empty = {
   students: [],
@@ -52,6 +53,8 @@ export function CloudAdminPanel() {
   const [editingStudent, setEditingStudent] = useState(undefined);
   const [historyStudent, setHistoryStudent] = useState(null);
   const [day, setDay] = useState(today);
+  const [editingLesson, setEditingLesson] = useState(null);
+  const [agendaCategory, setAgendaCategory] = useState("");
   const [message, setMessage] = useState("");
   const [busy, setBusy] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -219,13 +222,18 @@ export function CloudAdminPanel() {
   const name = (list, id) =>
     list.find((item) => item.id === id)?.name || "Cadastro indisponível";
   const ownDay = data.lessons
-    .filter((l) => dayOf(l.starts_at) === day)
+    .filter(
+      (l) =>
+        dayOf(l.starts_at) === day &&
+        (!agendaCategory || l.category === agendaCategory),
+    )
     .sort((a, b) => a.starts_at.localeCompare(b.starts_at));
   const daySlots = data.slots
     .filter((s) => dayOf(s.starts_at) === day)
     .sort((a, b) => a.starts_at.localeCompare(b.starts_at));
   const freeSlots = daySlots.filter(
     (s) =>
+      (!agendaCategory || s.category === agendaCategory) &&
       s.active &&
       new Date(s.starts_at) > new Date() &&
       !data.lessons.some(
@@ -525,10 +533,33 @@ export function CloudAdminPanel() {
                 )}
                 {tab === "Catálogo" && <CatalogManager />}
                 {tab === "Regras" && <BookingRules />}
+                {tab === "Agenda" && (
+                  <div className="mb-5 flex flex-wrap items-end gap-4 rounded-2xl border bg-white p-4">
+                    <label className="block w-full sm:w-64">
+                      Filtrar agenda por categoria
+                      <select
+                        value={agendaCategory}
+                        onChange={(e) => {
+                          setAgendaCategory(e.target.value);
+                          setBooking((b) => ({ ...b, slot: "" }));
+                        }}
+                      >
+                        <option value="">Todas as categorias</option>
+                        <option value="A">Moto — Categoria A</option>
+                        <option value="B">Carro — Categoria B</option>
+                      </select>
+                    </label>
+                    <p className="pb-2 text-sm text-slate-600">
+                      {ownDay.length} agendamento
+                      {ownDay.length === 1 ? "" : "s"} no dia selecionado
+                    </p>
+                  </div>
+                )}
                 {tab === "Agenda" && day && (
                   <WeeklyCalendar
                     day={day}
                     onDay={setDay}
+                    category={agendaCategory}
                     students={data.students}
                     instructors={data.instructors}
                     lessons={data.lessons}
@@ -816,6 +847,21 @@ export function CloudAdminPanel() {
                           </p>
                           {l.status === "scheduled" && (
                             <div className="mt-4 flex flex-wrap gap-3">
+                              <button
+                                className="rounded-xl bg-green-100 px-4 py-2 font-semibold text-green-900"
+                                onClick={() => setEditingLesson(l.id)}
+                              >
+                                Editar agendamento
+                              </button>
+                              <button
+                                className="rounded-xl border px-4 py-2 text-red-700"
+                                onClick={() => {
+                                  if (!window.confirm('Excluir este agendamento? Esta ação é irreversível.')) return;
+                                  act(() => supabase.from('lessons').delete().eq('id', l.id), 'Agendamento excluído.');
+                                }}
+                              >
+                                Excluir
+                              </button>
                               {["completed", "missed", "cancelled"].map(
                                 (state) => (
                                   <button
@@ -843,16 +889,40 @@ export function CloudAdminPanel() {
                                       );
                                     }}
                                   >
-                                    {labels[state]}
+                                    {state === "cancelled"
+                                      ? "Cancelar aula"
+                                      : labels[state]}
                                   </button>
                                 ),
                               )}
                             </div>
                           )}
+                          {l.status === "scheduled" &&
+                            editingLesson === l.id && (
+                              <LessonEditor
+                                key={l.id}
+                                lesson={l}
+                                instructors={data.instructors}
+                                vehicles={data.vehicles}
+                                onClose={() => setEditingLesson(null)}
+                                onSaved={(nextDay) => {
+                                  setEditingLesson(null);
+                                  setDay(nextDay);
+                                  load();
+                                  setMessage(
+                                    "Agendamento alterado. O mesmo crédito foi mantido.",
+                                  );
+                                }}
+                              />
+                            )}
                         </article>
                       ))}
                       {!ownDay.length && (
-                        <p>Nenhuma aula agendada neste dia.</p>
+                        <p>
+                          {agendaCategory
+                            ? "Nenhuma aula desta categoria no dia selecionado."
+                            : "Nenhuma aula agendada neste dia."}
+                        </p>
                       )}
                     </section>
                     <form
