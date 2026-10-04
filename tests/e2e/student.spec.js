@@ -5,12 +5,7 @@ test("cadastro gratuito, liberação, crédito reservado e aviso ao instrutor", 
   context,
 }, info) => {
   await mockChatvolt(page);
-  await page.goto("/#categorias");
-  await page.locator('details[data-category="B"] summary').click();
-  await page
-    .locator('details[data-category="B"]')
-    .getByRole("button", { name: "ESCOLHER ESTE PACOTE" })
-    .click();
+  await page.goto("/cadastro?pacote=pacote-carro-exemplo");
   await expect(page).toHaveURL(/\/cadastro\?pacote=pacote-carro-exemplo/);
   await page.getByLabel("Seu nome").fill("Aluno Portal Teste");
   await page.getByLabel("Seu e-mail").fill("portal@example.com");

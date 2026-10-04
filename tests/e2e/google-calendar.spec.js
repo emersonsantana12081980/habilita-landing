@@ -16,12 +16,9 @@ test("configuração legada aceita só página de agendamento, sem expor calend�
       "https://calendar.google.com/calendar/appointments/schedules/test-example",
     );
   await page.getByRole("button", { name: "Salvar configurações" }).click();
-  await page.goto("/#categorias");
-  await page.locator('details[data-category="B"] summary').click();
-  await page
-    .locator('details[data-category="B"]')
-    .getByRole("button", { name: "ESCOLHER ESTE PACOTE" })
-    .click();
+  await page.goto("/");
+  await expect(page.locator("iframe")).toHaveCount(0);
+  await page.getByRole("link", {name:"Criar conta gratuita",exact:true}).click();
   await expect(
     page.getByRole("heading", { name: "Criar cadastro grátis" }),
   ).toBeVisible();

@@ -10,7 +10,9 @@ export function InstructorAvatar({ instructor, large = false }) {
     >
       {instructor.photo && failedPhoto !== instructor.photo ? (
         <img
-          src={instructor.photo}
+          src={instructor.photo === EMERSON_PHOTO ? "/images/emerson.webp" : instructor.photo}
+          width="96"
+          height="96"
           alt={`Foto de ${instructor.name}`}
           className={
             instructor.photo === EMERSON_PHOTO

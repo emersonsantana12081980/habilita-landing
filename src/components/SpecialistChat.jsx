@@ -65,7 +65,7 @@ async function loadWidget() {
   return widgetPromise;
 }
 
-export function SpecialistChat({ contact }) {
+export function SpecialistChat({ contact, inline = false }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const widget = useRef(null);
@@ -109,7 +109,7 @@ export function SpecialistChat({ contact }) {
     }
   }
   return (
-    <div className="chat-widget fixed right-4 z-40 sm:right-5">
+    <div className={inline ? "container flex justify-end pb-8" : "chat-widget fixed right-4 z-40 sm:right-5"}>
       {error && (
         <div className="mb-3 w-[min(340px,calc(100vw-32px))] rounded-xl border border-slate-200 bg-white p-4 shadow-xl">
           <p role="alert" className="text-sm leading-6 text-slate-600">

@@ -9,18 +9,18 @@ test("preço fechado e WhatsApp carregam o pacote escolhido", async ({
       window.lastContact = url;
     };
   });
-  const card = page.locator('details[data-category="B"]');
-  await expect(card.locator("summary")).toContainText("À vista R$ 299,00");
-  await expect(card.locator("summary")).toContainText("Ver pacote e valores");
+  const card = page.locator('article[data-category="B"]');
+  await expect(card).toContainText("R$ 299,00");
+  await expect(card.locator("summary")).toContainText("Ver condições");
   await card.locator("summary").click();
   await card
-    .getByRole("button", { name: "Quero este pacote no WhatsApp" })
+    .getByRole("button", { name: "Quero saber mais sobre este pacote" })
     .click();
   const url = new URL(await page.evaluate(() => window.lastContact));
   expect(url.hostname).toBe("wa.me");
   expect(url.pathname).toBe("/5512996225250");
   expect(url.searchParams.get("text").replace(/\s/g, " ")).toContain(
-    "Pacote Carro, de R$ 299,00 à vista",
+    "Pacote Carro, categoria B, por R$ 299,00 à vista",
   );
 });
 
@@ -46,8 +46,8 @@ test("regras editáveis e depoimentos dependem de autorização", async ({
   await page.getByRole("button", { name: "Salvar depoimento" }).click();
   await page.goto("/");
   await expect(page.locator("#depoimentos")).toHaveCount(0);
-  await page.locator('details[data-category="B"] summary').click();
-  await expect(page.locator('details[data-category="B"]')).toContainText(
+  await page.locator('article[data-category="B"] summary').click();
+  await expect(page.locator('article[data-category="B"]')).toContainText(
     "Condição de teste: prazo de 30 dias.",
   );
   await page.goto("/admin?view=site");

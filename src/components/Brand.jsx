@@ -8,7 +8,7 @@ export function Brand() {
       aria-label="Habilita mais, início"
     >
       <span className="brand-symbol">
-        <img src="/brand.png" alt="" width="1536" height="1024" />
+        <img src="/images/brand.webp" alt="" width="240" height="160" />
       </span>
       <span>
         <span className="block text-[25px] font-black italic tracking-tight leading-none">

@@ -1,4 +1,6 @@
+import { StudentPackageOffer } from "./StudentPackageOffer";
 import { StudentLessons } from "./StudentLessons";
+import { trackLanding } from "../lib/landing-events";
 import React, { useEffect, useRef, useState } from "react";
 import { Brand } from "./Brand";
 import { CloudProfileEditor } from "./CloudProfileEditor";
@@ -219,6 +221,9 @@ export function CloudStudentPortal() {
           },
         });
         if (error) throw error;
+        // Supabase can return an obfuscated user for an already registered email.
+        // Count only a new identity; this event does not mean email is confirmed.
+        if (result.user?.identities?.length) trackLanding("signup_complete");
         setMessage(
           result.session
             ? "Cadastro criado. Seus créditos começam em zero."
@@ -526,42 +531,20 @@ export function CloudStudentPortal() {
                     </p>
                     <div className="grid gap-4 md:grid-cols-3">
                       {data.packages.map((p) => (
-                        <article key={p.id} className="admin-card">
-                          <h2 className="text-xl font-bold">{p.name}</h2>
-                          <p className="mt-3">
-                            {p.lessons_a > 0 && `${p.lessons_a} aulas de moto `}
-                            {p.lessons_b > 0 && `${p.lessons_b} aulas de carro`}
-                          </p>
-                          <p className="my-4 text-2xl font-bold">
-                            {money(p.price_cents / 100)}
-                          </p>
-                          <button
-                            className="btn btn-green"
-                            disabled={
-                              busy ||
-                              data.requests.some(
-                                (r) =>
-                                  r.package_id === p.id &&
-                                  r.status === "pending",
-                              )
-                            }
-                            onClick={() =>
-                              action(async () => {
-                                const { error } = await supabase.rpc(
-                                  "request_package",
-                                  { p_package: p.id },
-                                );
-                                if (error) throw error;
-                                await refresh(session.user.id);
-                                setMessage(
-                                  "Solicitação enviada. Aguarde a liberação pela equipe.",
-                                );
-                              })
-                            }
-                          >
-                            Solicitar pacote
-                          </button>
-                        </article>
+                        <StudentPackageOffer
+                          key={p.id}
+                          pack={p}
+                          pending={data.requests.some(
+                            (r) =>
+                              r.package_id === p.id && r.status === "pending",
+                          )}
+                          onRequested={async () => {
+                            await refresh(session.user.id);
+                            setMessage(
+                              "Solicitação enviada. Aguarde a liberação pela equipe.",
+                            );
+                          }}
+                        />
                       ))}
                     </div>
                     <h2 className="mb-3 mt-7 text-xl font-bold">
@@ -572,6 +555,23 @@ export function CloudStudentPortal() {
                         <div className="admin-card mb-3" key={r.id}>
                           <p className="font-bold">{r.package_name}</p>
                           <p>{statusLabel[r.status]}</p>
+                          <p className="mt-2 text-sm">
+                            Total solicitado: {money(r.price_cents / 100)}
+                            {r.payment_method === "card"
+                              ? ` · ${r.installment_count}x no cartão`
+                              : " · à vista"}
+                          </p>
+                          {r.coupon_code && (
+                            <p className="mt-1 text-sm text-green-800">
+                              Cupom {r.coupon_code} · desconto de{" "}
+                              {money(r.discount_cents / 100)}
+                            </p>
+                          )}
+                          {r.pricing_demo && (
+                            <p className="mt-1 text-xs text-amber-900">
+                              Valores fictícios para visualização
+                            </p>
+                          )}
                           {r.reason && (
                             <p className="mt-2 text-sm">{r.reason}</p>
                           )}

@@ -14,7 +14,7 @@ test("login separado, saída, recuperação demonstrativa e perfil", async ({
   );
   await page.goto("/");
   await page
-    .getByRole("link", { name: "Criar minha conta grátis", exact: true })
+    .getByRole("link", { name: "Criar conta gratuita", exact: true })
     .click();
   await expect(page).toHaveURL(/\/cadastro$/);
   await page.getByLabel("Seu nome").fill("Teste Login");

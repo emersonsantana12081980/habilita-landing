@@ -5,6 +5,8 @@ export { whatsappUrl, money, normalizePhone } from "./store-data";
 function read() {
   if (cloudEnabled)
     return normalizeState({
+      schemaVersion: 2,
+      whatsapp: "",
       packageSeedVersion: 1,
       instructorSeedVersion: 1,
       packages: [],
@@ -38,6 +40,7 @@ export function useStore() {
           if (alive) {
             setData(
               normalizeState({
+                schemaVersion: 2,
                 packageSeedVersion: 1,
                 instructorSeedVersion: 1,
                 city: s.data.city,

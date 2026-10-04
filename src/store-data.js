@@ -202,4 +202,4 @@ export const money = (value) =>
   Number(value).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
 export const packageMessage = (pack) =>
-  `Olá! Tenho interesse no ${pack.name}, de ${money(pack.price)} à vista, categoria ${pack.category.replace("+", "/")}. Quero saber os horários e as condições de contratação${pack.freeRetest ? ", incluindo o reteste grátis" : ""}.`;
+  `Olá! Vim pelo site da HABILITA+ e tenho interesse no ${pack.name}, de ${money(pack.price)} à vista, categoria ${pack.category.replace("+", "/")}. Quero saber os horários e as condições de contratação${pack.freeRetest ? ", incluindo as condições do reteste" : ""}.`;

@@ -25,15 +25,9 @@ test("cadastro e inativação de instrutor atualizam a página pública", async 
   await publicPage
     .getByLabel("Filtrar instrutores por categoria")
     .selectOption("B");
-  await publicPage
-    .getByRole("button", {
-      name: "Selecionar instrutor Ana Teste",
-      exact: true,
-    })
-    .click();
-  await expect(
-    publicPage.getByText("Instrutor escolhido: Ana Teste"),
-  ).toBeVisible();
+  await publicPage.evaluate(()=>{window.open=url=>{window.lastContact=url;};});
+  await publicPage.locator('article').filter({has:publicPage.getByRole('heading',{name:'Ana Teste',exact:true})}).getByRole('button',{name:'Falar com este instrutor'}).click();
+  expect(await publicPage.evaluate(()=>new URL(window.lastContact).searchParams.get('text'))).toContain('Ana Teste');
   await page
     .getByRole("button", { name: "Editar instrutor Ana Teste" })
     .click();

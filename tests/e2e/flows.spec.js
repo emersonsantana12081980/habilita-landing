@@ -17,7 +17,7 @@ test("página inicial, navegação e atendimento", async ({ page }, testInfo) =>
   page.on("pageerror", (error) => errors.push(error.message));
   await page.goto("/");
   await expect(page.getByRole("heading", { level: 1 })).toContainText(
-    "Categorias A e B",
+    "Ganhe confiança para dirigir",
   );
   await expect(
     page.getByText("Seu plano começa com uma conversa."),
@@ -56,13 +56,13 @@ test("página inicial, navegação e atendimento", async ({ page }, testInfo) =>
       window.lastContactUrl = url;
     };
   });
-  await page.getByRole("button", { name: "Chame agora no WhatsApp" }).click();
+  await page.locator('.hero').getByRole("button", { name: "Falar com um instrutor", exact: true }).click();
   expect(await page.evaluate(() => window.lastContactUrl)).toContain(
     "https://wa.me/5512996225250?text=",
   );
-  await page.getByText("Como escolho os dias e horários?").click();
+  await page.getByText("Como escolho dias e horários?").click();
   await expect(
-    page.getByText("Você pode consultar os horários disponibilizados"),
+    page.getByText("Informe sua disponibilidade pelo WhatsApp.", {exact:false}),
   ).toBeVisible();
   await page.getByRole("button", { name: "Chame especialista" }).click();
   await expect(
@@ -91,7 +91,7 @@ test("layout sem rolagem lateral em celulares e tablets", async ({
       await page.getByRole("button", { name: "Abrir menu" }).click();
       await page
         .getByRole("navigation", { name: "Navegação móvel" })
-        .getByRole("link", { name: "Nossos pacotes" })
+        .getByRole("link", { name: "Pacotes", exact: true })
         .click();
       await expect(
         page.getByRole("button", { name: "Abrir menu" }),
@@ -131,7 +131,7 @@ test("recupera armazenamento inválido sem interromper a página", async ({
     ),
   );
   await page.reload();
-  await expect(page.getByRole("heading", { level: 1 })).toContainText(
+  await expect(page.locator('.hero')).toContainText(
     "Caçapava",
   );
   await expect(

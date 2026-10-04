@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /aluno
+Disallow: /cadastro
+
+Sitemap: https://habilita-landing.vercel.app/sitemap.xml

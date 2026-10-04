@@ -43,7 +43,7 @@ async function mock(page, broken = false, admin = false) {
   const calls = [];
   let rules = [], exceptions = [];
   let studentName='Aluno Teste';
-  let packages=[{id:'package1',slug:'carro',name:'Pacote Carro',category:'B',lessons_a:0,lessons_b:2,price_cents:29900,exam_vehicle:true,free_retest:true,retest_terms:'',card_installments:3,boleto_installments:6,active:true}];
+  let packages=[{id:'package1',slug:'carro',name:'Pacote Carro',category:'B',lessons_a:0,lessons_b:2,price_cents:29900,card_total_cents:35880,pricing_demo:true,exam_vehicle:true,free_retest:true,retest_terms:'',card_installments:12,boleto_installments:6,active:true}];
   let bookingSettings={id:true,minimum_notice_hours:2,cancellation_notice_hours:24,daily_limit:2};
   await page.route("https://test.supabase.co/**", async route => {
     const req = route.request(), path = new URL(req.url()).pathname;
@@ -82,6 +82,74 @@ async function mock(page, broken = false, admin = false) {
   });
   return calls;
 }
+
+test('cupom inválido, troca de forma e revalidação antes de solicitar',async({page})=>{
+  await mock(page);let failSubmit=true;const sent=[];
+  await page.route('**/rest/v1/rpc/quote_package',route=>{
+    const p=route.request().postDataJSON();
+    if(p.p_coupon==='ERRADO')return route.fulfill({status:400,json:{code:'P0001',message:'Cupom inválido, expirado ou não aplicável a este pacote'}});
+    const original=p.p_method==='cash'?29900:35880,discount=p.p_coupon?Math.round(original*.1):0;
+    return route.fulfill({json:[{original_cents:original,discount_cents:discount,total_cents:original-discount,installment_count:p.p_method==='cash'?1:12,coupon_code:p.p_coupon||null,pricing_demo:true}]});
+  });
+  await page.route('**/rest/v1/rpc/request_package_offer',route=>{
+    sent.push(route.request().postDataJSON());
+    if(failSubmit){failSubmit=false;return route.fulfill({status:400,json:{code:'P0001',message:'Cupom inválido, expirado ou não aplicável a este pacote'}});}
+    return route.fulfill({json:'request2'});
+  });
+  await page.goto('/aluno');
+  await page.getByLabel('E-mail',{exact:true}).fill('aluno@example.com');
+  await page.getByLabel('Senha',{exact:true}).fill('senha-teste-123');
+  await page.getByRole('button',{name:'Entrar',exact:true}).click();
+  await page.getByRole('button',{name:'Meus pacotes',exact:true}).click();
+  await expect(page.getByText('Valores fictícios para visualização')).toBeVisible();
+  await expect(page.getByRole('button',{name:'Solicitar pacote',exact:true})).toBeDisabled();
+  await page.getByLabel('Cupom de desconto (opcional)').fill('ERRADO');
+  await page.getByRole('button',{name:'Aplicar cupom',exact:true}).click();
+  await expect(page.getByText('Cupom inválido, expirado ou não aplicável a este pacote')).toBeVisible();
+  await page.getByLabel('Cupom de desconto (opcional)').fill('habilita10');
+  await page.getByRole('button',{name:'Aplicar cupom',exact:true}).click();
+  await expect(page.getByText('Total: R$ 322,92')).toBeVisible();
+  await page.getByLabel('Forma de pagamento').selectOption('cash');
+  await expect(page.getByRole('button',{name:'Solicitar pacote',exact:true})).toBeDisabled();
+  await page.getByRole('button',{name:'Aplicar cupom',exact:true}).click();
+  await expect(page.getByText('Total: R$ 269,10')).toBeVisible();
+  await page.getByRole('button',{name:'Solicitar pacote',exact:true}).click();
+  await expect(page.getByText('Cupom inválido, expirado ou não aplicável a este pacote')).toBeVisible();
+  await expect(page.getByRole('button',{name:'Solicitar pacote',exact:true})).toBeDisabled();
+  await page.getByLabel('Cupom de desconto (opcional)').fill('');
+  await page.getByRole('button',{name:'Conferir valor',exact:true}).click();
+  await page.getByRole('button',{name:'Solicitar pacote',exact:true}).click();
+  await expect(page.getByText('Solicitação enviada. Aguarde a liberação pela equipe.')).toBeVisible();
+  expect(sent[0]).toEqual({p_package:'package1',p_coupon:'HABILITA10',p_method:'cash',p_expected_total:26910,p_expected_installments:1});
+  expect(sent[1].p_coupon).toBe('');expect(sent[1].p_expected_total).toBe(29900);
+});
+
+test('administrador altera preços e cadastra cupom fixo',async({page})=>{
+  const calls=await mock(page,false,true);let coupons=[];
+  await page.route('**/rest/v1/coupons*',route=>{
+    if(route.request().method()==='POST')coupons=[{...route.request().postDataJSON(),id:'coupon1'}];
+    return route.fulfill({json:coupons});
+  });
+  await page.goto('/admin');
+  await page.getByLabel('E-mail administrativo').fill('admin@example.com');
+  await page.getByLabel('Senha',{exact:true}).fill('senha-teste-123');
+  await page.getByRole('button',{name:'Entrar no painel',exact:true}).click();
+  await page.getByRole('button',{name:'Catálogo',exact:true}).click();
+  await page.getByRole('button',{name:'Editar',exact:true}).click();
+  await page.getByLabel('Preço à vista (R$)').fill('300');
+  await page.getByLabel('Valor total parcelado (R$)').fill('399.60');
+  await page.getByLabel('Número de parcelas').fill('6');
+  await page.getByRole('button',{name:'Salvar no site'}).click();
+  await expect(page.getByText('Catálogo atualizado no banco.')).toBeVisible();
+  const saved=calls.find(c=>c.path.endsWith('/packages')&&c.body?.card_total_cents===39960);
+  expect(saved.body.price_cents).toBe(30000);expect(saved.body.card_installments).toBe(6);
+  await page.getByLabel('Código do cupom').fill('TESTE50');
+  await page.getByLabel('Tipo de desconto').selectOption('fixed');
+  await page.getByLabel('Desconto (R$)').fill('50');
+  await page.getByRole('button',{name:'Salvar cupom',exact:true}).click();
+  await expect(page.getByRole('heading',{name:'TESTE50',exact:true})).toBeVisible();
+  expect(coupons[0].amount).toBe(5000);expect(coupons[0].demo_only).toBe(true);
+});
 
 test('aluno vê próximas aulas compactas e histórico separado', async ({page}) => {
   await mock(page);

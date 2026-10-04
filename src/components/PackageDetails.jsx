@@ -16,7 +16,7 @@ export function PackageDetails({ pack, dark = false }) {
             (pack.category === "A+B"
               ? "Carro e moto para o exame"
               : "Veículo para o exame"),
-          pack.freeRetest && "Reteste grátis",
+          pack.freeRetest && "Reteste: consulte as condições",
         ]
           .filter(Boolean)
           .map((item) => (
@@ -30,7 +30,7 @@ export function PackageDetails({ pack, dark = false }) {
         <div
           className={`mt-4 rounded-xl border p-3 text-xs leading-5 ${dark ? "border-white/15 text-slate-300" : "border-slate-200 text-slate-600"}`}
         >
-          <p className="font-bold">Condições do reteste grátis</p>
+          <p className="font-bold">Condições do reteste</p>
           <p className="mt-1 whitespace-pre-line">
             {pack.retestTerms ||
               "Antes de contratar, confirme com o instrutor o que está incluído no reteste, o prazo de utilização e eventuais taxas ou custos adicionais."}

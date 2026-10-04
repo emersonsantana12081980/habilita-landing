@@ -1,5 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { supabase } from "../lib/supabase";
+import { CouponManager } from "./CouponManager";
+import { PackagePrice } from "./PackagePrice";
+import { packagePricing } from "../lib/package-pricing";
 export function CatalogManager() {
   const [kind, setKind] = useState("packages"),
     [rows, setRows] = useState([]),
@@ -33,7 +36,9 @@ export function CatalogManager() {
           exam_vehicle: true,
           free_retest: true,
           retest_terms: "",
-          card_installments: 3,
+          card_installments: 12,
+          card_total_cents: 35880,
+          pricing_demo: true,
           boleto_installments: 6,
           active: true,
         }
@@ -123,8 +128,7 @@ export function CatalogManager() {
               {[
                 ["lessons_a", "Aulas de moto"],
                 ["lessons_b", "Aulas de carro"],
-                ["card_installments", "Parcelas no cartão"],
-                ["boleto_installments", "Parcelas no boleto"],
+                ["card_installments", "Número de parcelas"],
               ].map(([k, label]) => (
                 <label key={k}>
                   {label}
@@ -156,6 +160,43 @@ export function CatalogManager() {
                   }
                 />
               </label>
+              <label>
+                Valor total parcelado (R$)
+                <input
+                  required
+                  type="number"
+                  min="0.01"
+                  max="1000000"
+                  step="0.01"
+                  value={(form.card_total_cents ?? 0) / 100}
+                  onChange={(e) =>
+                    setForm((f) => ({
+                      ...f,
+                      card_total_cents: Math.round(
+                        Number(e.target.value) * 100,
+                      ),
+                    }))
+                  }
+                />
+              </label>
+              <label className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  checked={form.pricing_demo ?? true}
+                  onChange={(e) =>
+                    setForm((f) => ({ ...f, pricing_demo: e.target.checked }))
+                  }
+                />
+                Valores fictícios para visualização
+              </label>
+              <div className="sm:col-span-2">
+                <PackagePrice pack={form} />
+                <p className="text-xs text-slate-600">
+                  Informe o total parcelado; as parcelas são calculadas
+                  automaticamente. Desmarque a demonstração somente quando os
+                  preços estiverem definidos.
+                </p>
+              </div>
               <label>
                 Condições do reteste
                 <textarea
@@ -235,13 +276,25 @@ export function CatalogManager() {
             </p>
             <button
               className="mt-3 text-green-700 underline"
-              onClick={() => setForm(r)}
+              onClick={() =>
+                setForm(
+                  kind === "packages"
+                    ? {
+                        ...r,
+                        card_total_cents: packagePricing(r).total,
+                        card_installments: packagePricing(r).count,
+                        pricing_demo: packagePricing(r).demo,
+                      }
+                    : r,
+                )
+              }
             >
               Editar
             </button>
           </article>
         ))}
       </div>
+      {kind === "packages" && <CouponManager />}
     </section>
   );
 }

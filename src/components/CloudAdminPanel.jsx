@@ -589,6 +589,18 @@ export function CloudAdminPanel() {
                             {r.lessons_a} aulas de moto + {r.lessons_b} aulas de
                             carro
                           </p>
+                          {r.original_price_cents && (
+                            <p className="mt-2 text-sm text-slate-600">
+                              Original: {money(r.original_price_cents / 100)} ·
+                              Desconto: {money(r.discount_cents / 100)}
+                              {r.coupon_code &&
+                                ` · Cupom: ${r.coupon_code}`} ·{" "}
+                              {r.payment_method === "card"
+                                ? `${r.installment_count}x no cartão`
+                                : "À vista"}
+                              {r.pricing_demo && " · Valores fictícios"}
+                            </p>
+                          )}
                           {r.status === "pending" ? (
                             <form
                               className="mt-4 space-y-3"
