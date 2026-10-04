@@ -1,3 +1,4 @@
+import { StudentLessons } from "./StudentLessons";
 import React, { useEffect, useRef, useState } from "react";
 import { Brand } from "./Brand";
 import { CloudProfileEditor } from "./CloudProfileEditor";
@@ -581,50 +582,32 @@ export function CloudStudentPortal() {
                     )}
                   </>
                 )}
-                {tab === "Minhas aulas" && <BookingRules readOnly/>}
-                {tab === "Minhas aulas" &&
-                  (data.lessons.length ? (
-                    data.lessons.map((l) => (
-                      <article key={l.id} className="admin-card mb-3">
-                        <h2 className="font-bold">
-                          Categoria {l.category} · {date(l.starts_at)}
-                        </h2>
-                        <p>{statusLabel[l.status]}</p>
-                        {l.status === "scheduled" && (
-                          <button
-                            disabled={busy}
-                            className="mt-3 text-red-700 underline"
-                            onClick={() => {
-                              if (
-                                !window.confirm(
-                                  "Cancelar esta aula e devolver o crédito disponível?",
-                                )
-                              )
-                                return;
-                              action(async () => {
-                                const { error } = await supabase.rpc(
-                                  "cancel_my_lesson",
-                                  { p_lesson: l.id },
-                                );
-                                if (error) throw error;
-                                await refresh(session.user.id);
-                                setMessage(
-                                  "Aula cancelada. Crédito disponível novamente.",
-                                );
-                              });
-                            }}
-                          >
-                            Cancelar aula
-                          </button>
-                        )}
-                        <p className="mt-2 text-sm text-slate-600">
-                          Para solicitar alterações, fale com a equipe.
-                        </p>
-                      </article>
-                    ))
-                  ) : (
-                    <p>Suas aulas aparecerão aqui após o agendamento.</p>
-                  ))}
+                {tab === "Minhas aulas" && <BookingRules readOnly />}
+                {tab === "Minhas aulas" && (
+                  <StudentLessons
+                    lessons={data.lessons}
+                    busy={busy}
+                    onCancel={(l) => {
+                      if (
+                        !window.confirm(
+                          "Cancelar esta aula e devolver o crédito disponível?",
+                        )
+                      )
+                        return;
+                      action(async () => {
+                        const { error } = await supabase.rpc(
+                          "cancel_my_lesson",
+                          { p_lesson: l.id },
+                        );
+                        if (error) throw error;
+                        await refresh(session.user.id);
+                        setMessage(
+                          "Aula cancelada. Crédito disponível novamente.",
+                        );
+                      });
+                    }}
+                  />
+                )}
                 {tab === "Meu perfil" && (
                   <CloudProfileEditor
                     student={data.student}
@@ -634,7 +617,7 @@ export function CloudStudentPortal() {
                 )}
                 {tab === "Agendar aula" && (
                   <div className="admin-card">
-                    <BookingRules readOnly/>
+                    <BookingRules readOnly />
                     <h2 className="text-xl font-bold">
                       Escolha um horário livre
                     </h2>

@@ -20,6 +20,14 @@ test('edição individual trata conflito e salva sem criar outra aula', async ({
   await page.getByLabel('E-mail administrativo', {exact:true}).fill('admin@example.com');
   await page.getByLabel('Senha', {exact:true}).fill('senha-teste-123');
   await page.getByRole('button',{name:'Entrar no painel',exact:true}).click();
+  await page.getByRole('button',{name:'Ver',exact:true}).click();
+  await expect(page.getByRole('dialog')).toBeVisible();
+  await expect(page.getByRole('dialog')).toContainText('Aluno Teste');
+  await expect(page.getByRole('dialog').getByRole('button',{name:'Cancelar aula',exact:true})).toBeVisible();
+  await page.getByRole('dialog').getByRole('button',{name:'Editar agendamento',exact:true}).click();
+  await expect(page.getByRole('dialog').getByLabel('Novo horário e instrutor')).toBeVisible();
+  await page.keyboard.press('Escape');
+  await expect(page.getByRole('dialog')).toHaveCount(0);
   await page.getByRole('button',{name:'Editar agendamento',exact:true}).click();
   await page.getByLabel('Novo horário e instrutor').selectOption('slot2');
   await page.getByRole('button',{name:'Salvar alteração',exact:true}).click();
@@ -74,6 +82,27 @@ async function mock(page, broken = false, admin = false) {
   });
   return calls;
 }
+
+test('aluno vê próximas aulas compactas e histórico separado', async ({page}) => {
+  await mock(page);
+  const future = new Date(Date.now()+7*86400000).toISOString();
+  await page.route('**/rest/v1/lessons*', route => route.fulfill({json:[
+    {id:'future',student_id:'student1',category:'A',status:'scheduled',starts_at:future,ends_at:future},
+    {id:'past',student_id:'student1',category:'B',status:'cancelled',starts_at:'2026-01-01T12:00:00Z'}
+  ]}));
+  await page.goto('/aluno');
+  await page.getByLabel('E-mail',{exact:true}).fill('aluno@example.com');
+  await page.getByLabel('Senha',{exact:true}).fill('senha-teste-123');
+  await page.getByRole('button',{name:'Entrar',exact:true}).click();
+  await page.getByRole('button',{name:'Minhas aulas',exact:true}).click();
+  const list = page.getByRole('region',{name:'Lista de aulas'});
+  await expect(list.getByText('Aula de moto',{exact:true})).toBeVisible();
+  await expect(list.getByText('Aula de carro',{exact:true})).toHaveCount(0);
+  await list.getByRole('button',{name:'Histórico (1)',exact:true}).click();
+  await expect(list.getByText('Aula de carro',{exact:true})).toBeVisible();
+  await expect(list.getByRole('button',{name:'Cancelar aula',exact:true})).toHaveCount(0);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBeTruthy();
+});
 test("cadastro envia senha ao Auth e aguarda confirmação, sem login fictício", async ({ page }) => {
   const calls = await mock(page);
   await page.goto("/cadastro");

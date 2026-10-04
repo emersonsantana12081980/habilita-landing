@@ -9,6 +9,7 @@ import { StudentEditor } from "./StudentEditor";
 import { CatalogManager } from "./CatalogManager";
 import { BookingRules } from "./BookingRules";
 import { LessonEditor } from "./LessonEditor";
+import { LessonDialog } from "./LessonDialog";
 
 const empty = {
   students: [],
@@ -54,6 +55,7 @@ export function CloudAdminPanel() {
   const [historyStudent, setHistoryStudent] = useState(null);
   const [day, setDay] = useState(today);
   const [editingLesson, setEditingLesson] = useState(null);
+  const [viewingLesson, setViewingLesson] = useState(null);
   const [agendaCategory, setAgendaCategory] = useState("");
   const [message, setMessage] = useState("");
   const [busy, setBusy] = useState(false);
@@ -557,6 +559,7 @@ export function CloudAdminPanel() {
                 )}
                 {tab === "Agenda" && day && (
                   <WeeklyCalendar
+                    onView={setViewingLesson}
                     day={day}
                     onDay={setDay}
                     category={agendaCategory}
@@ -856,8 +859,20 @@ export function CloudAdminPanel() {
                               <button
                                 className="rounded-xl border px-4 py-2 text-red-700"
                                 onClick={() => {
-                                  if (!window.confirm('Excluir este agendamento? Esta ação é irreversível.')) return;
-                                  act(() => supabase.from('lessons').delete().eq('id', l.id), 'Agendamento excluído.');
+                                  if (
+                                    !window.confirm(
+                                      "Excluir este agendamento? Esta ação é irreversível.",
+                                    )
+                                  )
+                                    return;
+                                  act(
+                                    () =>
+                                      supabase
+                                        .from("lessons")
+                                        .delete()
+                                        .eq("id", l.id),
+                                    "Agendamento excluído.",
+                                  );
                                 }}
                               >
                                 Excluir
@@ -994,6 +1009,21 @@ export function CloudAdminPanel() {
           </>
         )}
       </div>
+      {viewingLesson && (
+        <LessonDialog
+          key={viewingLesson.id}
+          lesson={viewingLesson}
+          students={data.students}
+          instructors={data.instructors}
+          vehicles={data.vehicles}
+          onClose={() => setViewingLesson(null)}
+          onSaved={(nextDay) => {
+            setViewingLesson(null);
+            if (nextDay) setDay(nextDay);
+            load();
+          }}
+        />
+      )}
     </main>
   );
 }

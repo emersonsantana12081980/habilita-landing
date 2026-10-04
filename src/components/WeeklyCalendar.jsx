@@ -18,6 +18,7 @@ const time = (v) =>
 export function WeeklyCalendar({
   day,
   onDay,
+  onView,
   students,
   instructors,
   lessons,
@@ -174,7 +175,7 @@ export function WeeklyCalendar({
                     <div className="flex flex-col items-end gap-1">
                       <button
                         className="text-sm text-slate-700 underline"
-                        onClick={() => onDay(d)}
+                        onClick={() => onView(l)}
                       >
                         Ver
                       </button>
