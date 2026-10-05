@@ -80,13 +80,10 @@ export function LandingPage({ data, error }) {
               Área do aluno
             </a>
           </nav>
-          <button
-            className="btn btn-green hidden sm:inline-flex"
-            onClick={() => contact(undefined, "header_whatsapp_click")}
-          >
-            <MessageCircle size={18} aria-hidden="true" />
-            Falar com um instrutor
-          </button>
+          <a className="btn btn-green hidden sm:inline-flex"
+            href="/cadastro" onClick={() => trackLanding("signup_start", { source: "header" })}>
+            Cadastre-se grátis <ArrowUpRight size={18} aria-hidden="true" />
+          </a>
           <button
             ref={menuButton}
             className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-slate-200 xl:hidden"
@@ -149,7 +146,7 @@ export function LandingPage({ data, error }) {
                   "Categorias A, B e A/B",
                   "Aulas práticas personalizadas",
                   "Veículo para exame conforme pacote",
-                  "Atendimento pelo WhatsApp",
+                  "Cadastro gratuito, sem compromisso",
                 ].map((t) => (
                   <li key={t} className="flex items-start gap-2">
                     <Check
@@ -162,14 +159,11 @@ export function LandingPage({ data, error }) {
                 ))}
               </ul>
               <div className="mt-7 flex flex-wrap gap-3">
-                <button
-                  className="btn btn-green min-h-13 w-full sm:w-auto"
+                <a className="btn btn-green min-h-13 w-full sm:w-auto"
                   ref={heroButton}
-                  onClick={() => contact(undefined, "hero_whatsapp_click")}
-                >
-                  <MessageCircle size={19} aria-hidden="true" />
-                  Falar com um instrutor
-                </button>
+                  href="/cadastro" onClick={() => trackLanding("signup_start", { source: "hero" })}>
+            Cadastre-se grátis <ArrowUpRight size={18} aria-hidden="true" />
+          </a>
                 <a href="#pacotes" className="btn btn-outline w-full sm:w-auto">
                   Ver pacotes e valores
                 </a>
@@ -418,23 +412,9 @@ export function LandingPage({ data, error }) {
               aulas para recuperar a confiança. Um instrutor poderá orientar
               você sobre o pacote mais adequado.
             </p>
-            <button
-              className="btn btn-green mt-7"
-              onClick={() =>
-                contact(
-                  "Olá! Vim pela página da HABILITA+ e quero entender qual pacote é mais indicado para mim.",
-                  "final_cta_click",
-                )
-              }
-            >
-              <MessageCircle
-                size={18}
-                className="shrink-0"
-                aria-hidden="true"
-              />
-              Falar com um instrutor no WhatsApp
-              <ArrowUpRight size={16} className="shrink-0" aria-hidden="true" />
-            </button>
+            <a className="btn btn-green mt-7" href="/cadastro" onClick={() => trackLanding("signup_start", { source: "final" })}>
+              Cadastre-se grátis <ArrowUpRight size={18} aria-hidden="true" />
+            </a>
           </div>
         </section>
       </main>
@@ -519,13 +499,10 @@ export function LandingPage({ data, error }) {
       <div
         className={`mobile-contact-bar sm:hidden ${showMobileContact ? "" : "hidden"}`}
       >
-        <button
-          className="btn btn-green w-full"
-          onClick={() => contact(undefined, "mobile_whatsapp_click")}
-        >
-          <MessageCircle size={18} aria-hidden="true" />
-          Falar com um instrutor
-        </button>
+        <a className="btn btn-green w-full"
+          href="/cadastro" onClick={() => trackLanding("signup_start", { source: "mobile" })}>
+            Cadastre-se grátis <ArrowUpRight size={18} aria-hidden="true" />
+          </a>
       </div>
       {data.ai && (
         <SpecialistChat

@@ -41,7 +41,7 @@ test("oferta única, condições honestas e WhatsApp por categoria",async({page}
   }
   await expect(page.getByRole("heading",{name:"Aprenda com quem entende do caminho."})).toBeVisible();
   await expect(page.getByLabel("Filtrar instrutores por categoria")).toHaveCount(0);
-  await page.locator(".hero").getByRole("button",{name:"Falar com um instrutor",exact:true}).click();
+  await expect(page.locator(".hero").getByRole("link",{name:"Cadastre-se grátis"})).toHaveAttribute("href","/cadastro");
   for(const cat of ["A","B","A+B"]){
     const card=page.locator(`#pacotes article[data-category="${cat}"]`);
     await expect(card).toContainText("não é a CNH completa");
@@ -49,10 +49,7 @@ test("oferta única, condições honestas e WhatsApp por categoria",async({page}
     await expect(card).toContainText("Valores fictícios para visualização");
     await expect(card).toContainText("12x");
     await expect(card).toContainText("Total parcelado:");
-    await card.getByRole("button").click();
-    const url=new URL(await page.evaluate(()=>window.contacts.at(-1)));
-    expect(url.hostname).toBe("wa.me");expect(url.pathname).toBe("/5512996225250");
-    expect(url.searchParams.get("text")).toContain(`categoria ${cat.replace("+","/")}`);
+    await expect(card.getByRole("link",{name:"Cadastre-se grátis",exact:true})).toHaveAttribute("href", `/cadastro?pacote=${cat === "A" ? "moto" : cat === "B" ? "carro" : "ambos"}`);
   }
   await expect(page.locator("main")).not.toContainText("Reteste grátis");
   await expect(page.locator("#duvidas details")).toHaveCount(15);
@@ -66,7 +63,7 @@ test("oferta única, condições honestas e WhatsApp por categoria",async({page}
   await page.evaluate(()=>{document.activeElement?.blur();window.scrollTo({top:0,behavior:"instant"});});
   await page.screenshot({path:`artifacts/prd-${info.project.name}.png`,fullPage:true});
   const events=await page.evaluate(()=>window.events);
-  for(const name of ["page_view","hero_whatsapp_click","package_view","package_whatsapp_click","package_conditions_open","faq_open"])expect(events.some(e=>e.event===name)).toBe(true);
+  for(const name of ["page_view","package_view","package_conditions_open","faq_open"])expect(events.some(e=>e.event===name)).toBe(true);
   expect(JSON.stringify(events)).not.toContain("Emerson");
   expect(errors).toEqual([]);
   console.log(info.project.name,await page.evaluate(()=>window.vitals));
@@ -75,9 +72,7 @@ test("oferta única, condições honestas e WhatsApp por categoria",async({page}
 test("menu, fallback de contato e catálogo vazio",async({page})=>{
   await catalog(page,{phone:"",empty:true});await page.goto("/");
   await expect(page.getByText("Seu plano começa com uma conversa.")).toBeVisible();
-  await page.locator(".hero").getByRole("button").click();
-  await expect(page.getByRole("status")).toContainText("WhatsApp está temporariamente indisponível");
-  expect(await page.evaluate(()=>window.contacts.length)).toBe(0);
+  await expect(page.locator(".hero").getByRole("link",{name:"Cadastre-se grátis"})).toHaveAttribute("href","/cadastro");
   if(await page.getByRole("button",{name:"Abrir menu"}).isVisible()){
     await page.getByRole("button",{name:"Abrir menu"}).click();
     await expect(page.getByRole("navigation",{name:"Navegação móvel"})).toBeVisible();
@@ -96,3 +91,10 @@ test("vários instrutores filtram por categoria e região",async({page})=>{
   await expect(page.getByRole("heading",{name:"Ana Teste",exact:true})).toBeVisible();
   await expect(page.getByRole("heading",{name:"Emerson Santana",exact:true})).toHaveCount(0);
 });
+
+ test("cadastro recebe pacote selecionado",async({page})=>{
+  await catalog(page);await page.goto('/');
+  await page.locator('#pacotes article[data-category="B"]').getByRole('link',{name:'Cadastre-se grátis',exact:true}).click();
+  await expect(page).toHaveURL(/\/cadastro\?pacote=carro$/);
+  await expect(page.getByLabel('E-mail',{exact:true})).toBeVisible();
+ });

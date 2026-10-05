@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from "react";
-import { Bike, CarFront, Check, MessageCircle, Plus } from "lucide-react";
+import { Bike, CarFront, Check, Plus } from "lucide-react";
 import { lessonLabel } from "../data/packages";
 import { commercialInfo } from "../data/landing";
 import { money } from "../store-data";
@@ -146,19 +146,10 @@ function PublicPackage({ pack, contact }) {
           </p>
         </div>
       </details>
-      <button
-        className="btn btn-green mt-auto w-full"
-        onClick={() =>
-          contact(
-            `Olá! Vim pelo site da HABILITA+ e quero saber mais sobre ${pack.name}, categoria ${category}, por ${money(pack.price)} à vista. Pode me explicar o que inclui e as condições?`,
-            "package_whatsapp_click",
-            { category: pack.category, package_id: pack.id },
-          )
-        }
-      >
-        <MessageCircle size={18} className="shrink-0" aria-hidden="true" />
-        Quero saber mais sobre este pacote
-      </button>
+      <a className="btn btn-green mt-auto w-full" href={`/cadastro?pacote=${encodeURIComponent(pack.id)}`} onClick={() => trackLanding("signup_start", { source: "package", category: pack.category, package_id: pack.id })}>
+        Cadastre-se grátis
+      </a>
+      <p className="mt-2 text-center text-xs text-slate-500">Criar sua conta não gera cobrança.</p>
       <a className="mt-3 min-h-11 py-3 text-center text-sm font-semibold text-green-800 underline underline-offset-4" href={`/aluno?pacote=${encodeURIComponent(pack.id)}`}>Tem cupom? Aplique na área do aluno</a>
     </article>
   );
@@ -199,12 +190,7 @@ export function PublicPackages({ packages, contact }) {
               Consulte os pacotes e valores disponíveis diretamente com o
               instrutor.
             </p>
-            <button
-              className="btn btn-green"
-              onClick={() => contact(undefined, "package_whatsapp_click")}
-            >
-              Falar com um instrutor
-            </button>
+            <a className="btn btn-green" href="/cadastro" onClick={() => trackLanding("signup_start", { source: "empty_catalog" })}>Cadastre-se grátis</a>
           </div>
         )}
         <div className="mt-6 flex flex-wrap items-center justify-between gap-4 rounded-xl border border-slate-200 bg-white p-5">
