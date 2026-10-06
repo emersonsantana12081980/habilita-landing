@@ -1,17 +1,40 @@
-import React from "react";
+import React, { useState } from "react";
 import { money } from "../store-data";
 import { supabase } from "../lib/supabase";
 
 export const requestStage = (r) => r.status !== "pending" ? "finished" : r.review_started_at ? "review" : "requested";
 export const requestLabel = (r) => r.status === "approved" ? "Finalizado · Aprovado" : r.status === "rejected" ? "Finalizado · Recusado" : r.review_started_at ? "Em análise" : "Solicitado";
 
-export function RequestBoard({ requests, students, reasons, setReasons, act }) {
-  return <div className="grid items-start gap-4 lg:grid-cols-3">
+export function RequestBoard({ requests, students, reasons, setReasons, act, filters, setFilters }) {
+  const [limit, setLimit] = useState(12);
+  const normalize = v => String(v || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+  const change = (key,value) => {setFilters(f=>({...f,[key]:value}));setLimit(12);};
+  const invalidDates = filters.from && filters.to && filters.from > filters.to;
+  const filtered = requests.filter(r=>{
+    const student=students.find(s=>s.id===r.student_id);
+    const category=r.lessons_a>0 ? r.lessons_b>0 ? "A+B" : "A" : "B";
+    const day=r.created_at ? new Intl.DateTimeFormat('en-CA',{timeZone:'America/Sao_Paulo'}).format(new Date(r.created_at)) : "";
+    return !invalidDates && (!filters.search || normalize(`${student?.name || ""} ${r.package_name}`).includes(normalize(filters.search.trim()))) &&
+      (!filters.category || category===filters.category) && (!filters.result || r.status===filters.result) &&
+      (!filters.from || day>=filters.from) && (!filters.to || (day && day<=filters.to));
+  });
+  return <>
+    <div className="mb-4 grid gap-3 rounded-xl border bg-white p-4 sm:grid-cols-2 lg:grid-cols-5">
+      <label className="text-sm">Buscar pedido<input type="search" placeholder="Aluno ou pacote" value={filters.search} onChange={e=>change('search',e.target.value)}/></label>
+      <label className="text-sm">Categoria do pedido<select value={filters.category} onChange={e=>change('category',e.target.value)}><option value="">Todas</option><option value="A">Moto</option><option value="B">Carro</option><option value="A+B">Carro e moto</option></select></label>
+      <label className="text-sm">Resultado do pedido<select value={filters.result} onChange={e=>change('result',e.target.value)}><option value="">Todos</option><option value="pending">Em aberto</option><option value="approved">Aprovados</option><option value="rejected">Recusados</option></select></label>
+      <label className="text-sm">Solicitado desde<input type="date" value={filters.from} onChange={e=>change('from',e.target.value)}/></label>
+      <label className="text-sm">Solicitado até<input type="date" value={filters.to} onChange={e=>change('to',e.target.value)}/></label>
+      <button className="text-left text-sm font-semibold underline" onClick={()=>{setFilters({search:"",category:"",result:"",from:"",to:""});setLimit(12);}}>Limpar filtros de pedidos</button>
+    </div>
+    {invalidDates && <p role="alert" className="mb-3 text-red-700">A data inicial deve ser anterior ou igual à data final.</p>}
+    <p role="status" className="mb-3 text-sm text-slate-600">{filtered.length} pedido(s) encontrado(s)</p>
+    <div className="grid items-start gap-4 lg:grid-cols-3">
     {[["requested", "Solicitado"], ["review", "Em análise"], ["finished", "Pedido finalizado"]].map(([stage, title]) => {
-      const rows = requests.filter(r => requestStage(r) === stage).sort((a,b) => (b.created_at || "").localeCompare(a.created_at || ""));
+      const rows = filtered.filter(r => requestStage(r) === stage).sort((a,b) => (b.created_at || "").localeCompare(a.created_at || ""));
       return <section key={stage} aria-label={title} className="min-w-0 rounded-2xl border border-slate-200 bg-slate-100 p-3">
         <h2 className="mb-3 flex justify-between px-1 font-bold">{title}<span className="rounded-full bg-white px-2 text-slate-600">{rows.length}</span></h2>
-        <div className="space-y-3">{rows.map(r => <article key={r.id} className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+        <div className="space-y-3">{(stage==='finished'?rows.slice(0,limit):rows).map(r => <article key={r.id} className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
           <h3 className="break-words font-bold">{students.find(s=>s.id===r.student_id)?.name || "Cadastro indisponível"}</h3>
           <p className="mt-1 text-sm text-slate-600">{r.package_name}</p>
           <p className={`mt-2 text-xs font-bold ${r.status === "rejected" ? "text-red-700" : "text-green-800"}`}>{requestLabel(r)}</p>
@@ -30,9 +53,10 @@ export function RequestBoard({ requests, students, reasons, setReasons, act }) {
           </details> : r.reason && <p className="mt-3 break-words text-sm text-slate-600">{r.reason}</p>}
         </article>)}</div>
         {!rows.length && <p className="py-5 text-center text-sm text-slate-500">Nenhum pedido nesta etapa.</p>}
+        {stage==='finished' && rows.length>limit && <button className="mt-3 w-full rounded-lg border bg-white p-3 text-sm font-semibold" onClick={()=>setLimit(n=>n+12)}>Mostrar mais finalizados ({rows.length-limit})</button>}
       </section>;
     })}
-  </div>;
+  </div></>;
 }
 
 export function StudentRequests({ requests }) {

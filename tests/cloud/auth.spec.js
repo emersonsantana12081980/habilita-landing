@@ -2,6 +2,49 @@ import { test, expect } from "@playwright/test";
 const uid = "00000000-0000-4000-8000-000000000001";
 const user = { id: uid, aud: "authenticated", role: "authenticated", email: "aluno@example.com", email_confirmed_at: "2026-01-01T00:00:00Z", user_metadata: {}, app_metadata: {}, created_at: "2026-01-01T00:00:00Z" };
 const jwt = () => [Buffer.from(JSON.stringify({ alg: "HS256", typ: "JWT" })).toString("base64url"), Buffer.from(JSON.stringify({ sub: uid, aud: "authenticated", role: "authenticated", exp: Math.floor(Date.now()/1000)+3600 })).toString("base64url"), "testsignature"].join(".");
+test('filtros do kanban e limite de finalizados',async({page})=>{
+  await mock(page,false,true);
+  const rows=Array.from({length:14},(_,i)=>({id:String(i),student_id:'student1',package_name:`Pacote ${i}`,price_cents:29900,lessons_a:i===0?2:0,lessons_b:i===0?0:2,status:i===0?'rejected':'approved',created_at:'2026-10-06T01:00:00Z'}));
+  await page.route('**/rest/v1/package_requests*',r=>r.fulfill({json:rows}));
+  await page.goto('/admin');
+  await page.getByLabel('E-mail administrativo',{exact:true}).fill('admin@example.com');
+  await page.getByLabel('Senha',{exact:true}).fill('senha-teste-123');
+  await page.getByRole('button',{name:'Entrar no painel',exact:true}).click();
+  await page.getByRole('button',{name:'Pedidos (0)',exact:true}).click();
+  const finished=page.getByRole('region',{name:'Pedido finalizado'});
+  await expect(finished.getByRole('article')).toHaveCount(12);
+  await page.getByRole('button',{name:'Mostrar mais finalizados (2)'}).click();
+  await expect(finished.getByRole('article')).toHaveCount(14);
+  await page.getByLabel('Resultado do pedido').selectOption('rejected');
+  await expect(finished.getByRole('article')).toHaveCount(1);
+  await page.getByLabel('Categoria do pedido').selectOption('B');
+  await expect(finished.getByRole('article')).toHaveCount(0);
+  await page.getByRole('button',{name:'Limpar filtros de pedidos'}).click();
+  await page.getByLabel('Buscar pedido').fill('pacote 0');
+  await expect(finished.getByRole('article')).toHaveCount(1);
+  await page.getByLabel('Solicitado desde').fill('2026-10-06');
+  await expect(finished.getByRole('article')).toHaveCount(0);
+  await page.getByLabel('Solicitado desde').fill('2026-10-05');
+  await page.getByLabel('Solicitado até').fill('2026-10-05');
+  await expect(finished.getByRole('article')).toHaveCount(1);
+  await page.getByRole('button',{name:'Atualizar',exact:true}).click();
+  await expect(page.getByLabel('Buscar pedido')).toHaveValue('pacote 0');
+  await expect(finished.getByRole('article')).toHaveCount(1);
+});
+for (const state of ['new','pending','credit']) {
+  test(`próximo passo do aluno: ${state}`,async({page})=>{
+    await mock(page);
+    await page.route('**/rest/v1/package_requests*',r=>r.fulfill({json:state==='pending'?[{id:'r',student_id:'student1',status:'pending',package_name:'Carro',price_cents:29900}]:[]}));
+    await page.route('**/rest/v1/credit_grants*',r=>r.fulfill({json:state==='credit'?[{id:'c',student_id:'student1',lessons_a:0,lessons_b:2}]:[]}));
+    await page.goto('/aluno');
+    await page.getByLabel('E-mail',{exact:true}).fill('aluno@example.com');
+    await page.getByLabel('Senha',{exact:true}).fill('senha-teste-123');
+    await page.getByRole('button',{name:'Entrar',exact:true}).click();
+    const next=page.getByRole('heading',{name:'Seu próximo passo'}).locator('..');
+    await next.getByRole('button',{name:state==='credit'?'Agendar aula':state==='pending'?'Acompanhar pedido':'Escolher pacote',exact:true}).click();
+    await expect(page.getByRole('button',{name:state==='credit'?'Agendar aula':'Meus pacotes',exact:true})).toHaveAttribute('aria-current','page');
+  });
+}
 test('kanban move pedido para análise e finaliza aprovado ou recusado', async ({ page }) => {
   await mock(page, false, true);
   let rows = ['one','two'].map(id=>({id,student_id:'student1',package_name:`Pacote ${id}`,price_cents:29900,lessons_a:0,lessons_b:2,status:'pending'}));
@@ -61,6 +104,7 @@ test('edição individual trata conflito e salva sem criar outra aula', async ({
   await page.getByLabel('Senha', {exact:true}).fill('senha-teste-123');
   await page.getByRole('button',{name:'Entrar no painel',exact:true}).click();
   await page.getByRole('button',{name:'Ver',exact:true}).click();
+  await expect(page.getByRole('button',{name:'Excluir',exact:true})).toHaveCount(0);
   await expect(page.getByRole('dialog')).toBeVisible();
   await expect(page.getByRole('dialog')).toContainText('Aluno Teste');
   await expect(page.getByRole('dialog').getByRole('button',{name:'Cancelar aula',exact:true})).toBeVisible();
@@ -316,7 +360,7 @@ test('administrador consulta alunos, decide pedidos e publica horário pelo serv
   await page.getByText('Decidir pedido',{exact:true}).click();
   await page.getByLabel('Motivo da decisão').fill('Liberação manual autorizada');
   await page.getByRole('button',{name:'Aprovar e liberar créditos'}).click();
-  await expect(page.getByRole('status')).toContainText('Pacote aprovado');
+  await expect(page.getByRole('status').filter({hasText:'Pacote aprovado'})).toBeVisible();
   expect(calls.find(c=>c.path.endsWith('/resolve_package')).body).toEqual({p_request:'request1',p_approve:true,p_reason:'Liberação manual autorizada'});
   await page.getByRole('button',{name:'Horários avulsos',exact:true}).click();
   await page.getByLabel('Data (horário de Brasília)').fill('2027-02-15');
@@ -394,6 +438,10 @@ test('lista de alunos filtra, arquiva e restaura sem excluir histórico', async 
   page.once('dialog',d=>d.accept());
   await list.getByRole('button',{name:'Restaurar cadastro'}).click();
   await expect(page.getByText('Cadastro restaurado.',{exact:true})).toBeVisible();
+  await expect(page.getByLabel('Buscar aluno')).toHaveValue('(12) 99999-8888');
+  await expect(page.getByLabel('Situação do cadastro')).toHaveValue('archived');
+  await expect(list.getByRole('listitem')).toHaveCount(0);
+  await page.getByLabel('Situação do cadastro').selectOption('active');
   await expect(list.getByText('João Silva',{exact:true})).toBeVisible();
   expect(changes).toBe(2);
 });

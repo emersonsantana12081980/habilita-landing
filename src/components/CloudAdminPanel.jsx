@@ -55,6 +55,8 @@ export function CloudAdminPanel() {
   const [tab, setTab] = useState("Agenda");
   const [editingStudent, setEditingStudent] = useState(undefined);
   const [historyStudent, setHistoryStudent] = useState(null);
+  const [studentFilters, setStudentFilters] = useState({search:"",status:"active",category:""});
+  const [requestFilters, setRequestFilters] = useState({search:"",category:"",result:"",from:"",to:""});
   const [day, setDay] = useState(today);
   const [editingLesson, setEditingLesson] = useState(null);
   const [viewingLesson, setViewingLesson] = useState(null);
@@ -502,6 +504,8 @@ export function CloudAdminPanel() {
                       </section>
                     )}
                     <StudentList
+                      filters={studentFilters}
+                      setFilters={setStudentFilters}
                       students={data.students}
                       balance={balance}
                       onEdit={setEditingStudent}
@@ -554,7 +558,7 @@ export function CloudAdminPanel() {
                   />
                 )}
                 {tab === "Pedidos" && (
-                  <RequestBoard requests={data.requests} students={data.students} reasons={reasons} setReasons={setReasons} act={act} />
+                  <RequestBoard requests={data.requests} students={data.students} reasons={reasons} setReasons={setReasons} act={act} filters={requestFilters} setFilters={setRequestFilters} />
                 )}
                 {tab === "Configurar agenda" && (
                   <ScheduleSettings
@@ -757,27 +761,6 @@ export function CloudAdminPanel() {
                                 onClick={() => setEditingLesson(l.id)}
                               >
                                 Editar agendamento
-                              </button>
-                              <button
-                                className="rounded-xl border px-4 py-2 text-red-700"
-                                onClick={() => {
-                                  if (
-                                    !window.confirm(
-                                      "Excluir este agendamento? Esta ação é irreversível.",
-                                    )
-                                  )
-                                    return;
-                                  act(
-                                    () =>
-                                      supabase
-                                        .from("lessons")
-                                        .delete()
-                                        .eq("id", l.id),
-                                    "Agendamento excluído.",
-                                  );
-                                }}
-                              >
-                                Excluir
                               </button>
                               {["completed", "missed", "cancelled"].map(
                                 (state) => (

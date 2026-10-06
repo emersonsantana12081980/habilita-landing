@@ -1,11 +1,12 @@
-import React, { useState } from "react";
+import React from "react";
 
 const normalize = (value) => String(value || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
 
-export function StudentList({ students, balance, onEdit, onHistory, onStatus }) {
-  const [search, setSearch] = useState("");
-  const [status, setStatus] = useState("active");
-  const [category, setCategory] = useState("");
+export function StudentList({ students, balance, onEdit, onHistory, onStatus, filters, setFilters }) {
+  const { search, status, category } = filters;
+  const setSearch = (search) => setFilters(f => ({...f,search}));
+  const setStatus = (status) => setFilters(f => ({...f,status}));
+  const setCategory = (category) => setFilters(f => ({...f,category}));
   const visible = students.filter((s) => {
     const query = normalize(search.trim());
     const digits = search.replace(/\D/g, "");

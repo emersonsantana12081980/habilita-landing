@@ -266,6 +266,8 @@ export function CloudStudentPortal() {
     "Olá! Preciso de ajuda na área do aluno.",
   );
   const canUse = session && data.student?.active && !loading && !failed;
+  const pendingRequests = data.requests.filter((r) => r.status === "pending");
+  const hasCredit = available("A") > 0 || available("B") > 0;
 
   return (
     <main className="min-h-screen bg-slate-50 pb-28 text-slate-900">
@@ -483,6 +485,16 @@ export function CloudStudentPortal() {
                 </nav>
                 {tab === "Início" && (
                   <>
+                    <div className="mb-5 rounded-xl border border-green-200 bg-green-50 p-4">
+                      <h2 className="font-bold">Seu próximo passo</h2>
+                      <p className="mt-1 text-sm">
+                        {hasCredit ? "Você tem créditos disponíveis. Escolha uma data livre para sua aula." : pendingRequests.length ? "Seu pedido aguarda a equipe. Acompanhe a análise em Meus pacotes." : "Escolha um pacote para solicitar suas aulas. O cadastro é gratuito e não gera cobrança."}
+                      </p>
+                      <button className="btn btn-green mt-3" onClick={() => setTab(hasCredit ? "Agendar aula" : "Meus pacotes")}>
+                        {hasCredit ? "Agendar aula" : pendingRequests.length ? "Acompanhar pedido" : "Escolher pacote"}
+                      </button>
+                    </div>
+                    {!!pendingRequests.length && <StudentRequests requests={pendingRequests} />}
                     <div className="grid gap-4 sm:grid-cols-2">
                       {["A", "B"].map((cat) => (
                         <div key={cat} className="admin-card">
