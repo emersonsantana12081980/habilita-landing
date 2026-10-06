@@ -80,10 +80,10 @@ export function LandingPage({ data, error }) {
               Área do aluno
             </a>
           </nav>
-          <a className="btn btn-green hidden sm:inline-flex"
-            href="/cadastro" onClick={() => trackLanding("signup_start", { source: "header" })}>
-            Cadastre-se grátis <ArrowUpRight size={18} aria-hidden="true" />
-          </a>
+          <button className="btn btn-green hidden sm:inline-flex"
+            onClick={() => contact(undefined, "header_whatsapp_click")}>
+            <MessageCircle size={18} aria-hidden="true" /> WhatsApp
+          </button>
           <button
             ref={menuButton}
             className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-slate-200 xl:hidden"
@@ -506,7 +506,6 @@ export function LandingPage({ data, error }) {
       </div>
       {data.ai && (
         <SpecialistChat
-          inline
           contact={() => contact(undefined, "specialist_whatsapp_click")}
         />
       )}
