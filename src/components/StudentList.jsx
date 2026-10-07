@@ -44,7 +44,7 @@ export function StudentList({ students, balance, onEdit, onHistory, onStatus, fi
         </div>
         <div className="flex flex-wrap gap-2 text-sm">
           <button className="rounded-lg border px-3 py-2 font-semibold" onClick={() => onEdit(student)}>Editar aluno</button>
-          <button className="rounded-lg border px-3 py-2" onClick={() => onHistory(student)}>Ver histórico</button>
+          <button className="rounded-lg border px-3 py-2" onClick={() => onHistory(student)}>Ver ficha</button>
           <button className={`rounded-lg px-3 py-2 font-semibold ${student.active ? "bg-red-50 text-red-800" : "bg-green-50 text-green-800"}`} onClick={() => {
             if (window.confirm(student.active
               ? `Enviar ${student.name} para o arquivo morto? O cadastro ficará inativo, sem novos agendamentos. Créditos, histórico e aulas já agendadas serão mantidos.`

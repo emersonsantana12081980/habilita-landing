@@ -1,3 +1,4 @@
+import { StudentRecord } from "./StudentRecord";
 import { RequestBoard } from "./RequestBoard";
 import React, { useEffect, useRef, useState } from "react";
 import { Brand } from "./Brand";
@@ -479,30 +480,10 @@ export function CloudAdminPanel() {
                         }}
                       />
                     )}
-                    {historyStudent && (
-                      <section className="admin-card mb-4">
-                        <h2 className="text-xl font-bold">
-                          Histórico de {historyStudent.name}
-                        </h2>
-                        <button
-                          className="my-3 underline"
-                          onClick={() => setHistoryStudent(null)}
-                        >
-                          Fechar histórico
-                        </button>
-                        {data.lessons
-                          .filter((l) => l.student_id === historyStudent.id)
-                          .map((l) => (
-                            <p key={l.id}>
-                              {dayOf(l.starts_at)} · {time(l.starts_at)} ·{" "}
-                              {l.category} · {labels[l.status]}
-                            </p>
-                          ))}
-                        {!data.lessons.some(
-                          (l) => l.student_id === historyStudent.id,
-                        ) && <p>Nenhuma aula registrada.</p>}
-                      </section>
-                    )}
+                    {historyStudent && <StudentRecord student={historyStudent} data={data} onClose={()=>setHistoryStudent(null)} onEdit={student=>{setHistoryStudent(null);setEditingStudent(student);}} onStatus={(student,active)=>{
+                      setHistoryStudent(null);setEditingStudent(undefined);
+                      act(()=>supabase.from("students").update({active}).eq("id",student.id).select("id").single(), active ? "Cadastro restaurado." : "Cadastro enviado ao arquivo morto.");
+                    }} />}
                     <StudentList
                       filters={studentFilters}
                       setFilters={setStudentFilters}
