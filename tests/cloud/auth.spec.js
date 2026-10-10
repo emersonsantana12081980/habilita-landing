@@ -2,6 +2,25 @@ import { test, expect } from "@playwright/test";
 const uid = "00000000-0000-4000-8000-000000000001";
 const user = { id: uid, aud: "authenticated", role: "authenticated", email: "aluno@example.com", email_confirmed_at: "2026-01-01T00:00:00Z", user_metadata: {}, app_metadata: {}, created_at: "2026-01-01T00:00:00Z" };
 const jwt = () => [Buffer.from(JSON.stringify({ alg: "HS256", typ: "JWT" })).toString("base64url"), Buffer.from(JSON.stringify({ sub: uid, aud: "authenticated", role: "authenticated", exp: Math.floor(Date.now()/1000)+3600 })).toString("base64url"), "testsignature"].join(".");
+test('admin salva informações públicas e valida links',async({page})=>{
+  await mock(page,false,true);let saved;
+  await page.route('**/rest/v1/site_settings*',r=>{
+    if(r.request().method()==='PATCH'){saved=r.request().postDataJSON();return r.fulfill({json:{id:true}});}
+    return r.fulfill({json:{id:true,city:'Caçapava',whatsapp:'5512996225250',ai_enabled:true,commercial_info:{}}});
+  });
+  await page.goto('/admin');await page.getByLabel('E-mail administrativo',{exact:true}).fill('admin@example.com');await page.getByLabel('Senha',{exact:true}).fill('senha-teste-123');await page.getByRole('button',{name:'Entrar no painel',exact:true}).click();
+  await page.getByRole('button',{name:'Configurações do site',exact:true}).click();
+  await page.getByLabel('Duração padrão da aula (minutos)').fill('50');
+  await page.getByLabel('Local e ponto de encontro').fill('Praça de teste');
+  await page.getByLabel('Link do Instagram').fill('http://example.com');
+  await page.getByRole('button',{name:'Salvar configurações do site'}).click();
+  await expect(page.getByText('Use links HTTPS sem credenciais.')).toBeVisible();
+  expect(saved).toBeUndefined();
+  await page.getByLabel('Link do Instagram').fill('https://example.com');
+  await page.getByRole('button',{name:'Salvar configurações do site'}).click();
+  await expect(page.getByText('Configurações salvas. Reabra ou atualize a página pública para conferir.')).toBeVisible();
+  expect(saved.commercial_info.lessonMinutes).toBe(50);expect(saved.commercial_info.lessonLocation).toBe('Praça de teste');
+});
 test('resumo consulta vagas e abre listas com filtros corretos',async({page})=>{
   await mock(page,false,true);
   let failed=true;
@@ -271,6 +290,11 @@ test('administrador altera preços e cadastra cupom fixo',async({page})=>{
   await page.getByRole('button',{name:'Entrar no painel',exact:true}).click();
   await page.getByRole('button',{name:'Catálogo',exact:true}).click();
   await page.getByRole('button',{name:'Editar',exact:true}).click();
+  await page.getByLabel('Preço à vista (R$)').fill('300');
+  await expect(page.getByLabel('Valor total parcelado (R$)')).toHaveValue('360');
+  await page.getByLabel('Preço à vista (R$)').fill('');
+  await page.getByLabel('Preço à vista (R$)').fill('500');
+  await expect(page.getByLabel('Valor total parcelado (R$)')).toHaveValue('600');
   await page.getByLabel('Preço à vista (R$)').fill('300');
   await page.getByLabel('Valor total parcelado (R$)').fill('399.60');
   await page.getByLabel('Número de parcelas').fill('6');

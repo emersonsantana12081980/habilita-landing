@@ -1,6 +1,7 @@
 // Preencher somente após validação do responsável. null = confirmação pendente.
 // Preços, quantidade de aulas e instrutores continuam vindo do catálogo/admin.
 export const commercialInfo = {
+  retestTerms: null,
   lessonMinutes: null,
   lessonLocation: null,
   serviceRegion: null,
@@ -39,9 +40,9 @@ export const faqItems = [
   ],
   [
     "Quanto dura cada aula?",
-    () =>
-      commercialInfo.lessonMinutes
-        ? `A duração informada é de ${commercialInfo.lessonMinutes} minutos. Confira também as condições específicas do seu pacote.`
+    (info = commercialInfo) =>
+      info.lessonMinutes
+        ? `A duração informada é de ${info.lessonMinutes} minutos. Confira também as condições específicas do seu pacote.`
         : "Duração a confirmar com o instrutor antes da contratação. A quantidade de aulas está descrita em cada pacote.",
   ],
   [
@@ -54,7 +55,7 @@ export const faqItems = [
   ],
   [
     "Como funciona o reteste?",
-    "Consulte as condições do pacote. Antes de contratar, confirme o serviço coberto, prazo, número de utilizações e eventuais taxas. Não considere taxas oficiais ou serviços adicionais gratuitos sem confirmação.",
+    (info = commercialInfo) => info.retestTerms || "Consulte as condições do pacote. Antes de contratar, confirme o serviço coberto, prazo, número de utilizações e eventuais taxas. Não considere taxas oficiais ou serviços adicionais gratuitos sem confirmação.",
   ],
   [
     "Quais formas de pagamento são aceitas?",
@@ -70,20 +71,20 @@ export const faqItems = [
   ],
   [
     "Onde as aulas são realizadas?",
-    () =>
-      commercialInfo.lessonLocation ||
+    (info = commercialInfo) =>
+      info.lessonLocation ||
       "O local e o ponto de encontro precisam ser combinados com o instrutor. Confirme essas informações antes da aula.",
   ],
   [
     "Atendem cidades além de Caçapava?",
-    () =>
-      commercialInfo.serviceRegion ||
+    (info = commercialInfo) =>
+      info.serviceRegion ||
       "O atendimento é divulgado para Caçapava e região. Informe sua cidade e bairro para confirmar cobertura e possíveis condições de deslocamento.",
   ],
   [
     "O que acontece se eu precisar remarcar?",
-    () =>
-      commercialInfo.cancellationPolicy ||
+    (info = commercialInfo) =>
+      info.cancellationPolicy ||
       "Entre em contato com a equipe para solicitar a alteração. Na área do aluno, consulte as regras vigentes de antecedência e cancelamento. A remarcação depende de um novo horário disponível; confirme as condições antes de contratar.",
   ],
 ];

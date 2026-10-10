@@ -1,7 +1,7 @@
 import React, { useEffect, useRef } from "react";
 import { Bike, CarFront, Check, Plus } from "lucide-react";
 import { lessonLabel } from "../data/packages";
-import { commercialInfo } from "../data/landing";
+import { commercialInfo as defaults } from "../data/landing";
 import { money } from "../store-data";
 import { trackLanding } from "../lib/landing-events";
 import { PackagePrice } from "./PackagePrice";
@@ -22,11 +22,11 @@ export function installmentText(totalCents, count) {
   return `${remainder}x de ${money((base + 1) / 100)} + ${count - remainder}x de ${money(base / 100)} · total ${money(totalCents / 100)}`;
 }
 
-function PublicPackage({ pack, contact }) {
+function PublicPackage({ pack, contact, commercialInfo }) {
   const ref = useRef(null);
   const details = commercialInfo.packages[pack.slug || pack.id] || {};
   const duration = details.lessonMinutes || commercialInfo.lessonMinutes;
-  const retest = details.retestTerms || pack.retestTerms;
+  const retest = details.retestTerms || pack.retestTerms || commercialInfo.retestTerms;
   const category = pack.category.replace("+", "/");
   const pricing = packagePricing(pack);
   useEffect(() => {
@@ -155,7 +155,7 @@ function PublicPackage({ pack, contact }) {
   );
 }
 
-export function PublicPackages({ packages, contact }) {
+export function PublicPackages({ packages, contact, commercialInfo = defaults }) {
   const active = packages.filter((p) => p.active);
   return (
     <section
@@ -178,7 +178,7 @@ export function PublicPackages({ packages, contact }) {
         {active.length ? (
           <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
             {active.map((p) => (
-              <PublicPackage key={p.id} pack={p} contact={contact} />
+              <PublicPackage key={p.id} pack={p} contact={contact} commercialInfo={commercialInfo} />
             ))}
           </div>
         ) : (

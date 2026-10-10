@@ -1,9 +1,10 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { supabase } from "../lib/supabase";
 import { CouponManager } from "./CouponManager";
 import { PackagePrice } from "./PackagePrice";
 import { packagePricing } from "../lib/package-pricing";
 export function CatalogManager() {
+  const installmentRatio = useRef(1);
   const [kind, setKind] = useState("packages"),
     [rows, setRows] = useState([]),
     [form, setForm] = useState(null),
@@ -152,10 +153,15 @@ export function CatalogManager() {
                   min="0.01"
                   step="0.01"
                   value={form.price_cents / 100}
+                  onFocus={() => {
+                    installmentRatio.current = form.price_cents > 0 && form.card_total_cents > 0
+                      ? form.card_total_cents / form.price_cents : 1;
+                  }}
                   onChange={(e) =>
                     setForm((f) => ({
                       ...f,
                       price_cents: Math.round(Number(e.target.value) * 100),
+                      card_total_cents: Math.round(Math.round(Number(e.target.value) * 100) * installmentRatio.current),
                     }))
                   }
                 />
@@ -192,8 +198,9 @@ export function CatalogManager() {
               <div className="sm:col-span-2">
                 <PackagePrice pack={form} />
                 <p className="text-xs text-slate-600">
-                  Informe o total parcelado; as parcelas são calculadas
-                  automaticamente. Desmarque a demonstração somente quando os
+                  Alterar o preço à vista recalcula o total e as parcelas, mantendo
+                  a proporção atual entre à vista e parcelado. Você também pode ajustar
+                  o total parcelado manualmente. Desmarque a demonstração somente quando os
                   preços estiverem definidos.
                 </p>
               </div>

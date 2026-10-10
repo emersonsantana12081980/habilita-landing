@@ -1,4 +1,14 @@
 import { test, expect } from "@playwright/test";
+test('informações comerciais vêm do cadastro do site',async({page})=>{
+  await catalog(page);
+  await page.route('**/rest/v1/site_settings*',r=>r.fulfill({json:{city:'Caçapava',whatsapp:'5512996225250',ai_enabled:false,commercial_info:{lessonMinutes:50,lessonLocation:'Praça de teste',privacyUrl:'https://example.com/privacidade',retestTerms:'Condições de teste confirmadas'}}}));
+  await page.goto('/');
+  await expect(page.locator('#pacotes article').first()).toContainText('50 minutos por aula');
+  await page.getByText('Onde as aulas são realizadas?',{exact:true}).click();
+  await expect(page.getByText('Praça de teste',{exact:true})).toBeVisible();
+  await expect(page.getByRole('link',{name:'Política de privacidade',exact:true})).toHaveAttribute('href','https://example.com/privacidade');
+  await expect(page.getByRole('button',{name:'Chame especialista'})).toHaveCount(0);
+});
 
 async function catalog(page,{phone="5512996225250",multiple=false,empty=false}={}) {
   await page.addInitScript(() => {

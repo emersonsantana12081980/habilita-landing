@@ -17,7 +17,7 @@ import { InstructorSection } from "./InstructorSection";
 import { Testimonials } from "./Testimonials";
 import { SpecialistChat } from "./SpecialistChat";
 import { whatsappUrl } from "../store-data";
-import { commercialInfo, faqItems } from "../data/landing";
+import { commercialInfo as defaults, faqItems } from "../data/landing";
 import { trackLanding, useLandingEvents } from "../lib/landing-events";
 
 const navigation = [
@@ -27,6 +27,7 @@ const navigation = [
   ["duvidas", "Dúvidas"],
 ];
 export function LandingPage({ data, error }) {
+  const commercialInfo = { ...defaults, ...data.commercialInfo, packages: defaults.packages };
   const [menu, setMenu] = useState(false),
     [notice, setNotice] = useState("");
   const menuButton = useRef(null);
@@ -263,7 +264,7 @@ export function LandingPage({ data, error }) {
             {error}
           </p>
         )}
-        <PublicPackages packages={data.packages} contact={contact} />
+        <PublicPackages commercialInfo={commercialInfo} packages={data.packages} contact={contact} />
         <section id="condicoes" className="container section-space">
           <p className="eyebrow">CLAREZA ANTES DE CONTRATAR</p>
           <h2>Entenda exatamente o que você está contratando.</h2>
@@ -396,7 +397,7 @@ export function LandingPage({ data, error }) {
                     />
                   </summary>
                   <p className="pb-5 text-sm leading-7 text-slate-600">
-                    {typeof a === "function" ? a() : a}
+                    {typeof a === "function" ? a(commercialInfo) : a}
                   </p>
                 </details>
               ))}

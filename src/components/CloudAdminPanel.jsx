@@ -1,3 +1,4 @@
+import { SiteSettings } from "./SiteSettings";
 import { AdminOverview } from "./AdminOverview";
 import { StudentRecord } from "./StudentRecord";
 import { RequestBoard } from "./RequestBoard";
@@ -381,6 +382,7 @@ export function CloudAdminPanel() {
                 "Configurar agenda",
                 "Horários avulsos",
                 "Catálogo",
+                "Configurações do site",
                 "Regras",
               ].map((t) => (
                 <button
@@ -512,6 +514,7 @@ export function CloudAdminPanel() {
                   </>
                 )}
                 {tab === "Catálogo" && <CatalogManager />}
+                {tab === "Configurações do site" && <SiteSettings />}
                 {tab === "Regras" && <BookingRules />}
                 {tab === "Agenda" && (
                   <div className="mb-5 flex flex-wrap items-end gap-4 rounded-2xl border bg-white p-4">

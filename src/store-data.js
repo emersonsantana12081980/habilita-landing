@@ -60,6 +60,7 @@ export function normalizeState(value) {
     ...normalizeManagement(source),
     ...normalizeFinance(source),
     ...normalizeStudent(source),
+    commercialInfo: source.commercialInfo || {},
     schemaVersion: 2,
     instructorSeedVersion: 1,
     packageSeedVersion: 1,

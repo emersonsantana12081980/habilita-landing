@@ -43,6 +43,7 @@ export function useStore() {
                 schemaVersion: 2,
                 packageSeedVersion: 1,
                 instructorSeedVersion: 1,
+                commercialInfo: s.data.commercial_info || {},
                 city: s.data.city,
                 whatsapp: s.data.whatsapp,
                 ai: s.data.ai_enabled,
