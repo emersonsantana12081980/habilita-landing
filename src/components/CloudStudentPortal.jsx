@@ -1,3 +1,4 @@
+import { StudentWalletPreview } from "./StudentWalletPreview";
 import { StudentRequests } from "./RequestBoard";
 import { StudentPackageOffer } from "./StudentPackageOffer";
 import { StudentLessons } from "./StudentLessons";
@@ -459,6 +460,7 @@ export function CloudStudentPortal() {
               </p>
             ) : (
               <>
+                <StudentWalletPreview moto={available("A")} carro={available("B")} />
                 <nav
                   aria-label="Área do aluno"
                   className="my-6 flex flex-wrap gap-2"

@@ -2,6 +2,21 @@ import { test, expect } from "@playwright/test";
 const uid = "00000000-0000-4000-8000-000000000001";
 const user = { id: uid, aud: "authenticated", role: "authenticated", email: "aluno@example.com", email_confirmed_at: "2026-01-01T00:00:00Z", user_metadata: {}, app_metadata: {}, created_at: "2026-01-01T00:00:00Z" };
 const jwt = () => [Buffer.from(JSON.stringify({ alg: "HS256", typ: "JWT" })).toString("base64url"), Buffer.from(JSON.stringify({ sub: uid, aud: "authenticated", role: "authenticated", exp: Math.floor(Date.now()/1000)+3600 })).toString("base64url"), "testsignature"].join(".");
+test('prévia de depósito revisa sem gerar cobrança',async({page})=>{
+  const calls=await mock(page);
+  await page.goto('/aluno');await page.getByLabel('E-mail',{exact:true}).fill('aluno@example.com');await page.getByLabel('Senha',{exact:true}).fill('senha-teste-123');await page.getByRole('button',{name:'Entrar',exact:true}).click();
+  await expect(page.getByRole('region',{name:'Carteira do aluno'})).toContainText('Demonstração');
+  const before=calls.filter(c=>c.path.includes('/rpc/')).length;
+  await page.getByRole('button',{name:'Adicionar saldo',exact:true}).click();
+  const modal=page.getByRole('dialog',{name:'Adicionar saldo'});
+  await modal.getByLabel('Valor do depósito (R$)').fill('150.50');
+  await modal.getByLabel('Cartão',{exact:true}).check();
+  await modal.getByRole('button',{name:'Revisar depósito'}).click();
+  await expect(modal).toContainText('R$ 150,50');
+  await expect(modal.getByRole('button',{name:'Pagamento em breve'})).toBeDisabled();
+  await page.keyboard.press('Escape');await expect(modal).toHaveCount(0);
+  expect(calls.filter(c=>c.path.includes('/rpc/')).length).toBe(before);
+});
 test('admin salva informações públicas e valida links',async({page})=>{
   await mock(page,false,true);let saved;
   await page.route('**/rest/v1/site_settings*',r=>{
