@@ -2,6 +2,28 @@ import { test, expect } from "@playwright/test";
 const uid = "00000000-0000-4000-8000-000000000001";
 const user = { id: uid, aud: "authenticated", role: "authenticated", email: "aluno@example.com", email_confirmed_at: "2026-01-01T00:00:00Z", user_metadata: {}, app_metadata: {}, created_at: "2026-01-01T00:00:00Z" };
 const jwt = () => [Buffer.from(JSON.stringify({ alg: "HS256", typ: "JWT" })).toString("base64url"), Buffer.from(JSON.stringify({ sub: uid, aud: "authenticated", role: "authenticated", exp: Math.floor(Date.now()/1000)+3600 })).toString("base64url"), "testsignature"].join(".");
+test('checkout de teste usa pedido e explica função indisponível',async({page})=>{
+  await mock(page,false,true);
+  await page.route('**/rest/v1/package_requests*',r=>r.fulfill({json:[{id:'00000000-0000-4000-8000-000000000010',student_id:'student1',package_id:'package1',package_name:'Pacote Carro',price_cents:26910,status:'pending',pricing_demo:true,payment_method:'cash',installment_count:1}]}));
+  let sent;
+  await page.route('**/functions/v1/mercado-pago-test-checkout',r=>{sent=r.request().postDataJSON();return r.fulfill({status:503,json:{error:'O checkout de teste ainda não foi ativado no servidor.'}});});
+  await page.goto('/aluno?checkout=teste');
+  await page.getByLabel('E-mail',{exact:true}).fill('admin@example.com');await page.getByLabel('Senha',{exact:true}).fill('senha-teste-123');await page.getByRole('button',{name:'Entrar',exact:true}).click();
+  const region=page.getByRole('region',{name:'Teste de pagamento do administrador'});
+  await expect(region).toContainText('Total do pedido: R$ 269,10');
+  await expect(page.getByText(/Este retorno não confirma pagamento nem libera créditos/)).toBeVisible();
+  await region.getByRole('button',{name:'Testar pagamento do pacote'}).click();
+  await expect(region).toContainText('O checkout de teste ainda não foi ativado no servidor.');
+  expect(sent).toEqual({request_id:'00000000-0000-4000-8000-000000000010'});
+  await expect(region.getByRole('button',{name:'Testar pagamento do pacote'})).toBeEnabled();
+});
+test('aluno comum não vê checkout administrativo de teste',async({page})=>{
+  const calls=await mock(page);
+  await page.goto('/aluno');await page.getByLabel('E-mail',{exact:true}).fill('aluno@example.com');await page.getByLabel('Senha',{exact:true}).fill('senha-teste-123');await page.getByRole('button',{name:'Entrar',exact:true}).click();
+  await page.getByRole('button',{name:'Meus pacotes',exact:true}).click();
+  await expect.poll(()=>calls.some(c=>c.path.endsWith('/my_access_role'))).toBe(true);
+  await expect(page.getByRole('region',{name:'Teste de pagamento do administrador'})).toHaveCount(0);
+});
 test('prévia de depósito revisa sem gerar cobrança',async({page})=>{
   const calls=await mock(page);
   await page.goto('/aluno');await page.getByLabel('E-mail',{exact:true}).fill('aluno@example.com');await page.getByLabel('Senha',{exact:true}).fill('senha-teste-123');await page.getByRole('button',{name:'Entrar',exact:true}).click();

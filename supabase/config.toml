@@ -1,0 +1,4 @@
+# A função valida o JWT do usuário com Supabase Auth e exige papel admin.
+# Permite usar a chave pública sb_publishable no gateway das Edge Functions.
+[functions.mercado-pago-test-checkout]
+verify_jwt = false

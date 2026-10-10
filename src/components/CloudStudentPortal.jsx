@@ -1,4 +1,5 @@
 import { StudentWalletPreview } from "./StudentWalletPreview";
+import { PackageCheckoutTest } from "./PackageCheckoutTest";
 import { StudentRequests } from "./RequestBoard";
 import { StudentPackageOffer } from "./StudentPackageOffer";
 import { StudentLessons } from "./StudentLessons";
@@ -69,7 +70,7 @@ export function CloudStudentPortal() {
   const [data, setData] = useState(empty);
   const [loading, setLoading] = useState(false);
   const [failed, setFailed] = useState(false);
-  const [tab, setTab] = useState(requestedPackage ? "Meus pacotes" : "Início");
+  const [tab, setTab] = useState(requestedPackage || new URLSearchParams(location.search).get("checkout") === "teste" ? "Meus pacotes" : "Início");
   const [day, setDay] = useState("");
   const [category, setCategory] = useState("B");
   const [slots, setSlots] = useState(null);
@@ -115,7 +116,7 @@ export function CloudStudentPortal() {
           .maybeSingle(),
         supabase
           .from("packages")
-          .select("id,slug,name,category,lessons_a,lessons_b,price_cents")
+          .select("id,slug,name,category,lessons_a,lessons_b,price_cents,card_total_cents,card_installments,pricing_demo")
           .eq("active", true),
         supabase.from("credit_grants").select("student_id,lessons_a,lessons_b"),
         supabase
@@ -124,7 +125,7 @@ export function CloudStudentPortal() {
           .order("starts_at"),
         supabase
           .from("package_requests")
-          .select("id,student_id,package_id,package_name,status,reason"),
+          .select("id,student_id,package_id,package_name,status,reason,price_cents,created_at,review_started_at,payment_method,installment_count,coupon_code,discount_cents,pricing_demo"),
         supabase.from("site_settings").select("whatsapp,ai_enabled").single(),
       ]);
       const bad = responses.find((r) => r.error);
@@ -540,6 +541,10 @@ export function CloudStudentPortal() {
                 )}
                 {tab === "Meus pacotes" && (
                   <>
+                    <PackageCheckoutTest requests={data.requests} />
+                    {new URLSearchParams(location.search).get("checkout") === "teste" && (
+                      <p role="status" className="mb-4 rounded-xl bg-blue-50 p-4 text-sm">Você retornou do checkout de teste. Este retorno não confirma pagamento nem libera créditos. A confirmação automática será implementada na próxima etapa.</p>
+                    )}
                     <StudentRequests requests={data.requests} />
                     <p className="mb-5 text-sm text-slate-600">
                       Solicitar não gera cobrança. A equipe confirma as
