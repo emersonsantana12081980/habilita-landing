@@ -1,3 +1,4 @@
+import { AdminOverview } from "./AdminOverview";
 import { StudentRecord } from "./StudentRecord";
 import { RequestBoard } from "./RequestBoard";
 import React, { useEffect, useRef, useState } from "react";
@@ -53,7 +54,7 @@ export function CloudAdminPanel() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [data, setData] = useState(empty);
-  const [tab, setTab] = useState("Agenda");
+  const [tab, setTab] = useState("Resumo");
   const [editingStudent, setEditingStudent] = useState(undefined);
   const [historyStudent, setHistoryStudent] = useState(null);
   const [studentFilters, setStudentFilters] = useState({search:"",status:"active",category:""});
@@ -373,6 +374,7 @@ export function CloudAdminPanel() {
           <>
             <div className="my-5 flex flex-wrap gap-2">
               {[
+                "Resumo",
                 "Agenda",
                 "Alunos",
                 "Pedidos",
@@ -403,6 +405,12 @@ export function CloudAdminPanel() {
               <p role="status">Carregando dados…</p>
             ) : (
               <fieldset disabled={busy} className="min-w-0">
+                {tab === "Resumo" && <AdminOverview data={data} onLesson={setViewingLesson} onNavigate={(target,today)=>{
+                  setTab(target);setDay(today);setAgendaCategory("");setBooking({student:"",slot:""});
+                  if(target === "Alunos")setStudentFilters({search:"",status:"active",category:""});
+                  if(target === "Pedidos")setRequestFilters({search:"",category:"",result:"pending",from:"",to:""});
+                }} />}
+
                 {!!data.notifications.filter((n) => !n.read_at).length && (
                   <section className="admin-card mb-5">
                     <h2 className="font-bold">Novos agendamentos</h2>

@@ -2,6 +2,26 @@ import { test, expect } from "@playwright/test";
 const uid = "00000000-0000-4000-8000-000000000001";
 const user = { id: uid, aud: "authenticated", role: "authenticated", email: "aluno@example.com", email_confirmed_at: "2026-01-01T00:00:00Z", user_metadata: {}, app_metadata: {}, created_at: "2026-01-01T00:00:00Z" };
 const jwt = () => [Buffer.from(JSON.stringify({ alg: "HS256", typ: "JWT" })).toString("base64url"), Buffer.from(JSON.stringify({ sub: uid, aud: "authenticated", role: "authenticated", exp: Math.floor(Date.now()/1000)+3600 })).toString("base64url"), "testsignature"].join(".");
+test('resumo consulta vagas e abre listas com filtros corretos',async({page})=>{
+  await mock(page,false,true);
+  let failed=true;
+  await page.route('**/rest/v1/rpc/available_slots',r=>r.fulfill(failed?{status:500,json:{message:'Falha'}}:{json:[{id:'slot'}]}));
+  await page.goto('/admin');
+  await page.getByLabel('E-mail administrativo',{exact:true}).fill('admin@example.com');
+  await page.getByLabel('Senha',{exact:true}).fill('senha-teste-123');
+  await page.getByRole('button',{name:'Entrar no painel',exact:true}).click();
+  const summary=page.getByRole('region',{name:'Resumo do administrador'});
+  await expect(summary).toBeVisible();
+  await expect(summary).toContainText('Não foi possível consultar as vagas.');
+  failed=false;
+  await summary.getByRole('button',{name:'Tentar novamente',exact:true}).click();
+  await expect(summary).toContainText('Moto: 1 · Carro: 1');
+  await summary.getByRole('button',{name:/Pedidos pendentes/}).click();
+  await expect(page.getByLabel('Resultado do pedido')).toHaveValue('pending');
+  await page.getByRole('button',{name:'Resumo',exact:true}).click();
+  await summary.getByRole('button',{name:/Alunos ativos/}).click();
+  await expect(page.getByLabel('Situação do cadastro')).toHaveValue('active');
+});
 test('ficha reconcilia créditos e aulas sem misturar outros alunos',async({page})=>{
   await mock(page,false,true);
   await page.route('**/rest/v1/credit_grants*',r=>r.fulfill({json:[{id:'g1',student_id:'student1',request_id:'request1',lessons_a:2,lessons_b:5,reason:'Liberação manual'},{id:'g2',student_id:'other',lessons_a:100,lessons_b:100}]}));
@@ -133,6 +153,7 @@ test('edição individual trata conflito e salva sem criar outra aula', async ({
   await page.getByLabel('E-mail administrativo', {exact:true}).fill('admin@example.com');
   await page.getByLabel('Senha', {exact:true}).fill('senha-teste-123');
   await page.getByRole('button',{name:'Entrar no painel',exact:true}).click();
+  await page.getByRole('button',{name:'Agenda',exact:true}).click();
   await page.getByRole('button',{name:'Ver',exact:true}).click();
   await expect(page.getByRole('button',{name:'Excluir',exact:true})).toHaveCount(0);
   await expect(page.getByRole('dialog')).toBeVisible();
@@ -342,7 +363,7 @@ test('consulta de horários travada não bloqueia a configuração semanal', asy
   await page.getByLabel('E-mail administrativo',{exact:true}).fill('admin@example.com');
   await page.getByLabel('Senha',{exact:true}).fill('senha-teste-123');
   await page.getByRole('button',{name:'Entrar no painel',exact:true}).click();
-  await expect(page.getByRole('heading',{name:'Agendar para um aluno'})).toBeVisible();
+  await expect(page.getByRole('heading',{name:'Seu dia na Habilita+'})).toBeVisible();
   await page.getByRole('button',{name:'Configurar agenda',exact:true}).click();
   await expect(page.getByRole('button',{name:'Salvar e ativar rotina'})).toBeVisible();
 });
@@ -353,6 +374,7 @@ test('calendário semanal, edição de aluno, catálogo público e regras persis
  await page.getByLabel('E-mail administrativo').fill('admin@example.com');
  await page.getByLabel('Senha',{exact:true}).fill('senha-teste-123');
  await page.getByRole('button',{name:'Entrar no painel',exact:true}).click();
+ await page.getByRole('button',{name:'Agenda',exact:true}).click();
  await expect(page.getByRole('heading',{name:'Visão semanal'})).toBeVisible();
  await page.getByRole('button',{name:'Alunos',exact:true}).click();
  await page.getByRole('button',{name:'Editar aluno',exact:true}).click();
@@ -360,8 +382,10 @@ test('calendário semanal, edição de aluno, catálogo público e regras persis
  await page.getByRole('button',{name:'Salvar aluno'}).click();
  await expect(page.getByRole('heading',{name:'Aluno Atualizado'})).toBeVisible();
  expect(calls.find(c=>c.path.endsWith('/students')&&c.body?.name==='Aluno Atualizado').body).not.toHaveProperty('credits');
- await page.getByRole('button',{name:'Ver histórico'}).click();
+ await page.getByRole('button',{name:'Ver ficha'}).click();
+ await page.getByRole('dialog').getByRole('button',{name:'Aulas',exact:true}).click();
  await expect(page.getByText('Nenhuma aula registrada.')).toBeVisible();
+ await page.getByRole('button',{name:'Fechar ficha'}).click();
  await page.getByRole('button',{name:'Regras',exact:true}).click();
  await page.getByLabel('Máximo de aulas por aluno/dia').fill('3');
  await page.getByRole('button',{name:'Salvar regras'}).click();
