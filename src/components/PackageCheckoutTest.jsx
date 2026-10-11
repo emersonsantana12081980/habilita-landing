@@ -2,6 +2,58 @@ import React, { useEffect, useRef, useState } from "react";
 import { supabase } from "../lib/supabase";
 import { money } from "../store-data";
 
+const paymentLabels = {
+  approved: 'Aprovado no teste', pending: 'Pendente', in_process: 'Em análise',
+  authorized: 'Autorizado, aguardando captura', rejected: 'Recusado', cancelled: 'Cancelado',
+  refunded: 'Estornado', charged_back: 'Contestado', in_mediation: 'Em mediação',
+};
+
+function TestPaymentResults({ requests }) {
+  const [payments, setPayments] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [refresh, setRefresh] = useState(0);
+  useEffect(() => {
+    let alive = true;
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 10000);
+    setLoading(true);
+    setError('');
+    supabase.from('mp_test_payments')
+      .select('payment_id,request_id,amount_cents,status,confirmed_at')
+      .order('confirmed_at', { ascending: false }).limit(10)
+      .abortSignal(controller.signal)
+      .then(({ data, error: problem }) => {
+        if (!alive) return;
+        if (problem) setError('Não foi possível consultar as confirmações. Confira a instalação do SQL e tente atualizar.');
+        else setPayments(data || []);
+      }).catch(() => {
+        if (alive) setError('Não foi possível consultar as confirmações. Tente novamente.');
+      }).finally(() => { clearTimeout(timeout); if (alive) setLoading(false); });
+    return () => { alive = false; clearTimeout(timeout); controller.abort(); };
+  }, [refresh]);
+  return <div className="mt-5 border-t border-amber-200 pt-4">
+    <div className="flex flex-wrap items-center justify-between gap-2">
+      <h3 className="text-base font-bold">Confirmações do Mercado Pago</h3>
+      <button className="btn" disabled={loading} onClick={() => setRefresh(n => n + 1)}>
+        {loading ? 'Consultando…' : 'Atualizar pagamentos'}
+      </button>
+    </div>
+    <p className="mt-2 text-sm">Somente resultados verificados pelo servidor. Testes não adicionam saldo nem créditos de aulas.</p>
+    {error ? <p role="status" className="mt-2 text-sm text-red-800">{error}</p> :
+      !loading && !payments.length ? <p role="status" className="mt-3 text-sm">Nenhuma confirmação recebida. Após pagar, aguarde a notificação e clique em atualizar.</p> :
+      <ul className="mt-3 space-y-2" aria-label="Pagamentos de teste confirmados">
+        {payments.map(payment => <li key={payment.payment_id} className="flex flex-wrap items-center justify-between gap-2 rounded-lg bg-white p-3 text-sm">
+          <div><strong>{requests.find(r => r.id === payment.request_id)?.package_name || 'Pedido de teste'}</strong>
+            <p>Pagamento {payment.payment_id} · {money(payment.amount_cents / 100)}</p></div>
+          <span className={`rounded-full px-3 py-1 font-semibold ${payment.status === 'approved' ? 'bg-green-100 text-green-900' : 'bg-slate-100 text-slate-800'}`}>
+            {paymentLabels[payment.status] || 'Aguardando confirmação'}
+          </span>
+        </li>)}
+      </ul>}
+  </div>;
+}
+
 export function PackageCheckoutTest({ requests }) {
   const [admin, setAdmin] = useState(false);
   const [selected, setSelected] = useState("");
@@ -58,5 +110,6 @@ export function PackageCheckoutTest({ requests }) {
       <button disabled={busy} onClick={open} className="btn btn-green mt-3">{busy ? "Abrindo teste…" : "Testar pagamento do pacote"}</button>
     </> : <p className="mt-3 text-sm">Solicite um pacote com valores fictícios nesta conta para testar. O pedido precisa estar pendente.</p>}
     {message && <p role="status" className="mt-3 text-sm text-red-800">{message}</p>}
+    <TestPaymentResults requests={requests} />
   </section>;
 }

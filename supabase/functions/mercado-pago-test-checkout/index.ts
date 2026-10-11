@@ -10,6 +10,12 @@ const client = (authorization: string) => createClient(
 
 Deno.serve(createTestCheckoutHandler({
   env: (key: string) => Deno.env.get(key),
+  registerAttempt: async (args: Record<string, unknown>) => {
+    const db = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
+      { auth: { persistSession: false, autoRefreshToken: false } });
+    const { error } = await db.rpc("register_mp_test_attempt", args);
+    if (error) throw error;
+  },
   authenticate: async (authorization: string) => {
     const db = client(authorization);
     const { data, error } = await db.auth.getUser(authorization.slice(7));

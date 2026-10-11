@@ -24,6 +24,45 @@ test('aluno comum não vê checkout administrativo de teste',async({page})=>{
   await expect.poll(()=>calls.some(c=>c.path.endsWith('/my_access_role'))).toBe(true);
   await expect(page.getByRole('region',{name:'Teste de pagamento do administrador'})).toHaveCount(0);
 });
+
+test('confirmação verificada aparece após atualizar sem criar cobrança ou liberar créditos',async({page})=>{
+  const calls=await mock(page,false,true);
+  let confirmedStatus='in_process';
+  await page.route('**/rest/v1/mp_test_payments*',route=>{
+    expect(route.request().method()).toBe('GET');
+    return route.fulfill({json:[{payment_id:'456',request_id:'request1',amount_cents:29900,
+      status:confirmedStatus,confirmed_at:'2026-10-11T12:00:00Z'}]});
+  });
+  await page.goto('/aluno?checkout=teste&status=approved');
+  await page.getByLabel('E-mail',{exact:true}).fill('admin@example.com');
+  await page.getByLabel('Senha',{exact:true}).fill('senha-teste-123');
+  await page.getByRole('button',{name:'Entrar',exact:true}).click();
+  const region=page.getByRole('region',{name:'Teste de pagamento do administrador'});
+  await expect(region.getByText('Em análise',{exact:true})).toBeVisible();
+  await expect(region.getByText('Aprovado no teste',{exact:true})).toHaveCount(0);
+  confirmedStatus='approved';
+  await region.getByRole('button',{name:'Atualizar pagamentos'}).click();
+  await expect(region.getByText('Aprovado no teste',{exact:true})).toBeVisible();
+  expect(calls.some(c=>/resolve_package|record_mp_test_payment|mercado-pago-test-checkout/.test(c.path))).toBe(false);
+  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBeTruthy();
+});
+
+test('erro ao consultar confirmações permite tentar novamente',async({page})=>{
+  await mock(page,false,true);
+  let offline=true;
+  await page.route('**/rest/v1/mp_test_payments*',route=>{
+    return offline?route.fulfill({status:503,json:{message:'offline'}}):route.fulfill({json:[]});
+  });
+  await page.goto('/aluno?checkout=teste');
+  await page.getByLabel('E-mail',{exact:true}).fill('admin@example.com');
+  await page.getByLabel('Senha',{exact:true}).fill('senha-teste-123');
+  await page.getByRole('button',{name:'Entrar',exact:true}).click();
+  const region=page.getByRole('region',{name:'Teste de pagamento do administrador'});
+  await expect(region.getByRole('status')).toContainText('Não foi possível consultar',{timeout:15000});
+  offline=false;
+  await region.getByRole('button',{name:'Atualizar pagamentos'}).click();
+  await expect(region.getByRole('status')).toContainText('Nenhuma confirmação recebida');
+});
 test('prévia de depósito revisa sem gerar cobrança',async({page})=>{
   const calls=await mock(page);
   await page.goto('/aluno');await page.getByLabel('E-mail',{exact:true}).fill('aluno@example.com');await page.getByLabel('Senha',{exact:true}).fill('senha-teste-123');await page.getByRole('button',{name:'Entrar',exact:true}).click();

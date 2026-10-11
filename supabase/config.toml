@@ -2,3 +2,7 @@
 # Permite usar a chave pública sb_publishable no gateway das Edge Functions.
 [functions.mercado-pago-test-checkout]
 verify_jwt = false
+
+# O webhook valida HMAC do Mercado Pago; não recebe JWT de usuário.
+[functions.mercado-pago-test-webhook]
+verify_jwt = false

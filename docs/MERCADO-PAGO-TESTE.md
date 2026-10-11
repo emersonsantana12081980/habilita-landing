@@ -10,7 +10,7 @@ teste é configurado pelo titular diretamente nos Secrets do Supabase.
 - O checkout recebe o valor total salvo no pedido, incluindo o desconto já aplicado.
 - Não permite informar outro valor, pagar parcialmente nem usar pedidos de terceiros.
 - Valida no Mercado Pago que a credencial pertence a um vendedor fictício brasileiro.
-- Não grava pagamentos, não aprova pedidos, não libera aulas e não altera saldo real.
+- MP-04 registra tentativas e confirmações de teste, sem aprovar pedidos, liberar aulas ou alterar saldo real.
 - Alunos comuns não veem a seção; a função também verifica o papel administrativo.
 
 ## Configuração no Supabase (não enviar chaves pelo chat)
@@ -28,7 +28,8 @@ variáveis `VITE_*`, SQL, Git ou arquivos públicos. Não há credencial de prod
 
 ## Publicação da função
 
-Não exige nova migração SQL. Requer as migrações de preços/cupons e papéis já aplicadas.
+MP-04 exige a migração `202610110001_mp_test_confirmation.sql`. Siga primeiro
+`docs/MERCADO-PAGO-CONFIRMACAO-TESTE.md` para instalar o SQL e o webhook.
 A função tem dois arquivos em `supabase/functions/mercado-pago-test-checkout/`:
 `index.ts` e `handler.js`. Ambos devem ser publicados juntos.
 
@@ -40,10 +41,14 @@ npx supabase functions deploy mercado-pago-test-checkout --project-ref utxacavho
 
 `verify_jwt = false` desativa apenas a validação antiga do gateway. O código chama
 `auth.getUser` com o JWT do usuário e exige `my_access_role() = admin`. Consultas ao
-banco usam a sessão do usuário e RLS, sem chave service_role.
+banco para ler pedidos usam a sessão do usuário e RLS. O registro de tentativas e
+de confirmações usa a chave service_role somente no servidor.
 
-Alternativa: criar a função pelo editor de Edge Functions no Dashboard, adicionar
-os dois arquivos e desativar a opção de verificação JWT legada do gateway.
+Alternativa simples pelo Dashboard: executar `node scripts/build-mp-dashboard.mjs`
+e copiar todo o arquivo `docs/supabase-dashboard/mercado-pago-test-checkout.ts`
+para o `index.ts` do editor de Edge Functions. Essa versão contém os dois arquivos
+reunidos e dispensa criar `handler.js` no Dashboard. Desativar a opção de verificação
+JWT legada do gateway, mantendo a validação própria da sessão no código.
 
 Depois publicar o frontend pelo fluxo Git/Vercel. Os arquivos preparados localmente
 não significam que a função ou o site já foram publicados.
@@ -82,7 +87,31 @@ sucesso nunca comprova pagamento.
 Os testes de navegador validam acesso, preço mostrado e falha recuperável. Esses
 testes não validam a credencial salva nem executam transações no Mercado Pago.
 
+## Diagnóstico do erro de abertura (11/10/2026)
+
+A mensagem genérica observada em produção não identifica a causa. A versão revisada
+retorna apenas códigos controlados, sem imprimir respostas brutas nem credenciais:
+`TOKEN_FORMAT`, `SELLER_401`, `SELLER_403`, `PREFERENCE_400`, `ORDER`, etc.
+Não concluir que a credencial está errada sem evidência. Atualizar a função no
+Dashboard e repetir o teste autenticado para obter a etapa e o status HTTP.
+Alterar arquivos locais ou publicar o frontend na Vercel não atualiza essa função.
+
+O usuário obteve `PREFERENCE_400`: a validação local e a consulta ao vendedor de
+teste passaram, mas a criação da preferência foi recusada. Isso não identifica
+sozinho qual parâmetro falhou. A revisão seguinte lê somente códigos de erro
+conhecidos do JSON retornado pelo provedor; mensagens brutas são descartadas.
+Também envia início e fim da validade com offset explícito, conforme os exemplos
+oficiais. A causa externa e o sucesso do checkout ainda dependem de novo teste
+após publicar esse código na Edge Function.
+
 Referências:
+- Revisão MP-03: removida a exclusão de `account_money`, não permitida na API
+  Preferences segundo a documentação abaixo. Mantidos preço, parcelas e as
+  validações de teste. O checkout pode oferecer saldo da conta Mercado Pago.
+  Erros agora incluem MP-03 para identificar a versão implantada. Ainda é
+  necessário publicar o arquivo gerado na Edge Function e retestar; não há
+  confirmação de que essa incompatibilidade explica o 400 observado.
+- https://www.mercadopago.com.br/developers/en/docs/checkout-pro-preferences/additional-settings/payment-methods
 - https://www.mercadopago.com.br/developers/pt/reference/online-payments/checkout-pro-preferences/overview
 - https://supabase.com/docs/guides/functions/secrets
 - https://supabase.com/docs/guides/functions/deploy
