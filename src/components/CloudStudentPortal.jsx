@@ -1,4 +1,5 @@
 import { StudentWalletPreview } from "./StudentWalletPreview";
+import { StudentStart } from "./StudentStart";
 import { PackageCheckoutTest } from "./PackageCheckoutTest";
 import { StudentRequests } from "./RequestBoard";
 import { StudentPackageOffer } from "./StudentPackageOffer";
@@ -229,7 +230,7 @@ export function CloudStudentPortal() {
         if (result.user?.identities?.length) trackLanding("signup_complete");
         setMessage(
           result.session
-            ? "Cadastro criado. Seus créditos começam em zero."
+            ? "Cadastro criado! Escolha suas aulas para começar."
             : "Confira seu e-mail para confirmar o cadastro. Se já tem conta, entre pela área do aluno.",
         );
       } else {
@@ -270,6 +271,12 @@ export function CloudStudentPortal() {
   const canUse = session && data.student?.active && !loading && !failed;
   const pendingRequests = data.requests.filter((r) => r.status === "pending");
   const hasCredit = available("A") > 0 || available("B") > 0;
+  const hasLessons = data.lessons.some(l => l.status !== "cancelled");
+  const starting = !hasCredit && !hasLessons && !data.credits.length;
+  const initialCategory = data.packages.find(p => p.slug === requestedPackage)?.category || "";
+  const startView = <StudentStart packages={data.packages} requests={data.requests}
+    initialCategory={initialCategory} contact={whatsappUrl(data.settings?.whatsapp || "5512996225250", "Olá! Quero ajuda para escolher e combinar meu pacote de aulas.")}
+    onRequested={async () => { await refresh(session.user.id); setTab("Início"); setMessage("Recebemos seu interesse. Acompanhe os próximos passos abaixo."); }} />;
 
   return (
     <main className="min-h-screen bg-slate-50 pb-28 text-slate-900">
@@ -461,7 +468,7 @@ export function CloudStudentPortal() {
               </p>
             ) : (
               <>
-                <StudentWalletPreview moto={available("A")} carro={available("B")} />
+                {!starting && <StudentWalletPreview moto={available("A")} carro={available("B")} />}
                 <nav
                   aria-label="Área do aluno"
                   className="my-6 flex flex-wrap gap-2"
@@ -472,7 +479,7 @@ export function CloudStudentPortal() {
                     "Minhas aulas",
                     "Meu perfil",
                     "Agendar aula",
-                  ].map((name) => (
+                  ].filter(name => !(starting && name === "Minhas aulas") && !(name === "Agendar aula" && !hasCredit)).map((name) => (
                     <button
                       key={name}
                       onClick={() => {
@@ -486,7 +493,8 @@ export function CloudStudentPortal() {
                     </button>
                   ))}
                 </nav>
-                {tab === "Início" && (
+                {tab === "Início" && starting && startView}
+                {tab === "Início" && !starting && (
                   <>
                     <div className="mb-5 rounded-xl border border-green-200 bg-green-50 p-4">
                       <h2 className="font-bold">Seu próximo passo</h2>
@@ -494,7 +502,7 @@ export function CloudStudentPortal() {
                         {hasCredit ? "Você tem créditos disponíveis. Escolha uma data livre para sua aula." : pendingRequests.length ? "Seu pedido aguarda a equipe. Acompanhe a análise em Meus pacotes." : "Escolha um pacote para solicitar suas aulas. O cadastro é gratuito e não gera cobrança."}
                       </p>
                       <button className="btn btn-green mt-3" onClick={() => setTab(hasCredit ? "Agendar aula" : "Meus pacotes")}>
-                        {hasCredit ? "Agendar aula" : pendingRequests.length ? "Acompanhar pedido" : "Escolher pacote"}
+                        {hasCredit ? hasLessons ? "Agendar aula" : "Agendar minha primeira aula" : pendingRequests.length ? "Acompanhar pedido" : "Escolher pacote"}
                       </button>
                     </div>
                     {!!pendingRequests.length && <StudentRequests requests={pendingRequests} />}
@@ -546,6 +554,7 @@ export function CloudStudentPortal() {
                       <p role="status" className="mb-4 rounded-xl bg-blue-50 p-4 text-sm">Você retornou do checkout de teste. Este retorno não confirma pagamento nem libera créditos. A confirmação automática será implementada na próxima etapa.</p>
                     )}
                     <StudentRequests requests={data.requests} />
+                    {starting ? startView : <>
                     <p className="mb-5 text-sm text-slate-600">
                       Solicitar não gera cobrança. A equipe confirma as
                       condições e libera os créditos após análise.
@@ -568,7 +577,7 @@ export function CloudStudentPortal() {
                         />
                       ))}
                     </div>
-
+                    </>}
                   </>
                 )}
                 {tab === "Minhas aulas" && <BookingRules readOnly />}

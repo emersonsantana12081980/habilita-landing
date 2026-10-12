@@ -3,7 +3,8 @@ import { supabase } from "../lib/supabase";
 import { money } from "../store-data";
 import { PackagePrice } from "./PackagePrice";
 import { splitInstallments } from "../lib/package-pricing";
-export function StudentPackageOffer({ pack, pending, onRequested }) {
+export function StudentPackageOffer({ pack, pending, onRequested, guided = false }) {
+  const [expanded, setExpanded] = useState(!guided);
   const [method, setMethod] = useState("card"),
     [code, setCode] = useState(""),
     [quote, setQuote] = useState(null),
@@ -76,6 +77,8 @@ export function StudentPackageOffer({ pack, pending, onRequested }) {
         <p className="rounded-xl bg-amber-50 p-3 text-sm">
           Você já tem uma solicitação pendente deste pacote.
         </p>
+      ) : !expanded ? (
+        <button className="btn btn-green w-full" onClick={() => setExpanded(true)}>Tenho interesse neste pacote</button>
       ) : (
         <>
           <fieldset disabled={busy} className="space-y-3">
@@ -161,7 +164,7 @@ export function StudentPackageOffer({ pack, pending, onRequested }) {
               }
             }}
           >
-            {busy ? "Aguarde…" : "Solicitar pacote"}
+            {busy ? "Aguarde…" : guided ? "Enviar meu interesse" : "Solicitar pacote"}
           </button>
           {!quote && (
             <p className="mt-2 text-xs text-slate-500">
