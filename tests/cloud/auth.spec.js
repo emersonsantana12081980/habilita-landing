@@ -1,5 +1,53 @@
 import { test, expect } from "@playwright/test";
 
+test('admin consulta comprovante usando link temporário', async ({page}) => {
+  await mock(page, false, true);
+  await page.route('**/storage/v1/object/list/package-receipts', route => route.fulfill({json:[{name:'00000000-0000-4000-8000-000000000001.pdf'}]}));
+  await page.route('**/storage/v1/object/sign/package-receipts/**', route => {
+    expect(route.request().postDataJSON().expiresIn).toBe(60);
+    return route.fulfill({json:{signedURL:'/object/sign/package-receipts/request1/test.pdf?token=temporary'}});
+  });
+  await page.goto('/admin');
+  await page.getByLabel('E-mail administrativo').fill('admin@example.com');
+  await page.getByLabel('Senha',{exact:true}).fill('senha-teste-123');
+  await page.getByRole('button',{name:'Entrar no painel',exact:true}).click();
+  await page.getByRole('button',{name:'Pedidos (1)',exact:true}).click();
+  await page.getByText('Consultar comprovantes',{exact:true}).click();
+  await page.getByRole('button',{name:'Atualizar comprovantes'}).click();
+  await page.getByRole('button',{name:'Preparar comprovante 1'}).click();
+  await expect(page.getByRole('link',{name:'Abrir comprovante (link válido por 1 minuto)'})).toHaveAttribute('href',/token=temporary/);
+});
+
+test('Pix manual envia comprovante privado e mantém pedido pendente', async ({page}) => {
+  await mock(page);
+  let uploaded = false;
+  await page.route('**/rest/v1/package_requests*', route => route.fulfill({json:[{id:'request-pix',student_id:'student1',package_id:'package1',package_name:'Pacote Carro',price_cents:26910,status:'pending',payment_method:'cash',pricing_demo:true}]}));
+  await page.route('**/storage/v1/object/package-receipts/**', route => {
+    expect(route.request().method()).toBe('POST');
+    expect(route.request().url()).toMatch(/request-pix\/[0-9a-f-]+\.pdf$/);
+    uploaded = true;
+    return route.fulfill({json:{Key:'receipt'}});
+  });
+  await page.route('**/storage/v1/object/list/package-receipts', route => route.fulfill({json:uploaded ? [{name:'00000000-0000-4000-8000-000000000001.pdf'}] : []}));
+  await page.goto('/aluno');
+  await page.getByLabel('E-mail',{exact:true}).fill('aluno@example.com');
+  await page.getByLabel('Senha',{exact:true}).fill('senha-teste-123');
+  await page.getByRole('button',{name:'Entrar',exact:true}).click();
+  await expect(page.getByText('PIX-DEMONSTRACAO-SEM-VALIDADE',{exact:false})).toBeVisible();
+  const input = page.getByLabel('Anexar comprovante Pix',{exact:false});
+  await input.setInputFiles({name:'teste.txt',mimeType:'text/plain',buffer:Buffer.from('teste')});
+  await page.getByRole('button',{name:'Enviar comprovante para análise'}).click();
+  await expect(page.getByText('Escolha uma imagem JPG, PNG ou PDF de até 5 MB.')).toBeVisible();
+  expect(uploaded).toBe(false);
+  await input.setInputFiles({name:'teste.pdf',mimeType:'application/pdf',buffer:Buffer.from('%PDF-1.4 teste')});
+  await page.getByRole('button',{name:'Enviar comprovante para análise'}).click();
+  await expect(page.getByText('Comprovante enviado.',{exact:false})).toBeVisible();
+  await page.getByRole('button',{name:'Atualizar comprovantes'}).click();
+  await expect(page.getByRole('button',{name:'Preparar comprovante 1'})).toBeVisible();
+  await expect(page.getByRole('button',{name:'Agendar aula',exact:true})).toHaveCount(0);
+  expect(await page.evaluate(()=>document.documentElement.scrollWidth <= innerWidth)).toBeTruthy();
+});
+
 test('primeiro acesso orienta escolha e acompanha interesse sem duplicar', async ({page}) => {
   await mock(page);
   let requested = false, submissions = 0;
@@ -17,12 +65,12 @@ test('primeiro acesso orienta escolha e acompanha interesse sem duplicar', async
   await page.getByRole('button',{name:'Quero aulas de moto',exact:true}).click();
   await expect(page.getByText('Não há um pacote disponível nesta opção',{exact:false})).toBeVisible();
   await page.getByRole('button',{name:'Quero aulas de carro',exact:true}).click();
-  await page.getByRole('button',{name:'Tenho interesse neste pacote'}).click();
+  await page.getByRole('button',{name:'Escolher este pacote'}).click();
   await page.getByRole('button',{name:'Conferir valor',exact:true}).click();
-  await page.getByRole('button',{name:'Enviar meu interesse'}).click();
+  await page.getByRole('button',{name:'Continuar para pagamento'}).click();
   await expect(page.getByRole('heading',{name:'Recebemos seu interesse',exact:true})).toBeVisible();
   await expect(page.getByText('Não é necessário solicitar este pacote novamente.')).toBeVisible();
-  await expect(page.getByRole('button',{name:'Enviar meu interesse'})).toHaveCount(0);
+  await expect(page.getByRole('button',{name:'Continuar para pagamento'})).toHaveCount(0);
   expect(submissions).toBe(1);
   await page.getByRole('button',{name:'Quero conhecer outros pacotes'}).click();
   await page.getByRole('button',{name:'Quero aulas de carro',exact:true}).click();
@@ -373,9 +421,9 @@ test('cupom inválido, troca de forma e revalidação antes de solicitar',async(
   await page.getByRole('button',{name:'Entrar',exact:true}).click();
   await page.getByRole('button',{name:'Meus pacotes',exact:true}).click();
   await page.getByRole('button',{name:'Quero aulas de carro',exact:true}).click();
-  await page.getByRole('button',{name:'Tenho interesse neste pacote',exact:true}).click();
+  await page.getByRole('button',{name:'Escolher este pacote',exact:true}).click();
   await expect(page.getByText('Valores fictícios para visualização')).toBeVisible();
-  await expect(page.getByRole('button',{name:'Enviar meu interesse',exact:true})).toBeDisabled();
+  await expect(page.getByRole('button',{name:'Continuar para pagamento',exact:true})).toBeDisabled();
   await page.getByLabel('Cupom de desconto (opcional)').fill('ERRADO');
   await page.getByRole('button',{name:'Aplicar cupom',exact:true}).click();
   await expect(page.getByText('Cupom inválido, expirado ou não aplicável a este pacote')).toBeVisible();
@@ -383,15 +431,15 @@ test('cupom inválido, troca de forma e revalidação antes de solicitar',async(
   await page.getByRole('button',{name:'Aplicar cupom',exact:true}).click();
   await expect(page.getByText('Total: R$ 322,92')).toBeVisible();
   await page.getByLabel('Forma de pagamento').selectOption('cash');
-  await expect(page.getByRole('button',{name:'Enviar meu interesse',exact:true})).toBeDisabled();
+  await expect(page.getByRole('button',{name:'Continuar para pagamento',exact:true})).toBeDisabled();
   await page.getByRole('button',{name:'Aplicar cupom',exact:true}).click();
   await expect(page.getByText('Total: R$ 269,10')).toBeVisible();
-  await page.getByRole('button',{name:'Enviar meu interesse',exact:true}).click();
+  await page.getByRole('button',{name:'Continuar para pagamento',exact:true}).click();
   await expect(page.getByText('Cupom inválido, expirado ou não aplicável a este pacote')).toBeVisible();
-  await expect(page.getByRole('button',{name:'Enviar meu interesse',exact:true})).toBeDisabled();
+  await expect(page.getByRole('button',{name:'Continuar para pagamento',exact:true})).toBeDisabled();
   await page.getByLabel('Cupom de desconto (opcional)').fill('');
   await page.getByRole('button',{name:'Conferir valor',exact:true}).click();
-  await page.getByRole('button',{name:'Enviar meu interesse',exact:true}).click();
+  await page.getByRole('button',{name:'Continuar para pagamento',exact:true}).click();
   await expect(page.getByText('Recebemos seu interesse. Acompanhe os próximos passos abaixo.')).toBeVisible();
   expect(sent[0]).toEqual({p_package:'package1',p_coupon:'HABILITA10',p_method:'cash',p_expected_total:26910,p_expected_installments:1});
   expect(sent[1].p_coupon).toBe('');expect(sent[1].p_expected_total).toBe(29900);

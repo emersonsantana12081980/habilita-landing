@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Car, Bike, CheckCircle2, ArrowRight } from "lucide-react";
 import { StudentPackageOffer } from "./StudentPackageOffer";
+import { ManualPayment } from "./ManualPayment";
 import { money } from "../store-data";
 
 export function StudentStart({ packages, requests, contact, onRequested, initialCategory = "" }) {
@@ -27,6 +28,7 @@ export function StudentStart({ packages, requests, contact, onRequested, initial
           <p className="mt-2 text-sm text-slate-600">{r.review_started_at ? "A equipe está analisando sua solicitação." : "Solicitação recebida. Aguarde o contato da equipe ou fale conosco pelo WhatsApp."}</p>
           <p className="mt-2 text-sm text-slate-600">Não é necessário solicitar este pacote novamente.</p>
         </div></div>
+        <ManualPayment request={r}/>
       </article>)}
       <button className="rounded-lg px-1 py-3 text-sm font-semibold text-green-800 underline" onClick={() => setShowMore(v => !v)}>{showMore ? "Ocultar outros pacotes" : "Quero conhecer outros pacotes"}</button>
     </div>}

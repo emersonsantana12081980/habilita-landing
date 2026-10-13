@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { ManualPayment } from "./ManualPayment";
 import { money } from "../store-data";
 import { supabase } from "../lib/supabase";
 
@@ -41,6 +42,7 @@ export function RequestBoard({ requests, students, reasons, setReasons, act, fil
           <p className="mt-3 font-bold">{money(r.price_cents/100)}</p>
           <p className="text-xs text-slate-500">{r.lessons_a} aulas de moto · {r.lessons_b} aulas de carro</p>
           {r.original_price_cents && <p className="mt-2 text-xs text-slate-600">Original: {money(r.original_price_cents/100)} · Desconto: {money(r.discount_cents/100)}{r.coupon_code && ` · Cupom: ${r.coupon_code}`} · {r.payment_method === "card" ? `${r.installment_count}x no cartão` : "À vista"}{r.pricing_demo && " · Valores fictícios"}</p>}
+          <ManualPayment request={r} admin/>
           {stage === "requested" && <button className="mt-3 w-full rounded-lg bg-blue-50 px-3 py-2 font-semibold text-blue-800" onClick={()=>act(()=>supabase.rpc("start_package_review",{p_request:r.id}),"Pedido em análise.")}>Iniciar análise</button>}
           {r.status === "pending" ? <details className="mt-3" open={stage === "review" || undefined}>
             <summary className="cursor-pointer text-sm font-semibold">Decidir pedido</summary>
@@ -68,6 +70,7 @@ export function StudentRequests({ requests }) {
         {r.payment_method === "card" && <p className="text-xs">{r.installment_count}x no cartão</p>}
         {r.coupon_code && <p className="text-xs">Cupom {r.coupon_code} · desconto de {money(r.discount_cents/100)}</p>}
         {r.pricing_demo && <p className="text-xs text-amber-900">Valores fictícios para visualização</p>}
+        <ManualPayment request={r}/>
         {r.reason && <p className="mt-1 break-words text-xs">{r.reason}</p>}
       </li>)}</ul>
       {!requests.length && <p className="p-3 text-sm text-slate-500">Nenhuma solicitação por enquanto.</p>}

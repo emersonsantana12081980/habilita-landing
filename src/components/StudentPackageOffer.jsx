@@ -78,7 +78,7 @@ export function StudentPackageOffer({ pack, pending, onRequested, guided = false
           Você já tem uma solicitação pendente deste pacote.
         </p>
       ) : !expanded ? (
-        <button className="btn btn-green w-full" onClick={() => setExpanded(true)}>Tenho interesse neste pacote</button>
+        <button className="btn btn-green w-full" onClick={() => setExpanded(true)}>Escolher este pacote</button>
       ) : (
         <>
           <fieldset disabled={busy} className="space-y-3">
@@ -88,8 +88,8 @@ export function StudentPackageOffer({ pack, pending, onRequested, guided = false
                 value={method}
                 onChange={(e) => change(() => setMethod(e.target.value))}
               >
-                <option value="card">Parcelado no cartão</option>
-                <option value="cash">À vista</option>
+                <option value="card">Cartão de crédito parcelado</option>
+                <option value="cash">Pix à vista</option>
               </select>
             </label>
             <label>
@@ -164,11 +164,11 @@ export function StudentPackageOffer({ pack, pending, onRequested, guided = false
               }
             }}
           >
-            {busy ? "Aguarde…" : guided ? "Enviar meu interesse" : "Solicitar pacote"}
+            {busy ? "Aguarde…" : "Continuar para pagamento"}
           </button>
           {!quote && (
             <p className="mt-2 text-xs text-slate-500">
-              Confira o valor ou aplique o cupom para continuar.
+              Confira o valor ou aplique o cupom para continuar. O pagamento ser? acompanhado manualmente pela equipe.
             </p>
           )}
         </>
