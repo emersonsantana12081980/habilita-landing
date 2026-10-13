@@ -1,5 +1,32 @@
 import { test, expect } from "@playwright/test";
 
+test('painéis responsivos preservam navegação e mostram agenda semanal', async ({page}, testInfo) => {
+  await mock(page, false, true);
+  await page.goto('/admin');
+  await page.getByLabel('E-mail administrativo').fill('admin@example.com');
+  await page.getByLabel('Senha',{exact:true}).fill('senha-teste-123');
+  await page.getByRole('button',{name:'Entrar no painel',exact:true}).click();
+  await expect(page.getByRole('region',{name:'Agenda da semana',exact:true})).toBeVisible();
+  const week = page.getByRole('region',{name:'Agenda da semana',exact:true});
+  const currentRange = await week.locator('[aria-live="polite"]').textContent();
+  await week.getByRole('button',{name:'Próxima semana',exact:true}).click();
+  await expect(week.locator('[aria-live="polite"]')).not.toHaveText(currentRange);
+  await week.getByRole('button',{name:'Hoje',exact:true}).click();
+  await expect(week.locator('[aria-live="polite"]')).toHaveText(currentRange);
+  expect(await page.evaluate(()=>document.documentElement.scrollWidth <= innerWidth)).toBeTruthy();
+  await page.screenshot({path:`artifacts/redesign/admin-${testInfo.project.name}.png`,fullPage:true});
+  await page.getByRole('button',{name:'Abrir agenda',exact:true}).click();
+  await expect(page.getByRole('button',{name:'Agenda',exact:true})).toHaveAttribute('aria-current','page');
+  await page.goto('/aluno');
+  await expect(page.getByRole('navigation',{name:'Área do aluno',exact:true})).toBeVisible();
+  expect(await page.evaluate(()=>document.documentElement.scrollWidth <= innerWidth)).toBeTruthy();
+  await page.screenshot({path:`artifacts/redesign/aluno-${testInfo.project.name}.png`,fullPage:true});
+  await page.goto('/');
+  await expect(page.getByRole('heading',{name:'Sua CNH com segurança e confiança.'})).toBeVisible();
+  expect(await page.evaluate(()=>document.documentElement.scrollWidth <= innerWidth)).toBeTruthy();
+  await page.screenshot({path:`artifacts/redesign/inicio-${testInfo.project.name}.png`,fullPage:true});
+});
+
 test('admin consulta comprovante usando link temporário', async ({page}) => {
   await mock(page, false, true);
   await page.route('**/storage/v1/object/list/package-receipts', route => route.fulfill({json:[{name:'00000000-0000-4000-8000-000000000001.pdf'}]}));

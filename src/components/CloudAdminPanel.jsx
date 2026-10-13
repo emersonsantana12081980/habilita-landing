@@ -1,3 +1,4 @@
+import { PortalNavIcon } from "./PortalNavIcon";
 import { SiteSettings } from "./SiteSettings";
 import { AdminOverview } from "./AdminOverview";
 import { StudentRecord } from "./StudentRecord";
@@ -266,10 +267,10 @@ export function CloudAdminPanel() {
     ).length;
 
   return (
-    <main className="min-h-screen bg-slate-50 pb-16">
+    <main className="portal-shell admin-shell min-h-screen bg-slate-50 pb-16">
       <header className="border-b bg-white">
         <div className="container flex flex-wrap items-center justify-between gap-4 py-5">
-          <Brand />
+          <Brand /><span className="portal-area-title">Área administrativa</span>
           {access !== "login" && access !== "loading" && (
             <button
               disabled={busy}
@@ -373,7 +374,7 @@ export function CloudAdminPanel() {
           </button>
         ) : (
           <>
-            <div className="my-5 flex flex-wrap gap-2">
+            <div className="portal-nav my-5 flex flex-wrap gap-2">
               {[
                 "Resumo",
                 "Agenda",
@@ -388,9 +389,10 @@ export function CloudAdminPanel() {
                 <button
                   key={t}
                   className={`rounded-xl px-4 py-3 font-bold ${t === tab ? "bg-slate-900 text-white" : "border bg-white"}`}
+                  aria-current={t === tab ? "page" : undefined}
                   onClick={() => setTab(t)}
                 >
-                  {t}
+                  <PortalNavIcon name={t}/><span>{t}</span>
                   {t === "Pedidos" &&
                     ` (${data.requests.filter((r) => r.status === "pending").length})`}
                 </button>

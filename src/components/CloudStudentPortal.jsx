@@ -1,3 +1,6 @@
+import { UpcomingLessons } from "./UpcomingLessons";
+import { PortalNavIcon } from "./PortalNavIcon";
+import { StudentSummary } from "./StudentSummary";
 import { StudentWalletPreview } from "./StudentWalletPreview";
 import { StudentStart } from "./StudentStart";
 import { PackageCheckoutTest } from "./PackageCheckoutTest";
@@ -279,10 +282,10 @@ export function CloudStudentPortal() {
     onRequested={async () => { await refresh(session.user.id); setTab("Início"); setMessage("Recebemos seu interesse. Acompanhe os próximos passos abaixo."); }} />;
 
   return (
-    <main className="min-h-screen bg-slate-50 pb-28 text-slate-900">
+    <main className="portal-shell student-shell min-h-screen bg-slate-50 pb-28 text-slate-900">
       <header className="border-b bg-white">
         <div className="container flex flex-wrap items-center justify-between gap-4 py-5">
-          <Brand />
+          <Brand /><span className="portal-area-title">Área do aluno</span>
           <a href="/" className="text-sm font-semibold">
             Voltar ao site
           </a>
@@ -468,10 +471,10 @@ export function CloudStudentPortal() {
               </p>
             ) : (
               <>
-                {!starting && <StudentWalletPreview moto={available("A")} carro={available("B")} />}
+                {!starting && <><StudentSummary lessons={data.lessons} moto={available("A")} carro={available("B")}/><details className="wallet-details"><summary>Minha carteira de aulas</summary><StudentWalletPreview moto={available("A")} carro={available("B")} /></details></>}
                 <nav
                   aria-label="Área do aluno"
-                  className="my-6 flex flex-wrap gap-2"
+                  className="portal-nav my-6 flex flex-wrap gap-2"
                 >
                   {[
                     "Início",
@@ -489,7 +492,7 @@ export function CloudStudentPortal() {
                       className={`rounded-xl px-4 py-3 text-sm font-bold ${tab === name ? "bg-slate-900 text-white" : "border bg-white"}`}
                       aria-current={tab === name ? "page" : undefined}
                     >
-                      {name}
+                      <PortalNavIcon name={name}/><span>{name}</span>
                     </button>
                   ))}
                 </nav>
@@ -506,45 +509,7 @@ export function CloudStudentPortal() {
                       </button>
                     </div>
                     {!!pendingRequests.length && <StudentRequests requests={pendingRequests} />}
-                    <div className="grid gap-4 sm:grid-cols-2">
-                      {["A", "B"].map((cat) => (
-                        <div key={cat} className="admin-card">
-                          <h2 className="font-bold">
-                            {cat === "A" ? "Moto" : "Carro"}
-                          </h2>
-                          <p className="my-3 text-4xl font-extrabold">
-                            {available(cat)}
-                          </p>
-                          <p className="text-sm text-slate-600">
-                            Créditos disponíveis para agendar
-                          </p>
-                        </div>
-                      ))}
-                    </div>
-                    <div className="admin-card mt-5">
-                      <h2 className="font-bold">Próxima aula</h2>
-                      <p className="mt-3">
-                        {data.lessons.find(
-                          (l) =>
-                            l.status === "scheduled" &&
-                            new Date(l.ends_at) > new Date(),
-                        )
-                          ? date(
-                              data.lessons.find(
-                                (l) =>
-                                  l.status === "scheduled" &&
-                                  new Date(l.ends_at) > new Date(),
-                              ).starts_at,
-                            )
-                          : "Você ainda não tem uma aula agendada."}
-                      </p>
-                      <button
-                        className="btn btn-green mt-4"
-                        onClick={() => setTab("Meus pacotes")}
-                      >
-                        Conhecer os pacotes
-                      </button>
-                    </div>
+                    <UpcomingLessons lessons={data.lessons} onAgenda={() => setTab("Minhas aulas")} onPackages={() => setTab("Meus pacotes")}/>
                   </>
                 )}
                 {tab === "Meus pacotes" && (

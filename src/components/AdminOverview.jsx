@@ -1,3 +1,4 @@
+import { OverviewWeek } from "./OverviewWeek";
 import React, { useEffect, useState } from "react";
 import { supabase } from "../lib/supabase";
 
@@ -28,6 +29,7 @@ export function AdminOverview({data,onNavigate,onLesson}) {
       ].map(([title,count,target,note])=><button key={title} className="rounded-2xl border bg-white p-5 text-left shadow-sm" onClick={()=>onNavigate(target,day)}><span className="font-semibold">{title}</span><strong className="my-2 block text-3xl">{count}</strong><span className="text-xs text-slate-600">{note}</span></button>)}
       <div className="rounded-2xl border bg-white p-5 shadow-sm"><h3 className="font-semibold">Horários livres hoje</h3>{error?<><p role="status" className="my-2 text-sm">Não foi possível consultar as vagas.</p><button className="text-sm underline" onClick={()=>setRetry(n=>n+1)}>Tentar novamente</button></>:slots?<><strong className="my-2 block text-3xl">{slots[0]+slots[1]}</strong><p className="text-xs text-slate-600">Moto: {slots[0]} · Carro: {slots[1]}</p></>:<p className="my-3 text-sm" role="status">Consultando vagas…</p>}<button className="mt-3 text-sm font-semibold text-green-800 underline" onClick={()=>onNavigate("Agenda",day)}>Consultar agenda</button></div>
     </div>
+    <OverviewWeek lessons={data.lessons} students={data.students} onLesson={onLesson} onNavigate={onNavigate}/>
     <p className="text-xs text-slate-500">Vagas representam opções de agendamento, sujeitas a crédito e confirmação. Opções podem compartilhar instrutor ou veículo.</p>
     <div className="rounded-2xl border bg-white p-5"><h3 className="mb-3 font-bold">Aulas do dia</h3><ul className="divide-y">{lessons.slice(0,8).map(l=><li key={l.id} className="flex items-center justify-between gap-3 py-3"><div><p className="font-semibold">{time(l.starts_at)} · {data.students.find(s=>s.id===l.student_id)?.name || "Aluno"}</p><p className="text-sm text-slate-600">Categoria {l.category} · {{scheduled:"Agendada",completed:"Realizada",missed:"Falta"}[l.status]}</p></div><button className="rounded-lg border px-3 py-2 text-sm" onClick={()=>onLesson(l)}>Ver aula</button></li>)}</ul>{!lessons.length && <p className="text-sm text-slate-600">Nenhuma aula não cancelada para hoje.</p>}<button className="mt-4 text-sm font-semibold text-green-800 underline" onClick={()=>onNavigate("Agenda",day)}>Abrir agenda completa</button></div>
   </section>;

@@ -1,4 +1,120 @@
 @import "tailwindcss";
+
+/* Identidade Habilita Mais: amarelo nas ações, painéis claros e navegação lateral. */
+.public-landing, .portal-shell { --hm-ink: #0e213b; --hm-yellow: #facc15; }
+.public-landing .btn-green, .portal-shell .btn-green {
+  background: var(--hm-yellow); color: #17252d; box-shadow: 0 3px 0 #d9a91720;
+}
+.public-landing .btn-green:hover, .portal-shell .btn-green:hover { background: #f4c21b; transform: translateY(-1px); }
+.public-landing .btn-green:disabled, .portal-shell .btn-green:disabled { background: #e7e9ec; color: #68747a; transform: none; box-shadow: none; }
+.public-landing .reference-hero { background: #0e213b; color: white; overflow: hidden; }
+.reference-hero > .container { position: relative; min-height: 650px; gap: 48px; }
+.reference-hero h1 { font-size: clamp(2.7rem, 5vw, 4.8rem); max-width: 650px; letter-spacing: -.045em; }
+.reference-hero h1 span { color: #ffd02d; }
+.reference-hero p.text-slate-600, .reference-hero ul { color: #e1e7e8; }
+.reference-hero li svg { color: #ffd02d; }
+.reference-hero figure { position: relative; border-radius: 20px; background: #223941; border: 1px solid #ffffff26; box-shadow: 0 25px 60px #0003; }
+.reference-hero figure img { min-height: 260px; object-fit: cover; }
+.reference-hero figcaption { border-top: 4px solid #ffd02d; }
+.reference-hero figcaption p:first-child { color: #ffd02d; }
+.landing-benefits { background: #f6f5f1; border: 0; }
+.landing-benefits > .container { padding-top: 24px; padding-bottom: 24px; }
+.landing-benefits p { border: 1px solid #ecece8; background: white; padding: 24px 18px; border-radius: 12px; box-shadow: 0 8px 22px #1b303507; align-items: center; }
+.landing-benefits svg { color: #26383f; }
+.lesson-path-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 18px; margin-top: 32px; }
+.lesson-path { display: block; position: relative; padding: 26px; border: 1px solid #e5e8e8; border-radius: 16px; background: #fff; transition: border-color .2s, transform .2s; }
+.lesson-path:hover { border-color: #d8b022; transform: translateY(-4px); }
+.lesson-path-number { display: block; font-size: 40px; color: #d9dfe0; font-weight: 800; letter-spacing: -.06em; }
+.lesson-path-tag { display: inline-block; margin-top: 20px; padding: 4px 9px; background: #fff5ce; color: #675215; font-size: 11px; font-weight: 700; border-radius: 5px; }
+.lesson-path h3 { font-size: 20px; margin-top: 15px; font-weight: 750; letter-spacing: -.025em; }
+.lesson-path p { font-size: 14px; color: #647078; line-height: 1.7; margin-top: 12px; }
+.lesson-path-link { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 700; margin-top: 22px; }
+.journey-section { background: #192c34; border-radius: 22px; color: white; margin-bottom: 50px; }
+.journey-section .eyebrow, .journey-section article > span { color: #ffd02d; }
+.journey-section article { border-color: #ffffff20; background: #ffffff05; }
+.journey-section article p { color: #d2dcdf; }
+.portal-shell { background: #f5f7f8; color: #20313a; }
+.portal-shell > header { background: #0e213b; color: white; border: none; }
+.portal-shell > header .container { min-height: 85px; }
+.portal-shell > header .brand-symbol { background: white; border-radius: 9px; }
+.portal-shell > header .text-green-600 { color: #ffd02d; }
+.portal-area-title { font-weight: 650; font-size: 15px; margin-right: auto; padding-left: 26px; border-left: 1px solid #ffffff30; }
+.portal-shell > .container { position: relative; max-width: 1500px; min-height: calc(100vh - 100px); }
+.portal-shell h1 { font-size: clamp(25px, 3vw, 32px); letter-spacing: -.035em; }
+.portal-shell h2 { font-size: 22px; letter-spacing: -.025em; }
+.portal-shell .admin-card { border-color: #e7ebee; border-radius: 15px; box-shadow: 0 5px 18px #21334204; }
+.portal-shell section[aria-label="Resumo do administrador"] > .grid > *,
+.portal-shell section[aria-label="Resumo do administrador"] > div.rounded-2xl { border-color: #e7ebee; }
+.public-landing a[href*="wa.me"], .portal-shell a[href*="wa.me"].btn-green { background: #15803d; color: white; }
+.portal-nav { padding: 10px; background: white; border: 1px solid #e9edef; border-radius: 14px; }
+.portal-nav button { display: flex; align-items: center; gap: 10px; text-align: left; font-size: 13px; font-weight: 600; min-height: 46px; border: none; color: #4c5c65; background: transparent; }
+.portal-nav button svg { flex-shrink: 0; }
+.portal-nav button:hover { background: #f5f7f8; }
+.portal-nav button[aria-current="page"] { color: #252b25; background: #ffdd6b; box-shadow: inset 3px 0 0 #f0b800; }
+.student-stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; margin: 26px 0 16px; }
+.student-stats article { position: relative; border: 1px solid #e7ebee; border-radius: 13px; padding: 20px; background: white; }
+.student-stats svg { color: #9ba8ad; margin-bottom: 12px; }
+.student-stats p { color: #64727c; font-size: 12px; }
+.student-stats strong { display: block; font-size: 30px; margin-top: 5px; letter-spacing: -.04em; }
+.wallet-details { margin: 16px 0 22px; }
+.wallet-details > summary { font-size: 13px; font-weight: 600; color: #63737b; padding: 8px 0; }
+.student-shell section[aria-label="Comece suas aulas"] > div:first-child { background: linear-gradient(120deg, #1c313b, #304953); position: relative; overflow: hidden; }
+.student-shell section[aria-label="Comece suas aulas"] > div:first-child::after { content: "+"; position: absolute; right: 15px; bottom: -80px; font-size: 250px; line-height: 1; font-weight: 800; color: #ffffff04; pointer-events: none; }
+.student-shell section[aria-label="Comece suas aulas"] > div:first-child > p:first-child { color: #ffdb65; }
+.student-shell section[aria-label="Comece suas aulas"] button[aria-pressed="true"] { background: #fff8df; border-color: #ebc24a; color: #383326; }
+.overview-week { border: 1px solid #e5ebed; border-radius: 16px; background: white; padding: 22px; }
+.overview-week-heading { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 20px; }
+.overview-week-heading h3 { font-size: 20px; font-weight: 750; margin-top: 6px; }
+.overview-week-heading .eyebrow { font-size: 10px; color: #78858b; }
+.overview-week-scroll { overflow-x: auto; }
+.overview-week-grid { display: grid; grid-template-columns: repeat(7, minmax(100px, 1fr)); min-width: 740px; border: 1px solid #e9edef; border-radius: 10px; overflow: hidden; }
+.overview-week-day { border-right: 1px solid #e9edef; }
+.overview-week-day:last-child { border: 0; }
+.overview-week-day header { background: #f7f9fa; padding: 12px 8px; text-align: center; border-bottom: 1px solid #e9edef; }
+.overview-week-day header span { display: block; color: #6a7b84; font-size: 11px; }
+.overview-week-day header strong { font-size: 14px; }
+.overview-week-day header.is-today { background: #fff3bd; }
+.overview-week-events { min-height: 210px; padding: 8px 5px; background: repeating-linear-gradient(white,white 51px,#f5f7f8 52px); }
+.week-event { display: block; width: 100%; border-left: 3px solid #6295d6; background: #e9f0ff; color: #28466a; border-radius: 5px; padding: 9px 6px; text-align: left; font-size: 11px; margin-bottom: 8px; }
+.week-event span, .week-event small { display: block; margin-top: 3px; overflow-wrap: anywhere; }
+.week-event-moto { background: #ddf2e9; color: #295b48; border-color: #50a784; }
+.week-empty { font-size: 11px; text-align: center; color: #9aa6ad; margin-top: 25px; }
+.week-controls { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin: 0 0 16px; font-size: 12px; color: #526570; }
+.week-controls button { min-width: 40px; min-height: 40px; padding: 8px 12px; border: 1px solid #e5ebed; border-radius: 8px; font-weight: 650; }
+.week-controls button:hover { background: #fff6d3; }
+.lesson-date { display: flex; flex-direction: column; justify-content: center; text-align: center; flex-shrink: 0; width: 60px; min-height: 68px; border: 1px solid #e7ebee; border-radius: 10px; background: #f7f9fa; }
+.lesson-date strong { font-size: 25px; line-height: 1.2; }
+.lesson-date span { font-size: 11px; text-transform: uppercase; color: #6c7b84; }
+.portal-shell > .container > h1 + p { max-width: 650px; }
+@media (min-width: 1100px) {
+  .reference-hero > .container { display: block; min-height: 690px; padding-top: 80px; padding-bottom: 80px; }
+  .reference-hero > .container > div { position: relative; width: 54%; z-index: 2; }
+  .reference-hero figure { position: absolute; inset: 0 0 0 auto; width: 59%; border: 0; border-radius: 0; box-shadow: none; }
+  .reference-hero figure::after { content: ""; position: absolute; inset: 0; background: linear-gradient(90deg,#0e213b 0%,#0e213b99 20%,#0e213b00 70%); pointer-events: none; }
+  .reference-hero figure img { height: 100%; width: 100%; object-fit: cover; object-position: 42% center; opacity: .8; }
+  .reference-hero figcaption { position: absolute; bottom: 26px; right: 24px; max-width: 300px; z-index: 1; background: #0e213be6; border-radius: 12px; padding: 20px; }
+  .reference-hero figcaption p:nth-child(2) { font-size: 20px; }
+  .portal-shell > .container:has(.portal-nav) { padding-left: 254px; padding-right: 34px; }
+  .portal-nav { position: absolute; top: 0; left: 24px; width: 204px; flex-direction: column; gap: 5px; margin-top: 32px; padding: 13px 10px; }
+  .portal-nav::before { content: "SEU ESPAÇO"; font-size: 10px; color: #8b999f; font-weight: 700; letter-spacing: .13em; padding: 12px 14px; }
+  .admin-shell .portal-nav::before { content: "GERENCIAR"; }
+}
+@media (max-width: 767px) {
+  .portal-area-title { display: none; }
+  .reference-hero > .container { gap: 26px; min-height: auto; }
+  .reference-hero figure img { min-height: auto; }
+  .lesson-path-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  .lesson-path { padding: 18px; }
+  .lesson-path h3 { font-size: 17px; }
+  .landing-benefits p { padding: 16px 12px; flex-direction: column; text-align: center; font-size: 12px; }
+  .student-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  .student-stats article { padding: 16px; }
+  .portal-nav { gap: 3px; padding: 6px; }
+  .portal-nav button { padding: 10px; font-size: 12px; gap: 6px; }
+  .overview-week { padding: 14px; }
+  .overview-week-heading { align-items: start; }
+  .overview-week-heading .btn { padding: 8px 10px; font-size: 12px; }
+}
 @theme {
   --font-sans: "Segoe UI", Arial, sans-serif;
 }

@@ -125,7 +125,7 @@ export function LandingPage({ data, error }) {
         )}
       </header>
       <main id="conteudo">
-        <section className="hero">
+        <section className="hero reference-hero">
           <div className="container grid items-center gap-10 py-10 md:py-16 lg:grid-cols-[1.1fr_1fr] lg:py-20">
             <div>
               <p className="inline-flex items-center gap-2 rounded-full bg-yellow-100 px-3 py-2 text-xs font-bold text-yellow-950">
@@ -133,9 +133,9 @@ export function LandingPage({ data, error }) {
                 Aulas práticas em {data.city} e região
               </p>
               <h1 className="mt-6 text-[clamp(2.1rem,4vw,3.5rem)] font-extrabold leading-[1.08] tracking-[-.04em]">
-                Ganhe confiança para dirigir{" "}
+                Sua CNH com segurança{" "}
                 <span className="text-green-700">
-                  e prepare-se para o exame da CNH.
+                  e confiança.
                 </span>
               </h1>
               <p className="mt-5 max-w-xl text-base leading-7 text-slate-600">
@@ -202,7 +202,7 @@ export function LandingPage({ data, error }) {
         </section>
         <section
           aria-label="Sobre o atendimento"
-          className="border-y border-slate-200"
+          className="landing-benefits border-y border-slate-200"
         >
           <div className="container grid grid-cols-2 gap-5 py-7 lg:grid-cols-4">
             {[
@@ -225,7 +225,15 @@ export function LandingPage({ data, error }) {
             ))}
           </div>
         </section>
-        <section id="como-funciona" className="container section-space">
+        <section className="container lesson-paths section-space" aria-label="Aulas para cada objetivo">
+          <p className="eyebrow">DO PRIMEIRO PASSO À CONFIANÇA</p>
+          <h2>Aulas para o seu momento.</h2>
+          <p className="section-subtitle">Escolha seu objetivo. A Habilita Mais ajuda você a seguir em frente.</p>
+          <div className="lesson-path-grid">
+            {[["01", "Primeira habilitação", "Comece suas aulas práticas de carro, moto ou ambos.", "A, B ou A/B"], ["02", "Voltar a dirigir", "Retome a prática e ganhe confiança no seu ritmo.", "Acompanhamento"], ["03", "Preparação para o exame", "Pratique os exercícios e tire suas dúvidas com o instrutor.", "Foco na prática"], ["04", "Aulas personalizadas", "Converse com a equipe sobre o que você precisa desenvolver.", "Seu objetivo"]].map(([number, title, text, tag]) => <a key={number} href="#pacotes" className="lesson-path"><span className="lesson-path-number">{number}</span><span className="lesson-path-tag">{tag}</span><h3>{title}</h3><p>{text}</p><span className="lesson-path-link">Conhecer opções <ArrowUpRight size={18}/></span></a>)}
+          </div>
+        </section>
+        <section id="como-funciona" className="container section-space journey-section">
           <p className="eyebrow">DA CONVERSA À PRÁTICA</p>
           <h2>Três passos, sem complicação.</h2>
           <div className="mt-8 grid gap-6 md:grid-cols-3">
