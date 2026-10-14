@@ -1,5 +1,31 @@
 import { test, expect } from "@playwright/test";
 
+test('novo portal do aluno navega nas doze páginas sem inventar progresso', async ({page}, testInfo) => {
+  await mock(page);
+  await page.goto('/aluno');
+  await page.getByLabel('E-mail',{exact:true}).fill('aluno@example.com');
+  await page.getByLabel('Senha',{exact:true}).fill('senha-teste-123');
+  await page.getByRole('button',{name:'Entrar',exact:true}).click();
+  const nav = page.getByRole('navigation',{name:'Área do aluno',exact:true});
+  await expect(nav.locator(':scope > button')).toHaveCount(12);
+  await expect(page.getByRole('heading',{name:'Olá, Aluno!',exact:true})).toBeVisible();
+  await expect(page.getByText('Não informado',{exact:true})).toHaveCount(6);
+  expect(await page.evaluate(()=>document.documentElement.scrollWidth <= innerWidth)).toBeTruthy();
+  await page.screenshot({path:`artifacts/student-redesign/dashboard-${testInfo.project.name}.png`,fullPage:true});
+  for (const title of ['Agendar aula','Minha agenda','Histórico de aulas','Meus pacotes','Comprar aulas','Minha jornada CNH','Meu progresso','Pagamentos','Notificações','Meu perfil','Suporte']) {
+    await nav.getByRole('button',{name:title,exact:true}).click();
+    await expect(nav.getByRole('button',{name:title,exact:true})).toHaveAttribute('aria-current','page');
+    await expect(page.locator('.student-section-heading h1')).toHaveText(title);
+    expect(await page.evaluate(()=>document.documentElement.scrollWidth <= innerWidth)).toBeTruthy();
+  }
+  await expect(page.getByRole('link',{name:'Abrir WhatsApp',exact:false}).last()).toHaveAttribute('href',/^https:\/\/wa.me/);
+  await nav.getByRole('button',{name:'Comprar aulas',exact:true}).click();
+  await page.getByRole('button',{name:'Quero aulas de carro',exact:true}).click();
+  await page.getByRole('button',{name:'Escolher este pacote',exact:true}).click();
+  await expect(page.getByLabel('Forma de pagamento')).toBeVisible();
+  await expect(page.getByLabel('Cupom de desconto (opcional)')).toBeVisible();
+});
+
 test('painéis responsivos preservam navegação e mostram agenda semanal', async ({page}, testInfo) => {
   await mock(page, false, true);
   await page.goto('/admin');
@@ -60,6 +86,7 @@ test('Pix manual envia comprovante privado e mantém pedido pendente', async ({p
   await page.getByLabel('E-mail',{exact:true}).fill('aluno@example.com');
   await page.getByLabel('Senha',{exact:true}).fill('senha-teste-123');
   await page.getByRole('button',{name:'Entrar',exact:true}).click();
+  await page.getByRole('navigation',{name:'Área do aluno'}).getByRole('button',{name:'Pagamentos',exact:true}).click();
   await expect(page.getByText('PIX-DEMONSTRACAO-SEM-VALIDADE',{exact:false})).toBeVisible();
   const input = page.getByLabel('Anexar comprovante Pix',{exact:false});
   await input.setInputFiles({name:'teste.txt',mimeType:'text/plain',buffer:Buffer.from('teste')});
@@ -71,7 +98,8 @@ test('Pix manual envia comprovante privado e mantém pedido pendente', async ({p
   await expect(page.getByText('Comprovante enviado.',{exact:false})).toBeVisible();
   await page.getByRole('button',{name:'Atualizar comprovantes'}).click();
   await expect(page.getByRole('button',{name:'Preparar comprovante 1'})).toBeVisible();
-  await expect(page.getByRole('button',{name:'Agendar aula',exact:true})).toHaveCount(0);
+  await page.getByRole('navigation',{name:'Área do aluno'}).getByRole('button',{name:'Agendar aula',exact:true}).click();
+  await expect(page.getByText('Você pode consultar horários, mas precisa de créditos',{exact:false})).toBeVisible();
   expect(await page.evaluate(()=>document.documentElement.scrollWidth <= innerWidth)).toBeTruthy();
 });
 
@@ -85,16 +113,14 @@ test('primeiro acesso orienta escolha e acompanha interesse sem duplicar', async
   await page.getByLabel('E-mail',{exact:true}).fill('aluno@example.com');
   await page.getByLabel('Senha',{exact:true}).fill('senha-teste-123');
   await page.getByRole('button',{name:'Entrar',exact:true}).click();
-  await expect(page.getByRole('heading',{name:'Vamos começar suas aulas?'})).toBeVisible();
-  await expect(page.getByRole('region',{name:'Carteira do aluno'})).toHaveCount(0);
-  await expect(page.getByRole('button',{name:'Agendar aula',exact:true})).toHaveCount(0);
-  await expect(page.getByRole('link',{name:'Preciso de ajuda para escolher'})).toHaveAttribute('href',/wa.me/);
+  await page.getByRole('button',{name:'Escolher meu pacote',exact:true}).click();
   await page.getByRole('button',{name:'Quero aulas de moto',exact:true}).click();
   await expect(page.getByText('Não há um pacote disponível nesta opção',{exact:false})).toBeVisible();
   await page.getByRole('button',{name:'Quero aulas de carro',exact:true}).click();
   await page.getByRole('button',{name:'Escolher este pacote'}).click();
   await page.getByRole('button',{name:'Conferir valor',exact:true}).click();
   await page.getByRole('button',{name:'Continuar para pagamento'}).click();
+  await page.getByRole('navigation',{name:'Área do aluno'}).getByRole('button',{name:'Comprar aulas',exact:true}).click();
   await expect(page.getByRole('heading',{name:'Recebemos seu interesse',exact:true})).toBeVisible();
   await expect(page.getByText('Não é necessário solicitar este pacote novamente.')).toBeVisible();
   await expect(page.getByRole('button',{name:'Continuar para pagamento'})).toHaveCount(0);
@@ -112,7 +138,7 @@ test('aulas liberadas destacam primeiro agendamento',async({page})=>{
   await page.getByLabel('E-mail',{exact:true}).fill('aluno@example.com');
   await page.getByLabel('Senha',{exact:true}).fill('senha-teste-123');
   await page.getByRole('button',{name:'Entrar',exact:true}).click();
-  await page.getByRole('button',{name:'Agendar minha primeira aula'}).click();
+  await page.getByRole('button',{name:'Agendar nova aula'}).click();
   await expect(page.getByRole('heading',{name:'Escolha um horário livre'})).toBeVisible();
 });
 const uid = "00000000-0000-4000-8000-000000000001";

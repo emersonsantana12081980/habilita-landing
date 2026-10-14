@@ -1,7 +1,6 @@
-import { UpcomingLessons } from "./UpcomingLessons";
+import { studentPages, StudentIdentity, StudentSupport, StudentDashboard, StudentJourney, StudentProgress, StudentPackageSummary, StudentUpdates, StudentPayments, StudentMonth } from "./StudentDesign";
+import { Bell, UserRound } from "lucide-react";
 import { PortalNavIcon } from "./PortalNavIcon";
-import { StudentSummary } from "./StudentSummary";
-import { StudentWalletPreview } from "./StudentWalletPreview";
 import { StudentStart } from "./StudentStart";
 import { PackageCheckoutTest } from "./PackageCheckoutTest";
 import { StudentRequests } from "./RequestBoard";
@@ -74,7 +73,7 @@ export function CloudStudentPortal() {
   const [data, setData] = useState(empty);
   const [loading, setLoading] = useState(false);
   const [failed, setFailed] = useState(false);
-  const [tab, setTab] = useState(requestedPackage || new URLSearchParams(location.search).get("checkout") === "teste" ? "Meus pacotes" : "Início");
+  const [tab, setTab] = useState(requestedPackage || new URLSearchParams(location.search).get("checkout") === "teste" ? "Comprar aulas" : "Início");
   const [day, setDay] = useState("");
   const [category, setCategory] = useState("B");
   const [slots, setSlots] = useState(null);
@@ -282,10 +281,11 @@ export function CloudStudentPortal() {
     onRequested={async () => { await refresh(session.user.id); setTab("Início"); setMessage("Recebemos seu interesse. Acompanhe os próximos passos abaixo."); }} />;
 
   return (
-    <main className="portal-shell student-shell min-h-screen bg-slate-50 pb-28 text-slate-900">
+    <main className="portal-shell student-shell student-redesign min-h-screen bg-slate-50 pb-28 text-slate-900">
       <header className="border-b bg-white">
         <div className="container flex flex-wrap items-center justify-between gap-4 py-5">
           <Brand /><span className="portal-area-title">Área do aluno</span>
+          {canUse && <div className="student-header-actions"><button aria-label="Abrir notificações" onClick={() => setTab("Notificações")}><Bell size={19}/></button><button onClick={() => setTab("Meu perfil")} aria-label="Abrir meu perfil"><UserRound size={19}/><span>{data.student.name.split(" ")[0]}</span></button></div>}
           <a href="/" className="text-sm font-semibold">
             Voltar ao site
           </a>
@@ -437,6 +437,7 @@ export function CloudStudentPortal() {
           </section>
         ) : (
           <>
+            <div className="student-page-heading">
             <h1 className="text-3xl font-extrabold">
               {data.student
                 ? `Olá, ${data.student.name.split(" ")[0]}`
@@ -452,6 +453,7 @@ export function CloudStudentPortal() {
             >
               Atualizar informações
             </button>
+            </div>
             {loading ? (
               <p role="status" className="mt-6">
                 Carregando seus dados…
@@ -471,18 +473,12 @@ export function CloudStudentPortal() {
               </p>
             ) : (
               <>
-                {!starting && <><StudentSummary lessons={data.lessons} moto={available("A")} carro={available("B")}/><details className="wallet-details"><summary>Minha carteira de aulas</summary><StudentWalletPreview moto={available("A")} carro={available("B")} /></details></>}
                 <nav
                   aria-label="Área do aluno"
                   className="portal-nav my-6 flex flex-wrap gap-2"
                 >
-                  {[
-                    "Início",
-                    "Meus pacotes",
-                    "Minhas aulas",
-                    "Meu perfil",
-                    "Agendar aula",
-                  ].filter(name => !(starting && name === "Minhas aulas") && !(name === "Agendar aula" && !hasCredit)).map((name) => (
+                  <StudentIdentity student={data.student}/>
+                  {studentPages.map((name) => (
                     <button
                       key={name}
                       onClick={() => {
@@ -495,24 +491,17 @@ export function CloudStudentPortal() {
                       <PortalNavIcon name={name}/><span>{name}</span>
                     </button>
                   ))}
+                  <StudentSupport contact={contact} compact/>
                 </nav>
-                {tab === "Início" && starting && startView}
-                {tab === "Início" && !starting && (
-                  <>
-                    <div className="mb-5 rounded-xl border border-green-200 bg-green-50 p-4">
-                      <h2 className="font-bold">Seu próximo passo</h2>
-                      <p className="mt-1 text-sm">
-                        {hasCredit ? "Você tem créditos disponíveis. Escolha uma data livre para sua aula." : pendingRequests.length ? "Seu pedido aguarda a equipe. Acompanhe a análise em Meus pacotes." : "Escolha um pacote para solicitar suas aulas. O cadastro é gratuito e não gera cobrança."}
-                      </p>
-                      <button className="btn btn-green mt-3" onClick={() => setTab(hasCredit ? "Agendar aula" : "Meus pacotes")}>
-                        {hasCredit ? hasLessons ? "Agendar aula" : "Agendar minha primeira aula" : pendingRequests.length ? "Acompanhar pedido" : "Escolher pacote"}
-                      </button>
-                    </div>
-                    {!!pendingRequests.length && <StudentRequests requests={pendingRequests} />}
-                    <UpcomingLessons lessons={data.lessons} onAgenda={() => setTab("Minhas aulas")} onPackages={() => setTab("Meus pacotes")}/>
-                  </>
-                )}
-                {tab === "Meus pacotes" && (
+                {tab === "Início" && <StudentDashboard data={data} available={available} onNavigate={setTab}/>}
+                {tab !== "Início" && <div className="student-section-heading"><p>SEU ESPAÇO HABILITA+</p><h1>{tab}</h1></div>}
+                {tab === "Meus pacotes" && <StudentPackageSummary requests={data.requests} remaining={Math.max(0, available("A") + available("B"))} onBuy={() => setTab("Comprar aulas")}/>}
+                {tab === "Minha jornada CNH" && <StudentJourney/>}
+                {tab === "Meu progresso" && <StudentProgress lessons={data.lessons} onHistory={() => setTab("Histórico de aulas")}/>}
+                {tab === "Pagamentos" && <StudentPayments requests={data.requests}/>}
+                {tab === "Notificações" && <StudentUpdates requests={data.requests}/>}
+                {tab === "Suporte" && <StudentSupport contact={contact}/>}
+                {tab === "Comprar aulas" && (
                   <>
                     <PackageCheckoutTest requests={data.requests} />
                     {new URLSearchParams(location.search).get("checkout") === "teste" && (
@@ -545,9 +534,12 @@ export function CloudStudentPortal() {
                     </>}
                   </>
                 )}
-                {tab === "Minhas aulas" && <BookingRules readOnly />}
-                {tab === "Minhas aulas" && (
+                {tab === "Minha agenda" && <StudentMonth lessons={data.lessons} onAgenda={() => setTab("Agendar aula")}/>}
+                {["Minha agenda", "Histórico de aulas"].includes(tab) && (
                   <StudentLessons
+                    key={tab}
+                    initialFilter={tab === "Histórico de aulas" ? "Histórico" : "Próximas"}
+                    hideFilters
                     lessons={data.lessons}
                     busy={busy}
                     onCancel={(l) => {
@@ -644,7 +636,7 @@ export function CloudStudentPortal() {
                                 setSlots(null);
                                 if (error) throw error;
                                 await refresh(session.user.id);
-                                setTab("Minhas aulas");
+                                setTab("Minha agenda");
                                 setMessage(
                                   "Aula agendada. A equipe recebeu o aviso no banco.",
                                 );

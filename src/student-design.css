@@ -1,0 +1,82 @@
+/* Área do aluno Habilita+: estrutura visual inspirada na referência. */
+.student-redesign { background: #f7f9fb; }
+.student-redesign > header { background: #fff; color: #0e213b; border-bottom: 1px solid #e8edf2; }
+.student-redesign > header .container { max-width: 1800px; min-height: 76px; padding-top: 16px; padding-bottom: 16px; }
+.student-redesign > header .text-green-600 { color: #15803d; }
+.student-redesign .portal-area-title { border-color: #e4e9ee; }
+.student-header-actions { display: flex; gap: 15px; align-items: center; }.student-header-actions button { display: flex; gap: 8px; align-items: center; min-height: 38px; font-size: 12px; }.student-header-actions button:first-child { padding: 8px; border-right: 1px solid #e9eef2; }
+.student-redesign > .container { max-width: 1800px; padding-top: 20px; }
+.student-redesign .student-page-heading { display: flex; align-items: center; justify-content: flex-end; gap: 15px; margin-bottom: 14px; }
+.student-redesign .student-page-heading > h1, .student-redesign .student-page-heading > p { display: none; }
+.student-redesign .student-page-heading button { margin: 0; font-size: 11px; }
+.student-redesign .portal-nav { border: none; border-radius: 0; background: #fff; }
+.student-redesign .portal-nav::before { display: none; }
+.student-redesign .portal-nav > button { min-height: 43px; font-size: 12px; border-radius: 9px; }
+.student-redesign .portal-nav > button[aria-current="page"] { background: #fff0b1; box-shadow: inset 3px 0 0 #facc15; color: #0e213b; }
+.student-identity { display: flex; gap: 12px; align-items: center; padding: 14px 8px 22px; width: 100%; }
+.student-avatar { width: 49px; height: 49px; display: grid; place-items: center; flex-shrink: 0; background: #e8f3ed; color: #15803d; border-radius: 50%; font-size: 18px; font-weight: 750; }
+.student-identity strong { display: block; font-size: 13px; overflow-wrap: anywhere; }
+.student-identity p { font-size: 11px; color: #77828d; margin: 3px 0 6px; }
+.student-identity span { font-size: 10px; padding: 3px 8px; background: #fff0b1; border-radius: 6px; }
+.student-support { padding: 24px; background: white; border: 1px solid #e6edf0; border-radius: 15px; max-width: 640px; }
+.student-support svg { color: #15803d; }
+.student-support h3 { font-size: 17px; font-weight: 700; margin: 12px 0 8px; }
+.student-support p { font-size: 13px; line-height: 1.6; color: #71808b; }
+.student-support .btn { margin-top: 16px; background: #15803d; color: white; }
+.student-support .btn svg { color: white; }
+.student-support.compact { margin-top: 20px; padding: 14px 10px; background: #f7faf8; width: 100%; }
+.student-support.compact h3 { font-size: 12px; }
+.student-support.compact p { font-size: 11px; }
+.student-support.compact .btn { width: 100%; padding: 10px 8px; font-size: 11px; }
+.student-welcome { display: flex; align-items: center; justify-content: space-between; gap: 30px; padding: 28px 32px; min-height: 196px; background: linear-gradient(90deg,#0e213b 5%,#0e213bf2 46%,#0e213ba6),url('/images/hero-960.webp') center 54% / cover; color: white; border-radius: 14px; }
+.student-welcome p { color: #a8d7b5; font-size: 9px; font-weight: 750; letter-spacing: .13em; }
+.student-redesign .student-welcome h1 { font-size: clamp(24px,2.5vw,34px); margin: 9px 0; }
+.student-redesign .student-welcome h2 { font-size: 17px; font-weight: 500; margin: 0 0 7px; letter-spacing: 0; }
+.student-welcome span { font-size: 12px; color: #dbe3ee; line-height: 1.6; }
+.student-welcome blockquote { max-width: 210px; font-size: 19px; font-weight: 700; color: #facc15; border-left: 2px solid #facc15; padding-left: 20px; }
+.student-welcome small { display: block; font-size: 12px; line-height: 1.7; font-weight: 400; color: white; margin-top: 8px; }
+.student-metrics { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 14px; margin: 18px 0; }
+.student-metrics article { display: flex; align-items: center; gap: 14px; padding: 19px 15px; background: #fff; border: 1px solid #edf0f3; border-radius: 13px; min-width: 0; }
+.metric-icon { display: grid; place-items: center; width: 53px; height: 65px; flex-shrink: 0; border-radius: 10px; }
+.metric-icon.gold { background: #fff0b1; color: #a87904; }.metric-icon.green { background: #dff5e7; color: #15803d; }.metric-icon.blue { background: #e4edff; color: #3065b5; }.metric-icon.rose { background: #fde8ed; color: #bc5170; }
+.student-metrics p { font-size: 11px; color: #52616c; }
+.student-metrics strong { display: block; font-size: clamp(18px,1.8vw,27px); line-height: 1.2; margin: 7px 0 3px; }
+.student-metrics small { display: block; font-size: 10px; color: #7c8790; }
+.student-dashboard-grid { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 16px; align-items: stretch; }
+.student-panel, .student-upcoming-panel { padding: 19px; border: 1px solid #e9eef2; border-radius: 14px; background: #fff; min-width: 0; }
+.student-panel-title { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 17px; }
+.student-redesign .student-panel h2, .student-redesign .upcoming-lessons h2 { font-size: 16px; margin: 0; font-weight: 750; letter-spacing: -.025em; }
+.student-panel-title button, .student-text-link { color: #15803d; font-size: 10px; font-weight: 600; }
+.student-panel-title button { flex-shrink: 0; padding: 5px 0; }
+.student-muted { font-size: 12px; line-height: 1.65; color: #7c8893; }
+.journey-list { margin: 12px 0 0; }
+.journey-list li { display: flex; align-items: center; gap: 8px; position: relative; padding: 12px 0; border-bottom: 1px solid #f0f3f5; font-size: 11px; }
+.journey-list li:last-child { border: 0; }
+.journey-marker { color: #8392a0; display: flex; flex-shrink: 0; }
+.journey-list small { margin-left: auto; background: #f1f4f7; color: #7b8791; padding: 4px 6px; font-size: 9px; border-radius: 4px; white-space: nowrap; }
+.student-upcoming-panel { display: flex; flex-direction: column; padding: 0 18px 18px; }
+.student-redesign .student-upcoming-panel .upcoming-lessons { border: none; box-shadow: none; padding: 19px 0 0; flex: 1; }
+.student-redesign .student-upcoming-panel .upcoming-lessons button { font-size: 10px; }
+.student-upcoming-panel > .btn { margin-top: 14px; width: 100%; font-size: 12px; }
+.student-upcoming-panel .lesson-date { width: 43px; min-height: 57px; }
+.student-upcoming-panel .lesson-date strong { font-size: 21px; }
+.student-upcoming-panel li { gap: 10px; }
+.student-upcoming-panel li p { font-size: 11px; }
+.student-first-step { display: flex; align-items: center; justify-content: space-between; gap: 15px; padding: 17px 20px; border: 1px solid #f0dc95; background: #fffbed; border-radius: 12px; margin: 0 0 18px; }
+.student-first-step strong { font-size: 14px; }.student-first-step p { font-size: 12px; color: #7c745e; margin-top: 5px; }
+.student-first-step .btn { font-size: 12px; }
+.month-controls { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 13px; }.month-controls button { display: grid; place-items: center; width: 32px; height: 32px; border: 1px solid #e9eef2; border-radius: 7px; }.month-controls strong { font-size: 12px; text-transform: capitalize; }
+.month-grid { display: grid; grid-template-columns: repeat(7,minmax(0,1fr)); gap: 2px; text-align: center; }
+.month-weekday { font-size: 9px; color: #7c8893; padding: 8px 0; }.month-grid button,.month-blank { position: relative; min-height: 35px; font-size: 11px; border-radius: 50%; }.month-grid button:hover { background: #f2f6f9; }.month-grid .today { background: #fff0b1; font-weight: 750; }.month-grid .booked { color: #15803d; font-weight: 750; }.month-grid [aria-pressed="true"] { outline: 2px solid #15803d; outline-offset: -2px; }.month-grid i { display: block; width: 4px; height: 4px; border-radius: 50%; background: #15803d; position: absolute; bottom: 3px; left: calc(50% - 2px); }
+.month-selection { font-size: 11px; color: #637682; margin: 12px 0; }.month-panel > .student-text-link { display: block; margin-top: 14px; }
+.package-balance { display: flex; gap: 14px; align-items: center; background: #fffbed; border: 1px solid #f3e3a9; padding: 16px; border-radius: 10px; margin-bottom: 14px; }.package-balance svg { color: #a87904; }.package-balance strong { font-size: 25px; }.package-balance span { font-size: 11px; color: #786f53; }
+.student-package-line { border-top: 1px solid #edf1f4; padding: 14px 0; font-size: 12px; }.student-package-line > span { margin-left: 8px; font-size: 10px; color: #15803d; }.student-package-line p { margin-top: 5px; color: #7c8893; font-size: 11px; }
+.progress-total { display: flex; align-items: center; gap: 10px; margin: 24px 0; color: #15803d; }.progress-total strong { font-size: 32px; }.progress-total span { font-size: 12px; color: #7c8893; }
+.progress-row { display: flex; justify-content: space-between; padding: 12px 0; font-size: 12px; border-bottom: 1px solid #edf1f4; }.progress-row strong { color: #15803d; }
+.student-update { display: flex; gap: 10px; border-bottom: 1px solid #edf1f4; padding: 14px 0; }.student-update svg { color: #15803d; flex-shrink: 0; }.student-update strong { font-size: 11px; }.student-update p { font-size: 10px; color: #7c8893; margin-top: 5px; }
+.student-section-heading { margin: 8px 0 22px; }.student-section-heading p { color: #15803d; font-size: 10px; font-weight: 700; letter-spacing: .12em; }.student-section-heading h1 { margin-top: 8px; }
+.payment-request { border-top: 1px solid #e9eef2; padding-top: 20px; margin-top: 20px; }.payment-request h3 { font-weight: 700; }.student-empty { padding: 30px 0; font-size: 13px; color: #71808b; }
+@media(min-width:1100px) { .student-redesign > .container:has(.portal-nav) { padding-left: 246px; padding-right: 22px; }.student-redesign .portal-nav { left: 0; top: 0; bottom: 0; width: 225px; margin: 0; padding: 10px 14px; display: flex; flex-direction: column; flex-wrap: nowrap; }.student-redesign .portal-nav .student-support { margin-top: 25px; } }
+@media(min-width:1100px) and (max-width:1340px) { .student-dashboard-grid { grid-template-columns: repeat(2,minmax(0,1fr)); }.student-metrics { gap: 8px; }.student-metrics article { padding: 14px 10px; gap: 8px; }.metric-icon { width: 38px; } }
+@media(max-width:1099px) { .student-redesign .portal-nav { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); padding: 12px; border-radius: 14px; border: 1px solid #e9eef2; }.student-identity { grid-column: 1/-1; padding-bottom: 12px; }.student-redesign .portal-nav .student-support { display: none; }.student-dashboard-grid { grid-template-columns: repeat(2,minmax(0,1fr)); }.student-redesign .portal-nav > button { padding: 10px 6px; font-size: 11px; } }
+@media(max-width:650px) { .student-redesign > .container { padding: 14px; }.student-welcome { padding: 23px; min-height: 190px; }.student-welcome blockquote { display: none; }.student-redesign .portal-nav { grid-template-columns: repeat(3,minmax(0,1fr)); gap: 4px; margin-top: 0; }.student-redesign .portal-nav > button { flex-direction: column; text-align: center; gap: 6px; font-size: 10px; min-height: 64px; }.student-redesign .portal-nav > button[aria-current="page"] { box-shadow: inset 0 -3px 0 #facc15; }.student-identity { padding: 4px 8px 10px; }.student-metrics { grid-template-columns: repeat(2,minmax(0,1fr)); gap: 9px; }.student-metrics article { gap: 9px; padding: 12px; }.metric-icon { width: 38px; height: 49px; }.metric-icon svg { width: 22px; }.student-metrics p { font-size: 10px; }.student-metrics strong { font-size: 21px; }.student-dashboard-grid { grid-template-columns: 1fr; }.student-first-step { align-items: stretch; flex-direction: column; }.student-panel { padding: 18px; }.student-redesign .portal-area-title { display: none; } }

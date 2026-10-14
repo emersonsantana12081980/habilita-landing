@@ -1,8 +1,8 @@
 import React, { useState } from "react";
 import { Car, Bike, Clock3 } from "lucide-react";
 
-export function StudentLessons({ lessons, busy, onCancel }) {
-  const [filter, setFilter] = useState("Próximas");
+export function StudentLessons({ lessons, busy, onCancel, initialFilter = "Próximas", hideFilters = false }) {
+  const [filter, setFilter] = useState(initialFilter);
   const upcoming = (l) =>
     l.status === "scheduled" && new Date(l.ends_at || l.starts_at) > new Date();
   const groups = {
@@ -30,7 +30,7 @@ export function StudentLessons({ lessons, busy, onCancel }) {
     <section className="mt-5" aria-label="Lista de aulas">
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <h2 className="text-lg font-bold">Suas aulas</h2>
-        <div className="flex gap-1 rounded-xl bg-slate-100 p-1">
+        {!hideFilters && <div className="flex gap-1 rounded-xl bg-slate-100 p-1">
           {Object.keys(groups).map((label) => (
             <button
               key={label}
@@ -41,7 +41,7 @@ export function StudentLessons({ lessons, busy, onCancel }) {
               {label} ({groups[label].length})
             </button>
           ))}
-        </div>
+        </div>}
       </div>
       <div className="grid gap-3 lg:grid-cols-2">
         {visible.map((l) => {
