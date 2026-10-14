@@ -457,9 +457,10 @@ export function LandingPage({ data, error }) {
             >
               Criar conta gratuita
             </a>
-            <a className="py-3" href="/admin">
+            <a className="py-3" href="/instrutor">
               Área do instrutor
             </a>
+            <a className="py-3" href="/admin">Administração</a>
           </div>
           <div className="text-sm text-slate-600">
             <h2 className="mb-4 text-base! tracking-normal! text-slate-900">

@@ -2,6 +2,7 @@ import React, { lazy, Suspense } from "react";
 import { useStore } from "./store";
 import { cloudEnabled } from "./lib/supabase";
 import { LandingPage } from "./components/LandingPage";
+const InstructorPortal = lazy(() => import("./components/InstructorPortal"));
 const CloudAdminPanel = lazy(() =>
   import("./components/CloudAdminPanel").then((m) => ({
     default: m.CloudAdminPanel,
@@ -30,6 +31,7 @@ export function App() {
     ) : (
       <AdminPanel data={data} update={update} error={error} />
     );
+  else if (path === "/instrutor") page = <InstructorPortal />;
   else if (["/aluno", "/cadastro"].includes(path))
     page = cloudEnabled ? (
       <CloudStudentPortal />
