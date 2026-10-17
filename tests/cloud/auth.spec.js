@@ -1,5 +1,36 @@
 import { test, expect } from "@playwright/test";
 
+for (const [kind, menu] of [['students','Alunos'],['instructors','Instrutores'],['packages','Catálogo']]) {
+  test(`exclusão de ${kind} confirma, preserva histórico e atualiza lista`, async ({page}) => {
+    await mock(page,false,true);
+    let rows=[{id:'remove-me',name:'Cadastro para excluir',phone:'12999999999',category:'B',active:true,lessons_b:2,lessons_a:0,price_cents:10000}], calls=0, blocked=true;
+    await page.route(`**/rest/v1/${kind}*`,route=>route.fulfill({json:rows}));
+    await page.route('**/rest/v1/rpc/admin_delete_registration',route=>{
+      calls++;
+      expect(route.request().postDataJSON()).toEqual({p_kind:kind,p_id:'remove-me'});
+      if(blocked) return route.fulfill({status:400,json:{message:'registration_has_history'}});
+      rows=[]; return route.fulfill({json:null});
+    });
+    await page.goto('/admin');
+    await page.getByLabel('E-mail administrativo').fill('admin@example.com');
+    await page.getByLabel('Senha',{exact:true}).fill('senha-teste-123');
+    await page.getByRole('button',{name:'Entrar no painel',exact:true}).click();
+    await page.getByRole('button',{name:menu,exact:true}).click();
+    page.once('dialog',dialog=>dialog.dismiss());
+    await page.getByRole('button',{name:'Excluir cadastro',exact:true}).click();
+    expect(calls).toBe(0);
+    page.once('dialog',dialog=>{expect(dialog.message()).toContain('Cadastro para excluir');return dialog.accept();});
+    await page.getByRole('button',{name:'Excluir cadastro',exact:true}).click();
+    await expect(page.getByRole('alert')).toContainText('há registros vinculados');
+    await expect(page.getByRole('button',{name:'Excluir cadastro',exact:true})).toHaveCount(1);
+    blocked=false;
+    page.once('dialog',dialog=>dialog.accept());
+    await page.getByRole('button',{name:'Excluir cadastro',exact:true}).click();
+    await expect(page.getByRole('button',{name:'Excluir cadastro',exact:true})).toHaveCount(0);
+    expect(calls).toBe(2);
+  });
+}
+
 test('admin cria conta do instrutor sem substituir sua sessão', async ({page}) => {
   await mock(page,false,true);
   let created = false, linked = false, records = [];

@@ -1,8 +1,9 @@
 import React from "react";
+import { DeleteRegistration } from "./DeleteRegistration";
 
 const normalize = (value) => String(value || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
 
-export function StudentList({ students, balance, onEdit, onHistory, onStatus, filters, setFilters }) {
+export function StudentList({ students, balance, onEdit, onHistory, onStatus, onDeleted, filters, setFilters }) {
   const { search, status, category } = filters;
   const setSearch = (search) => setFilters(f => ({...f,search}));
   const setStatus = (status) => setFilters(f => ({...f,status}));
@@ -45,6 +46,7 @@ export function StudentList({ students, balance, onEdit, onHistory, onStatus, fi
         <div className="flex flex-wrap gap-2 text-sm">
           <button className="rounded-lg border px-3 py-2 font-semibold" onClick={() => onEdit(student)}>Editar aluno</button>
           <button className="rounded-lg border px-3 py-2" onClick={() => onHistory(student)}>Ver ficha</button>
+          <DeleteRegistration kind="students" record={student} onDeleted={onDeleted} />
           <button className={`rounded-lg px-3 py-2 font-semibold ${student.active ? "bg-red-50 text-red-800" : "bg-green-50 text-green-800"}`} onClick={() => {
             if (window.confirm(student.active
               ? `Enviar ${student.name} para o arquivo morto? O cadastro ficará inativo, sem novos agendamentos. Créditos, histórico e aulas já agendadas serão mantidos.`

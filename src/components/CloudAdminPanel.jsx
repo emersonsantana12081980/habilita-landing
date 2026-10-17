@@ -498,6 +498,7 @@ export function CloudAdminPanel() {
                       act(()=>supabase.from("students").update({active}).eq("id",student.id).select("id").single(), active ? "Cadastro restaurado." : "Cadastro enviado ao arquivo morto.");
                     }} />}
                     <StudentList
+                      onDeleted={() => { setEditingStudent(undefined); setHistoryStudent(null); setMessage("Cadastro excluído."); return load(); }}
                       filters={studentFilters}
                       setFilters={setStudentFilters}
                       students={data.students}

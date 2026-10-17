@@ -5,6 +5,7 @@ import { PackagePrice } from "./PackagePrice";
 import { packagePricing } from "../lib/package-pricing";
 import { InstructorAccess } from "./InstructorAccess";
 import { createInstructorAccount } from "../lib/instructor-account";
+import { DeleteRegistration } from "./DeleteRegistration";
 export function CatalogManager({ initialKind = "packages", instructorsOnly = false }) {
   const installmentRatio = useRef(1);
   const [accountEmail, setAccountEmail] = useState("");
@@ -358,6 +359,10 @@ export function CatalogManager({ initialKind = "packages", instructorsOnly = fal
               Editar
             </button>
             {kind === "instructors" && <InstructorAccess instructor={r} />}
+            <div className="mt-4"><DeleteRegistration kind={kind} record={r} disabled={busy} onDeleted={async () => {
+              if (form?.id === r.id) { setForm(null); setPhotoFile(null); }
+              await load(); setMessage("Cadastro excluído.");
+            }} /></div>
           </article>
         ))}
       </div>
