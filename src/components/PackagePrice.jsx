@@ -11,10 +11,12 @@ export function PackagePrice({ pack, showDemoLabel = true }) {
           Valores fictícios para visualização
         </p>
       )}
-      <p className="text-sm text-slate-600">Parcelado no cartão</p>
+      <p className="text-sm font-semibold text-green-800">À vista</p>
       <p className="mt-1 text-3xl font-extrabold tracking-tight text-green-800">
-        <span className="text-xl">{count}x</span>{" "}
-        {money(Math.ceil(total / count) / 100)}
+        {money(cash / 100)}
+      </p>
+      <p className="mt-4 text-base text-slate-700">
+        ou <strong>{count}x de {money(Math.ceil(total / count) / 100)}</strong> no cartão
       </p>
       {split?.higher > 0 && (
         <p className="mt-2 text-xs text-slate-600">
@@ -24,9 +26,6 @@ export function PackagePrice({ pack, showDemoLabel = true }) {
       )}
       <p className="mt-2 text-xs text-slate-600">
         Total parcelado: {money(total / 100)}
-      </p>
-      <p className="mt-4 text-base text-slate-700">
-        ou <strong>{money(cash / 100)} à vista</strong>
       </p>
     </div>
   );
