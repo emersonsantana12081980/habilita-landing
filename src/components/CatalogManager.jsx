@@ -4,8 +4,12 @@ import { CouponManager } from "./CouponManager";
 import { PackagePrice } from "./PackagePrice";
 import { packagePricing } from "../lib/package-pricing";
 import { InstructorAccess } from "./InstructorAccess";
+import { createInstructorAccount } from "../lib/instructor-account";
 export function CatalogManager({ initialKind = "packages", instructorsOnly = false }) {
   const installmentRatio = useRef(1);
+  const [accountEmail, setAccountEmail] = useState("");
+  const [initialPassword, setInitialPassword] = useState("");
+  const [createAccess, setCreateAccess] = useState(false);
   const [photoFile, setPhotoFile] = useState(null);
   const [photoPreview, setPhotoPreview] = useState("");
   useEffect(() => {
@@ -72,7 +76,7 @@ export function CatalogManager({ initialKind = "packages", instructorsOnly = fal
       <div className="flex gap-3">
         {!instructorsOnly && <><button onClick={() => setKind("packages")}>Pacotes</button>
         <button onClick={() => setKind("instructors")}>Instrutores</button></>}
-        <button disabled={busy} className="btn btn-green" onClick={() => { setPhotoFile(null); setForm(fresh()); }}>
+        <button disabled={busy} className="btn btn-green" onClick={() => { setAccountEmail(""); setInitialPassword(""); setCreateAccess(false); setPhotoFile(null); setForm(fresh()); }}>
           {kind === "instructors" ? "Cadastrar instrutor" : "Novo cadastro"}
         </button>
       </div>
@@ -86,6 +90,12 @@ export function CatalogManager({ initialKind = "packages", instructorsOnly = fal
             setBusy(true);
             setMessage("");
             try {
+              if (kind === "instructors" && createAccess && !form.id) {
+                const { error } = await supabase.rpc("admin_check_instructor_email", { p_email: accountEmail.trim() });
+                if (error) throw new Error(error.message === "account_exists"
+                  ? "Este e-mail já possui conta. Desmarque Criar acesso, salve o cadastro e use Vincular login do instrutor. A senha existente será preservada."
+                  : "Não foi possível conferir o e-mail. Verifique a atualização de cadastro de contas no Supabase.");
+              }
               if (
                 kind === "instructors" &&
                 form.photo_url &&
@@ -96,6 +106,7 @@ export function CatalogManager({ initialKind = "packages", instructorsOnly = fal
                 ...form,
                 slug: form.slug || crypto.randomUUID(),
               };
+              if (kind === "instructors" && !payload.id) payload.id = crypto.randomUUID();
               if (kind === "instructors" && photoFile) {
                 const extensions = { "image/jpeg": "jpg", "image/png": "png", "image/webp": "webp" };
                 if (!extensions[photoFile.type] || photoFile.size > 5 * 1024 * 1024)
@@ -114,9 +125,16 @@ export function CatalogManager({ initialKind = "packages", instructorsOnly = fal
                 throw new Error(
                   "Confira categoria, aulas e valores. Não foi possível salvar.",
                 );
+              let savedMessage = "Catálogo atualizado no banco.";
+              if (kind === "instructors" && createAccess && !form.id) {
+                setForm(payload);
+                try { savedMessage = await createInstructorAccount(payload, accountEmail, initialPassword); }
+                catch (failure) { await load(); throw failure; }
+                finally { setInitialPassword(""); setCreateAccess(false); }
+              }
               setForm(null);
               await load();
-              setMessage("Catálogo atualizado no banco.");
+              setMessage(savedMessage);
             } catch (e) {
               setMessage(e.message);
             } finally {
@@ -252,6 +270,12 @@ export function CatalogManager({ initialKind = "packages", instructorsOnly = fal
             </>
           ) : (
             <>
+              {!form.id && <div className="sm:col-span-2 grid gap-3 rounded-xl border border-slate-200 p-4">
+                <label><input type="checkbox" checked={createAccess} onChange={e => { setCreateAccess(e.target.checked); setInitialPassword(""); }} /> Criar acesso do instrutor</label>
+                {createAccess && <><label>E-mail do instrutor<input type="email" required maxLength={254} autoComplete="off" value={accountEmail} onChange={e => setAccountEmail(e.target.value)}/></label>
+                <label>Senha inicial<input type="password" required minLength={8} autoComplete="new-password" value={initialPassword} onChange={e => setInitialPassword(e.target.value)}/></label>
+                <p className="text-sm text-slate-600">Use pelo menos 8 caracteres. O instrutor receberá a confirmação por e-mail e poderá definir sua própria senha no primeiro acesso. A senha não será enviada por e-mail.</p></>}
+              </div>}
               <div className="sm:col-span-2">
                 <label>Foto do instrutor
                   <input type="file" accept="image/jpeg,image/png,image/webp" disabled={busy} onChange={event => {
@@ -319,7 +343,7 @@ export function CatalogManager({ initialKind = "packages", instructorsOnly = fal
             <button
               className="mt-3 text-green-700 underline"
               disabled={busy}
-              onClick={() => { setPhotoFile(null);
+              onClick={() => { setCreateAccess(false); setInitialPassword(""); setPhotoFile(null);
                 setForm(
                   kind === "packages"
                     ? {

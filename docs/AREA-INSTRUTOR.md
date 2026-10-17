@@ -4,6 +4,21 @@ Endereço: https://habilita-landing.vercel.app/instrutor
 
 ## Cadastro pelo administrativo
 
+### Conta criada pelo administrador
+
+No novo cadastro, marque **Criar acesso do instrutor** e informe e-mail e senha inicial (mínimo 8 caracteres). Ao salvar, o perfil é salvo, a conta é criada por um cliente Auth separado (sem trocar a sessão do administrador) e vinculada usando a RPC administrativa. Não são expostas chaves secretas no navegador. Senhas não entram na tabela de instrutores nem no armazenamento local.
+
+Configuração necessária antes de usar:
+
+1. Execute `supabase/migrations/202610170003_instructor_account_check.sql`, além das migrations anteriores de acesso.
+2. No Supabase Authentication, mantenha **Confirm email** ativado e configure o envio SMTP para os destinatários reais. Limites de envio e CAPTCHA do projeto também se aplicam a esse fluxo de cadastro.
+3. Em URL Configuration, adicione `https://habilita-landing.vercel.app/instrutor?primeiro-acesso=1` às Redirect URLs permitidas. Mantenha o template de confirmação usando `{{ .ConfirmationURL }}`.
+4. Teste com um endereço de e-mail que você controla. O link confirma o e-mail e abre a tela para definir a senha pessoal. Também existe **Trocar senha** na área autenticada.
+
+O e-mail de confirmação é enviado pelo Supabase Auth; não contém a senha inicial. A tela não promete entrega na caixa de entrada. Com confirmação desativada, informa explicitamente que a conta não exigiu confirmação. Contas existentes são recusadas na pré-checagem administrativa: use o vínculo existente em vez de redefinir senhas. Em falha após salvar o perfil, o cadastro permanece e o erro orienta como recuperar o vínculo. A criação Auth e o vínculo no banco não são uma transação única. A troca de senha é oferecida na tela de primeiro acesso, não é uma política obrigatória imposta pelo servidor. O trigger atual de criação de contas também cria um registro de aluno, sem concessão de créditos.
+
+Referências: https://supabase.com/docs/reference/javascript/auth-signup e https://supabase.com/docs/reference/javascript/auth-updateuser.
+
 Para enviar fotos do computador ou celular, execute também `supabase/migrations/202610170002_instructor_photos.sql`. Em **Foto do instrutor**, escolha JPG, PNG ou WebP de até 5 MB e salve. A prévia aparece antes de salvar. A foto fica pública no catálogo; somente administradores podem enviar. Substituições usam arquivos novos e preservam os antigos; arquivos sem referência podem ser limpos posteriormente no Storage pela administração. Cancelar antes de salvar não envia o arquivo.
 
 Abra `/admin` → **Instrutores** → **Cadastrar instrutor**. Preencha nome, categoria, cidade e apresentação e salve. Para liberar login, abra **Vincular login do instrutor** no cartão e informe o e-mail de uma conta existente. Não é criada uma senha ou uma conta de autenticação por esse formulário.

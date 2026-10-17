@@ -1,5 +1,46 @@
 import { test, expect } from "@playwright/test";
 
+test('admin cria conta do instrutor sem substituir sua sessão', async ({page}) => {
+  await mock(page,false,true);
+  let created = false, linked = false, records = [];
+  await page.route('**/rest/v1/instructors*', route => {
+    if(route.request().method()==='POST') {
+      const payload=route.request().postDataJSON();
+      expect(payload.password).toBeUndefined();
+      records=[payload];
+    }
+    return route.fulfill({json:records});
+  });
+  await page.route('**/rest/v1/rpc/admin_check_instructor_email', route => route.fulfill({json:null}));
+  await page.route('**/auth/v1/signup*', route => {
+    const payload=route.request().postDataJSON();
+    expect(payload.email).toBe('novo@example.com');
+    expect(payload.password).toBe('SenhaInicial123');
+    expect(decodeURIComponent(route.request().url())).toContain('/instrutor?primeiro-acesso=1');
+    created=true;
+    return route.fulfill({json:{id:'new-user',identities:[{id:'identity'}],email:'novo@example.com'}});
+  });
+  await page.route('**/rest/v1/rpc/admin_link_instructor', route => {
+    expect(route.request().postDataJSON().p_instructor).toBe(records[0].id);
+    linked=true; return route.fulfill({json:null});
+  });
+  await page.goto('/admin');
+  await page.getByLabel('E-mail administrativo').fill('admin@example.com');
+  await page.getByLabel('Senha',{exact:true}).fill('senha-teste-123');
+  await page.getByRole('button',{name:'Entrar no painel',exact:true}).click();
+  await page.getByRole('button',{name:'Instrutores',exact:true}).click();
+  await page.getByRole('button',{name:'Cadastrar instrutor'}).click();
+  const sessionBefore=await page.evaluate(()=>JSON.stringify(localStorage));
+  await page.getByLabel('Nome',{exact:true}).fill('Novo Profissional');
+  await page.getByLabel('Criar acesso do instrutor',{exact:true}).check();
+  await page.getByLabel('E-mail do instrutor',{exact:true}).fill('novo@example.com');
+  await page.getByLabel('Senha inicial',{exact:true}).fill('SenhaInicial123');
+  await page.getByRole('button',{name:'Salvar no site'}).click();
+  await expect(page.getByText('Instrutor e acesso criados.',{exact:false})).toBeVisible();
+  expect(created && linked).toBe(true);
+  expect(await page.evaluate(()=>JSON.stringify(localStorage))).toBe(sessionBefore);
+});
+
 test('admin cadastra instrutor pelo menu e vincula conta existente', async ({page}) => {
   await mock(page, false, true);
   let instructors = [], linked = false;
