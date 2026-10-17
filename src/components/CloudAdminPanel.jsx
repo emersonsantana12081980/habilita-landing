@@ -383,6 +383,7 @@ export function CloudAdminPanel() {
                 "Configurar agenda",
                 "Horários avulsos",
                 "Catálogo",
+                "Instrutores",
                 "Configurações do site",
                 "Regras",
               ].map((t) => (
@@ -516,6 +517,7 @@ export function CloudAdminPanel() {
                   </>
                 )}
                 {tab === "Catálogo" && <CatalogManager />}
+                {tab === "Instrutores" && <CatalogManager initialKind="instructors" instructorsOnly />}
                 {tab === "Configurações do site" && <SiteSettings />}
                 {tab === "Regras" && <BookingRules />}
                 {tab === "Agenda" && (

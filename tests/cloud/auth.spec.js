@@ -1,5 +1,38 @@
 import { test, expect } from "@playwright/test";
 
+test('admin cadastra instrutor pelo menu e vincula conta existente', async ({page}) => {
+  await mock(page, false, true);
+  let instructors = [], linked = false;
+  await page.route('**/rest/v1/instructors*', async route => {
+    if (route.request().method() === 'POST') {
+      const payload = route.request().postDataJSON();
+      expect(payload.name).toBe('Instrutor Novo');
+      expect(payload.user_id).toBeUndefined();
+      instructors = [{...payload,id:'instructor-new'}];
+    }
+    await route.fulfill({json:instructors});
+  });
+  await page.route('**/rest/v1/rpc/admin_link_instructor', route => {
+    expect(route.request().postDataJSON()).toEqual({p_instructor:'instructor-new',p_email:'instrutor@example.com'});
+    linked = true;
+    return route.fulfill({json:null});
+  });
+  await page.goto('/admin');
+  await page.getByLabel('E-mail administrativo').fill('admin@example.com');
+  await page.getByLabel('Senha',{exact:true}).fill('senha-teste-123');
+  await page.getByRole('button',{name:'Entrar no painel',exact:true}).click();
+  await page.getByRole('button',{name:'Instrutores',exact:true}).click();
+  await page.getByRole('button',{name:'Cadastrar instrutor'}).click();
+  await page.getByLabel('Nome',{exact:true}).fill('Instrutor Novo');
+  await page.getByRole('button',{name:'Salvar no site'}).click();
+  await expect(page.getByRole('heading',{name:'Instrutor Novo'})).toBeVisible();
+  await page.getByText('Vincular login do instrutor',{exact:true}).click();
+  await page.getByLabel('E-mail de acesso de Instrutor Novo').fill('instrutor@example.com');
+  await page.getByRole('button',{name:'Vincular acesso',exact:true}).click();
+  await expect(page.getByText('Acesso vinculado.',{exact:false})).toBeVisible();
+  expect(linked).toBe(true);
+});
+
 test('novo portal do aluno navega nas doze páginas sem inventar progresso', async ({page}, testInfo) => {
   await mock(page);
   await page.goto('/aluno');

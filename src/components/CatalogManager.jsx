@@ -3,9 +3,10 @@ import { supabase } from "../lib/supabase";
 import { CouponManager } from "./CouponManager";
 import { PackagePrice } from "./PackagePrice";
 import { packagePricing } from "../lib/package-pricing";
-export function CatalogManager() {
+import { InstructorAccess } from "./InstructorAccess";
+export function CatalogManager({ initialKind = "packages", instructorsOnly = false }) {
   const installmentRatio = useRef(1);
-  const [kind, setKind] = useState("packages"),
+  const [kind, setKind] = useState(initialKind),
     [rows, setRows] = useState([]),
     [form, setForm] = useState(null),
     [message, setMessage] = useState(""),
@@ -54,16 +55,16 @@ export function CatalogManager() {
   }
   return (
     <section className="space-y-4">
-      <h2 className="text-2xl font-bold">Catálogo do site</h2>
+      <h2 className="text-2xl font-bold">{instructorsOnly ? "Instrutores" : "Catálogo do site"}</h2>
       <p>
         Alterações salvas aparecem na página pública ao abrir ou atualizar o
         site.
       </p>
       <div className="flex gap-3">
-        <button onClick={() => setKind("packages")}>Pacotes</button>
-        <button onClick={() => setKind("instructors")}>Instrutores</button>
+        {!instructorsOnly && <><button onClick={() => setKind("packages")}>Pacotes</button>
+        <button onClick={() => setKind("instructors")}>Instrutores</button></>}
         <button className="btn btn-green" onClick={() => setForm(fresh())}>
-          Novo cadastro
+          {kind === "instructors" ? "Cadastrar instrutor" : "Novo cadastro"}
         </button>
       </div>
       {message && <p role="status">{message}</p>}
@@ -298,6 +299,7 @@ export function CatalogManager() {
             >
               Editar
             </button>
+            {kind === "instructors" && <InstructorAccess instructor={r} />}
           </article>
         ))}
       </div>

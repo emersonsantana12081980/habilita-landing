@@ -2,6 +2,12 @@
 
 Endereço: https://habilita-landing.vercel.app/instrutor
 
+## Cadastro pelo administrativo
+
+Abra `/admin` → **Instrutores** → **Cadastrar instrutor**. Preencha nome, categoria, cidade e apresentação e salve. Para liberar login, abra **Vincular login do instrutor** no cartão e informe o e-mail de uma conta existente. Não é criada uma senha ou uma conta de autenticação por esse formulário.
+
+Antes de usar o vínculo pelo painel, execute `supabase/migrations/202610170001_admin_instructors.sql` no SQL Editor. Essa função exige administrador no servidor e não permite substituir vínculos existentes. Preserva o papel de administrador quando ele também é instrutor. A migration não foi aplicada remotamente pela ferramenta.
+
 Escopo: login com conta existente, resumo, agenda semanal, lista por dia, detalhes e histórico. Somente consulta. Administração e alterações de agendamento continuam em `/admin`.
 
 ## Ativar no Supabase
