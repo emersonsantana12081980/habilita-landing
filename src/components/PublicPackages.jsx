@@ -68,7 +68,7 @@ function PublicPackage({ pack, contact, commercialInfo }) {
             ? "Para praticar manobras e direção com carro."
             : "Para quem quer se preparar nas duas categorias."}
       </p>
-      <PackagePrice pack={pack} />
+      <PackagePrice pack={pack} showDemoLabel={false} />
       <p className="mb-4 text-sm text-slate-600">
         Pacote prático · não é a CNH completa
       </p>

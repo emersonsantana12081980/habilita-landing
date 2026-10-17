@@ -1,12 +1,12 @@
 import React from "react";
 import { packagePricing, splitInstallments } from "../lib/package-pricing";
 import { money } from "../store-data";
-export function PackagePrice({ pack }) {
+export function PackagePrice({ pack, showDemoLabel = true }) {
   const { cash, total, count, demo } = packagePricing(pack);
   const split = splitInstallments(total, count);
   return (
     <div className="my-5 border-y border-slate-100 py-5">
-      {demo && (
+      {demo && showDemoLabel && (
         <p className="mb-3 inline-block rounded-md bg-amber-100 px-2 py-1 text-xs font-semibold text-amber-900">
           Valores fictícios para visualização
         </p>
