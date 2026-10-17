@@ -28,7 +28,7 @@ export const faqItems = [
   ],
   [
     "O que está incluído no valor?",
-    "Cada card informa a quantidade de aulas e se inclui veículo para o exame. A duração, a disponibilidade e as condições do reteste devem ser confirmadas antes da contratação.",
+    "Escolha a categoria e seu nível de experiência. Antes de contratar, confirme a quantidade e duração das aulas, o total de horas, o veículo para exame e as condições do reteste com o instrutor.",
   ],
   [
     "O que não está incluído?",
@@ -43,7 +43,7 @@ export const faqItems = [
     (info = commercialInfo) =>
       info.lessonMinutes
         ? `A duração informada é de ${info.lessonMinutes} minutos. Confira também as condições específicas do seu pacote.`
-        : "Duração a confirmar com o instrutor antes da contratação. A quantidade de aulas está descrita em cada pacote.",
+        : "Confirme com o instrutor a duração de cada aula, a quantidade incluída e o total de horas antes de contratar.",
   ],
   [
     "Posso contratar aulas extras?",
@@ -59,7 +59,7 @@ export const faqItems = [
   ],
   [
     "Quais formas de pagamento são aceitas?",
-    "Os cards mostram o preço à vista e as opções de parcelamento cadastradas. Confirme o valor de cada parcela, juros, total e condições de contratação com o instrutor. O site ainda não realiza cobranças online.",
+    "Consulte as formas de pagamento com o instrutor. Quando houver oferta confirmada, confira o preço à vista, cada parcela, o total e as condições de contratação. O site não conclui compras ou pagamentos.",
   ],
   [
     "Posso fazer aulas aos finais de semana?",

@@ -1,4 +1,6 @@
 import React, { useEffect, useState } from "react";
+import { PlanChoice } from "./PlanChoice";
+import { readPlanChoice } from "../data/experience-plans";
 import {
   ArrowLeft,
   ArrowRight,
@@ -62,7 +64,7 @@ export function StudentPortal({ data, update, error }) {
     name: "",
     email: "",
     phone: "",
-    category: requestedPack?.category || "B",
+    category: requestedPack?.category || readPlanChoice(location.search)?.category.id || "B",
   });
   const [selection, setSelection] = useState({
     day: localDay(),
@@ -216,6 +218,7 @@ export function StudentPortal({ data, update, error }) {
         </div>
       </header>
       <main className="container py-7 sm:py-10">
+        <PlanChoice />
         <p className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs leading-5 text-amber-900">
           Prévia de demonstração · Use dados fictícios. Sem login seguro ou
           pagamento. Os cadastros ficam neste navegador e podem ser acessados

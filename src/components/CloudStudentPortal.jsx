@@ -1,5 +1,7 @@
 import { studentPages, StudentIdentity, StudentSupport, StudentDashboard, StudentJourney, StudentProgress, StudentPackageSummary, StudentUpdates, StudentPayments, StudentMonth } from "./StudentDesign";
 import { Bell, UserRound } from "lucide-react";
+import { PlanChoice } from "./PlanChoice";
+import { readPlanChoice } from "../data/experience-plans";
 import { PortalNavIcon } from "./PortalNavIcon";
 import { StudentStart } from "./StudentStart";
 import { PackageCheckoutTest } from "./PackageCheckoutTest";
@@ -64,7 +66,7 @@ export function CloudStudentPortal() {
     name: "",
     email: "",
     phone: "",
-    category: "B",
+    category: readPlanChoice(location.search)?.category.id || "B",
     password: "",
     confirm: "",
   });
@@ -222,7 +224,7 @@ export function CloudStudentPortal() {
           email: form.email.trim(),
           password: form.password,
           options: {
-            emailRedirectTo: `${location.origin}/aluno`,
+            emailRedirectTo: `${location.origin}/aluno${location.search}`,
             data: { name: form.name.trim(), phone, category: form.category },
           },
         });
@@ -275,7 +277,7 @@ export function CloudStudentPortal() {
   const hasCredit = available("A") > 0 || available("B") > 0;
   const hasLessons = data.lessons.some(l => l.status !== "cancelled");
   const starting = !hasCredit && !hasLessons && !data.credits.length;
-  const initialCategory = data.packages.find(p => p.slug === requestedPackage)?.category || "";
+  const initialCategory = data.packages.find(p => p.id === requestedPackage || p.slug === requestedPackage)?.category || readPlanChoice(location.search)?.category.id || "";
   const startView = <StudentStart packages={data.packages} requests={data.requests}
     initialCategory={initialCategory} contact={whatsappUrl(data.settings?.whatsapp || "5512996225250", "Olá! Quero ajuda para escolher e combinar meu pacote de aulas.")}
     onRequested={async () => { await refresh(session.user.id); setTab("Início"); setMessage("Recebemos seu interesse. Acompanhe os próximos passos abaixo."); }} />;
@@ -330,6 +332,7 @@ export function CloudStudentPortal() {
                   ? "Seu primeiro passo começa aqui"
                   : "Bom ter você de volta"}
             </h1>
+            {!recovery && <PlanChoice />}
             {signup && !recovery && (
               <p className="mt-3 text-sm text-slate-600">
                 Cadastro gratuito. Contrate aulas quando estiver pronto.
@@ -427,7 +430,7 @@ export function CloudStudentPortal() {
             <p className="mt-6 text-sm">
               <a
                 className="font-bold text-green-700"
-                href={signup ? "/aluno" : `/cadastro${location.search}`}
+                href={signup ? `/aluno${location.search}` : `/cadastro${location.search}`}
               >
                 {signup
                   ? "Já tenho conta. Entrar"
@@ -437,6 +440,7 @@ export function CloudStudentPortal() {
           </section>
         ) : (
           <>
+            <PlanChoice />
             <div className="student-page-heading">
             <h1 className="text-3xl font-extrabold">
               {data.student
