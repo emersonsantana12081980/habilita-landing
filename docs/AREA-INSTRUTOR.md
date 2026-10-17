@@ -4,6 +4,8 @@ Endereço: https://habilita-landing.vercel.app/instrutor
 
 ## Cadastro pelo administrativo
 
+Para enviar fotos do computador ou celular, execute também `supabase/migrations/202610170002_instructor_photos.sql`. Em **Foto do instrutor**, escolha JPG, PNG ou WebP de até 5 MB e salve. A prévia aparece antes de salvar. A foto fica pública no catálogo; somente administradores podem enviar. Substituições usam arquivos novos e preservam os antigos; arquivos sem referência podem ser limpos posteriormente no Storage pela administração. Cancelar antes de salvar não envia o arquivo.
+
 Abra `/admin` → **Instrutores** → **Cadastrar instrutor**. Preencha nome, categoria, cidade e apresentação e salve. Para liberar login, abra **Vincular login do instrutor** no cartão e informe o e-mail de uma conta existente. Não é criada uma senha ou uma conta de autenticação por esse formulário.
 
 Antes de usar o vínculo pelo painel, execute `supabase/migrations/202610170001_admin_instructors.sql` no SQL Editor. Essa função exige administrador no servidor e não permite substituir vínculos existentes. Preserva o papel de administrador quando ele também é instrutor. A migration não foi aplicada remotamente pela ferramenta.

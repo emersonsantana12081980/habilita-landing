@@ -3,11 +3,19 @@ import { test, expect } from "@playwright/test";
 test('admin cadastra instrutor pelo menu e vincula conta existente', async ({page}) => {
   await mock(page, false, true);
   let instructors = [], linked = false;
+  let uploaded = false;
+  await page.route('**/storage/v1/object/instructor-photos/**', route => {
+    expect(route.request().method()).toBe('POST');
+    expect(route.request().url()).toMatch(/instructor-photos\/[0-9a-f-]+\.png$/);
+    uploaded = true;
+    return route.fulfill({json:{Key:'photo'}});
+  });
   await page.route('**/rest/v1/instructors*', async route => {
     if (route.request().method() === 'POST') {
       const payload = route.request().postDataJSON();
       expect(payload.name).toBe('Instrutor Novo');
       expect(payload.user_id).toBeUndefined();
+      expect(payload.photo_url).toMatch(/storage\/v1\/object\/public\/instructor-photos\//);
       instructors = [{...payload,id:'instructor-new'}];
     }
     await route.fulfill({json:instructors});
@@ -24,6 +32,11 @@ test('admin cadastra instrutor pelo menu e vincula conta existente', async ({pag
   await page.getByRole('button',{name:'Instrutores',exact:true}).click();
   await page.getByRole('button',{name:'Cadastrar instrutor'}).click();
   await page.getByLabel('Nome',{exact:true}).fill('Instrutor Novo');
+  await page.getByLabel('Foto do instrutor',{exact:true}).setInputFiles({name:'bad.txt',mimeType:'text/plain',buffer:Buffer.from('bad')});
+  await expect(page.getByText('Escolha uma foto JPG, PNG ou WebP de até 5 MB.',{exact:true})).toBeVisible();
+  expect(uploaded).toBe(false);
+  await page.getByLabel('Foto do instrutor',{exact:true}).setInputFiles({name:'foto.png',mimeType:'image/png',buffer:Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aX1sAAAAASUVORK5CYII=','base64')});
+  await expect(page.getByAltText('Prévia da foto do instrutor')).toBeVisible();
   await page.getByRole('button',{name:'Salvar no site'}).click();
   await expect(page.getByRole('heading',{name:'Instrutor Novo'})).toBeVisible();
   await page.getByText('Vincular login do instrutor',{exact:true}).click();
@@ -31,6 +44,7 @@ test('admin cadastra instrutor pelo menu e vincula conta existente', async ({pag
   await page.getByRole('button',{name:'Vincular acesso',exact:true}).click();
   await expect(page.getByText('Acesso vinculado.',{exact:false})).toBeVisible();
   expect(linked).toBe(true);
+  expect(uploaded).toBe(true);
 });
 
 test('novo portal do aluno navega nas doze páginas sem inventar progresso', async ({page}, testInfo) => {

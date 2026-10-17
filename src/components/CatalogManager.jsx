@@ -6,6 +6,14 @@ import { packagePricing } from "../lib/package-pricing";
 import { InstructorAccess } from "./InstructorAccess";
 export function CatalogManager({ initialKind = "packages", instructorsOnly = false }) {
   const installmentRatio = useRef(1);
+  const [photoFile, setPhotoFile] = useState(null);
+  const [photoPreview, setPhotoPreview] = useState("");
+  useEffect(() => {
+    if (!photoFile) { setPhotoPreview(""); return; }
+    const url = URL.createObjectURL(photoFile);
+    setPhotoPreview(url);
+    return () => URL.revokeObjectURL(url);
+  }, [photoFile]);
   const [kind, setKind] = useState(initialKind),
     [rows, setRows] = useState([]),
     [form, setForm] = useState(null),
@@ -25,6 +33,7 @@ export function CatalogManager({ initialKind = "packages", instructorsOnly = fal
   useEffect(() => {
     setRows([]);
     setForm(null);
+    setPhotoFile(null);
     load();
   }, [kind]);
   function fresh() {
@@ -63,7 +72,7 @@ export function CatalogManager({ initialKind = "packages", instructorsOnly = fal
       <div className="flex gap-3">
         {!instructorsOnly && <><button onClick={() => setKind("packages")}>Pacotes</button>
         <button onClick={() => setKind("instructors")}>Instrutores</button></>}
-        <button className="btn btn-green" onClick={() => setForm(fresh())}>
+        <button disabled={busy} className="btn btn-green" onClick={() => { setPhotoFile(null); setForm(fresh()); }}>
           {kind === "instructors" ? "Cadastrar instrutor" : "Novo cadastro"}
         </button>
       </div>
@@ -87,6 +96,17 @@ export function CatalogManager({ initialKind = "packages", instructorsOnly = fal
                 ...form,
                 slug: form.slug || crypto.randomUUID(),
               };
+              if (kind === "instructors" && photoFile) {
+                const extensions = { "image/jpeg": "jpg", "image/png": "png", "image/webp": "webp" };
+                if (!extensions[photoFile.type] || photoFile.size > 5 * 1024 * 1024)
+                  throw new Error("Escolha uma foto JPG, PNG ou WebP de até 5 MB.");
+                const path = `${crypto.randomUUID()}.${extensions[photoFile.type]}`;
+                const { error } = await supabase.storage.from("instructor-photos").upload(path, photoFile, { contentType: photoFile.type, upsert: false });
+                if (error) throw new Error("Não foi possível enviar a foto. Confira se o armazenamento de fotos foi ativado no Supabase e tente novamente.");
+                payload.photo_url = supabase.storage.from("instructor-photos").getPublicUrl(path).data.publicUrl;
+                setForm(current => ({ ...current, photo_url: payload.photo_url }));
+                setPhotoFile(null);
+              }
               const result = form.id
                 ? await supabase.from(kind).update(payload).eq("id", form.id)
                 : await supabase.from(kind).insert(payload);
@@ -232,9 +252,23 @@ export function CatalogManager({ initialKind = "packages", instructorsOnly = fal
             </>
           ) : (
             <>
+              <div className="sm:col-span-2">
+                <label>Foto do instrutor
+                  <input type="file" accept="image/jpeg,image/png,image/webp" disabled={busy} onChange={event => {
+                    const file = event.target.files?.[0];
+                    setMessage("");
+                    if (file && (!['image/jpeg','image/png','image/webp'].includes(file.type) || file.size > 5 * 1024 * 1024)) {
+                      setMessage("Escolha uma foto JPG, PNG ou WebP de até 5 MB.");
+                      event.target.value = ""; setPhotoFile(null); return;
+                    }
+                    setPhotoFile(file || null);
+                  }} />
+                </label>
+                <p className="text-sm text-slate-600">JPG, PNG ou WebP, até 5 MB. A foto será pública no perfil do instrutor e enviada ao salvar.</p>
+                {(photoPreview || form.photo_url) && <img src={photoPreview || form.photo_url} alt="Prévia da foto do instrutor" className="mt-3 h-32 w-32 rounded-xl object-cover" />}
+              </div>
               {[
                 ["city", "Cidade"],
-                ["photo_url", "URL da foto"],
               ].map(([k, l]) => (
                 <label key={k}>
                   {l}
@@ -270,7 +304,7 @@ export function CatalogManager({ initialKind = "packages", instructorsOnly = fal
           <button disabled={busy} className="btn btn-green">
             Salvar no site
           </button>
-          <button type="button" onClick={() => setForm(null)}>
+          <button disabled={busy} type="button" onClick={() => { setPhotoFile(null); setForm(null); }}>
             Cancelar
           </button>
         </form>
@@ -284,7 +318,8 @@ export function CatalogManager({ initialKind = "packages", instructorsOnly = fal
             </p>
             <button
               className="mt-3 text-green-700 underline"
-              onClick={() =>
+              disabled={busy}
+              onClick={() => { setPhotoFile(null);
                 setForm(
                   kind === "packages"
                     ? {
@@ -294,8 +329,7 @@ export function CatalogManager({ initialKind = "packages", instructorsOnly = fal
                         pricing_demo: packagePricing(r).demo,
                       }
                     : r,
-                )
-              }
+                ); }}
             >
               Editar
             </button>
