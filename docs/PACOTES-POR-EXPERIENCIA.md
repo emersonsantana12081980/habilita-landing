@@ -1,5 +1,11 @@
 # Prévia: pacotes por experiência
 
+## Regra atual — simplificação solicitada pelo responsável
+
+O administrador mantém os campos originais do pacote e adiciona apenas **Tipo de experiência**. Categoria + tipo selecionam o quadro. Os valores cadastrados são exibidos independentemente dos antigos campos `offer_confirmed` e `pricing_demo`; duração, divisão de valores A/B e condições extras não bloqueiam a exibição. Parcelamento só aparece quando existe total e número de parcelas válidos. Não se inventam duração nem juros.
+
+Pacotes ativos ainda sem tipo aparecem abaixo em “Pacotes disponíveis”, com seus valores originais, até serem classificados. Gravações pelo formulário deixam `offer_confirmed=false` para compatibilidade com a constraint anterior. Não é necessária outra migration. Os parágrafos abaixo documentam o planejamento anterior, substituído por esta simplificação.
+
 ## Atualização: cadastro pelo administrador
 
 A associação manual descrita abaixo foi substituída pelo cadastro no administrador: Categoria + Nível de experiência. O site consulta os campos salvos no pacote para escolher o quadro.

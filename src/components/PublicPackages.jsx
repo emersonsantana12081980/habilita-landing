@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Bike, CarFront, Clock3, MessageCircle, Plus } from 'lucide-react';
 import { money } from '../store-data';
 import { trackLanding } from '../lib/landing-events';
-import { experienceLevels, planCategories, resolveExperienceOffer } from '../data/experience-plans';
+import { experienceLevels, planCategories, resolveExperienceOffer, packageOffer } from '../data/experience-plans';
 
 export function installmentText(totalCents, count) {
   if (!Number.isSafeInteger(totalCents) || totalCents <= 0 || !Number.isInteger(count) || count <= 0) return null;
@@ -28,7 +28,7 @@ export function PublicPackages({ packages, contact }) {
         <div className="flex items-center justify-between gap-2"><span className="rounded-md bg-yellow-100 px-2 py-1 text-[11px] font-bold text-yellow-950">{level.badge}</span><span className="flex text-slate-500">{category !== 'A' && <CarFront size={19}/>} {category !== 'B' && <Bike size={19}/>}</span></div>
         <h4 className="mt-5 text-xl font-extrabold">{level.title}</h4><p className="mt-3 text-sm leading-6 text-slate-600">{level.description}</p>
         <div className="my-5 rounded-lg bg-slate-50 p-3 text-sm font-medium text-green-800"><Clock3 size={16} className="mr-2 inline"/>{level.note}</div>
-        {offer ? <div className="mb-4"><p className="text-sm text-green-800">À vista</p><p className="text-3xl font-extrabold text-green-800">{money(offer.cash / 100)}</p><p className="mt-2 text-sm text-slate-600">{offer.total % offer.count === 0 ? `ou até ${offer.count}x de ${money(offer.total / offer.count / 100)} no cartão` : `No cartão: ${installmentText(offer.total,offer.count)}`}</p><p className="mt-1 text-xs text-slate-500">Total parcelado: {money(offer.total/100)}.</p><p className="mt-2 text-xs text-slate-600">{offer.total > offer.cash ? `O total no cartão é ${money((offer.total-offer.cash)/100)} maior que o preço à vista.` : offer.total < offer.cash ? 'O total no cartão é menor que o preço à vista, conforme condição cadastrada.' : 'Mesmo total à vista e no cartão.'}</p>{offer.hours.map(h => <p key={h.id} className="mt-2 text-sm">{h.id === 'B' ? 'Carro' : 'Moto'}: {h.lessons} aulas de {h.minutes} min · {(h.lessons*h.minutes/60).toLocaleString('pt-BR',{maximumFractionDigits:2})} horas{category === 'A+B' ? ` · ${money(h.cash/100)} à vista` : ''}.</p>)}</div>
+        {offer ? <OfferPrice offer={offer} />
           : <div className="mb-4"><p className="text-xl font-extrabold text-green-800">Vamos montar seu plano</p><p className="mt-2 text-sm leading-6 text-slate-600">Consulte valores e carga horária com o instrutor antes de contratar.</p>{category === 'A+B' && <p className="mt-2 text-sm text-slate-600">Carro e moto: horas e valores definidos separadamente.</p>}</div>}
         <details className="group mb-5 rounded-xl border border-slate-100 p-4"><summary className="flex min-h-6 cursor-pointer items-center justify-between gap-2 text-sm font-semibold">Ver condições<Plus size={16} className="group-open:rotate-45"/></summary><div className="mt-4 space-y-3 text-sm leading-6 text-slate-600">
           {!offer && <p>Quantidade de aulas, duração de cada aula e total de horas ainda precisam ser definidos para esta opção. Confirme esses dados antes de contratar.</p>}
@@ -40,6 +40,26 @@ export function PublicPackages({ packages, contact }) {
         <p className="mt-2 text-center text-xs text-slate-500">Cadastro gratuito, sem cobrança.</p>
       </article>;
     })}</div>
+    {packages.filter(p => p.active && p.category === category && !p.experience_level && packageOffer(p)).length > 0 && <div className="mt-6">
+      <h3 className="mb-4 text-xl font-bold">Pacotes disponíveis</h3>
+      <div className="grid gap-5 lg:grid-cols-3">{packages.filter(p => p.active && p.category === category && !p.experience_level).map(pack => {
+        const offer = packageOffer(pack);
+        return offer && <article key={pack.id} className="rounded-2xl border border-slate-200 bg-white p-6">
+          <h4 className="mb-4 text-xl font-bold">{pack.name}</h4><OfferPrice offer={offer}/>
+          <button className="btn w-full bg-yellow-400 text-slate-900" onClick={() => contact(`Olá! Tenho interesse no pacote ${pack.name}.`, 'package_whatsapp_click', {category, package_id:pack.id})}>Consultar este pacote</button>
+        </article>;
+      })}</div>
+    </div>}
     <p className="mt-6 rounded-xl border border-green-100 bg-green-50 p-4 text-sm leading-6 text-slate-700"><strong>Primeira habilitação:</strong> a carga mínima prática é de 2 horas por categoria. Em A/B, são 2 horas para carro e 2 para moto. Esse mínimo não define a quantidade adequada para cada pessoa nem garante aprovação. <a className="font-semibold underline" href="https://detran.sp.gov.br/cnhpaulista/" target="_blank" rel="noopener noreferrer">Consulte o Detran-SP.</a></p>
   </div></section>;
+}
+
+function OfferPrice({ offer }) {
+  return <div className="mb-4">
+    <p className="text-sm text-green-800">À vista</p>
+    <p className="text-3xl font-extrabold text-green-800">{money(offer.cash / 100)}</p>
+    {offer.total && <><p className="mt-2 text-sm text-slate-600">No cartão: {installmentText(offer.total, offer.count)}</p>
+      {offer.total > offer.cash && <p className="mt-1 text-xs text-slate-500">O total no cartão é {money((offer.total - offer.cash) / 100)} maior que o preço à vista.</p>}</>}
+    {offer.hours.map(h => <p key={h.id} className="mt-2 text-sm">{h.id === 'B' ? 'Carro' : 'Moto'}: {h.lessons} aulas.</p>)}
+  </div>;
 }

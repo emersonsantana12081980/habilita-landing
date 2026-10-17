@@ -12,13 +12,18 @@ test('o cadastro aparece somente na categoria e experiência escolhidas', () => 
     assert.equal(Boolean(resolveExperienceOffer([pack], category, level)), category === 'B' && level === 'base');
   }
 });
-test('não exibe oferta ambígua, inativa, fictícia ou sem confirmação', () => {
-  assert.equal(resolveExperienceOffer([pack, { ...pack, id: 'p2' }], 'B', 'base'), null);
-  for (const change of [{ active: false }, { pricing_demo: true }, { offer_confirmed: false }, { lesson_minutes_b: null }])
-    assert.equal(resolveExperienceOffer([{ ...pack, ...change }], 'B', 'base'), null);
+test('uses registered prices without extra confirmation or duration fields', () => {
+  const result = resolveExperienceOffer([{ ...pack, pricing_demo: true, offer_confirmed: false, lesson_minutes_b: null, card_contract: null }], 'B', 'base');
+  assert.equal(result.cash, 30000);
+  assert.equal(result.total, 33000);
+  assert.equal(result.hours[0].lessons, 3);
 });
-test('pacote combinado exige valores separados que correspondam ao total', () => {
-  const combined = { ...pack, category: 'A+B', lessons_a: 2, lesson_minutes_a: 50, cash_a_cents: 10000, cash_b_cents: 20000 };
-  assert.equal(resolveExperienceOffer([combined], 'A+B', 'base').pack.id, 'p1');
-  assert.equal(resolveExperienceOffer([{ ...combined, cash_a_cents: 9999 }], 'A+B', 'base'), null);
+test('ambiguous or inactive slots are not selected', () => {
+  assert.equal(resolveExperienceOffer([pack, { ...pack, id: 'p2' }], 'B', 'base'), null);
+  assert.equal(resolveExperienceOffer([{ ...pack, active: false }], 'B', 'base'), null);
+});
+test('missing installment price does not invent interest or hide cash price', () => {
+  const result = resolveExperienceOffer([{ ...pack, card_total_cents: null }], 'B', 'base');
+  assert.equal(result.cash, 30000);
+  assert.equal(result.total, null);
 });

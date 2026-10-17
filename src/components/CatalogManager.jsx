@@ -7,7 +7,7 @@ import { InstructorAccess } from "./InstructorAccess";
 import { createInstructorAccount } from "../lib/instructor-account";
 import { DeleteRegistration } from "./DeleteRegistration";
 import { PackagePlacementFields } from "./PackagePlacementFields";
-import { experienceLevels, resolveExperienceOffer } from "../data/experience-plans";
+import { experienceLevels } from "../data/experience-plans";
 export function CatalogManager({ initialKind = "packages", instructorsOnly = false }) {
   const installmentRatio = useRef(1);
   const [accountEmail, setAccountEmail] = useState("");
@@ -99,8 +99,7 @@ export function CatalogManager({ initialKind = "packages", instructorsOnly = fal
                 if (!form.experience_level) throw new Error("Selecione o nível de experiência para definir o quadro do pacote.");
                 if (form.active && rows.some(r => r.id !== form.id && r.active && r.category === form.category && r.experience_level === form.experience_level))
                   throw new Error("Já existe um pacote ativo neste quadro. Edite ou desative o pacote anterior.");
-                if (form.offer_confirmed && !resolveExperienceOffer([{ ...form, id: form.id || 'preview', active: true }], form.category, form.experience_level))
-                  throw new Error("Confira valores reais, aulas, duração e parcelamento. Para carro e moto, os valores separados devem somar o preço à vista.");
+
               }
               if (kind === "instructors" && createAccess && !form.id) {
                 const { error } = await supabase.rpc("admin_check_instructor_email", { p_email: accountEmail.trim() });
@@ -116,6 +115,7 @@ export function CatalogManager({ initialKind = "packages", instructorsOnly = fal
                 throw new Error("Use uma foto HTTPS ou um caminho local.");
               const payload = {
                 ...form,
+                ...(kind === "packages" ? { offer_confirmed: false } : {}),
                 slug: form.slug || crypto.randomUUID(),
               };
               if (kind === "instructors" && !payload.id) payload.id = crypto.randomUUID();
