@@ -7,7 +7,6 @@ import { InstructorAccess } from "./InstructorAccess";
 import { createInstructorAccount } from "../lib/instructor-account";
 import { DeleteRegistration } from "./DeleteRegistration";
 import { PackagePlacementFields } from "./PackagePlacementFields";
-import { experienceLevels } from "../data/experience-plans";
 export function CatalogManager({ initialKind = "packages", instructorsOnly = false }) {
   const installmentRatio = useRef(1);
   const [accountEmail, setAccountEmail] = useState("");
@@ -49,7 +48,6 @@ export function CatalogManager({ initialKind = "packages", instructorsOnly = fal
           name: "",
           category: "B",
           experience_level: "",
-          offer_confirmed: false,
           lessons_a: 0,
           lessons_b: 2,
           price_cents: 29900,
@@ -95,12 +93,6 @@ export function CatalogManager({ initialKind = "packages", instructorsOnly = fal
             setBusy(true);
             setMessage("");
             try {
-              if (kind === "packages") {
-                if (!form.experience_level) throw new Error("Selecione o nível de experiência para definir o quadro do pacote.");
-                if (form.active && rows.some(r => r.id !== form.id && r.active && r.category === form.category && r.experience_level === form.experience_level))
-                  throw new Error("Já existe um pacote ativo neste quadro. Edite ou desative o pacote anterior.");
-
-              }
               if (kind === "instructors" && createAccess && !form.id) {
                 const { error } = await supabase.rpc("admin_check_instructor_email", { p_email: accountEmail.trim() });
                 if (error) throw new Error(error.message === "account_exists"
@@ -115,7 +107,7 @@ export function CatalogManager({ initialKind = "packages", instructorsOnly = fal
                 throw new Error("Use uma foto HTTPS ou um caminho local.");
               const payload = {
                 ...form,
-                ...(kind === "packages" ? { offer_confirmed: false } : {}),
+                ...(kind === "packages" ? { experience_level: form.experience_level || null, offer_confirmed: false } : {}),
                 slug: form.slug || crypto.randomUUID(),
               };
               if (kind === "instructors" && !payload.id) payload.id = crypto.randomUUID();
@@ -135,7 +127,7 @@ export function CatalogManager({ initialKind = "packages", instructorsOnly = fal
                 : await supabase.from(kind).insert(payload);
               if (result.error)
                 throw new Error(
-                  result.error.code === "23505" ? "Já existe um cadastro com estes dados ou um pacote ativo neste quadro." : "Não foi possível salvar. Confira os campos e se a atualização de pacotes por categoria foi aplicada no Supabase.",
+                  "Confira categoria, aulas e valores. Não foi possível salvar.",
                 );
               let savedMessage = "Catálogo atualizado no banco.";
               if (kind === "instructors" && createAccess && !form.id) {
@@ -167,7 +159,7 @@ export function CatalogManager({ initialKind = "packages", instructorsOnly = fal
             <select
               value={form.category}
               onChange={(e) =>
-                setForm((f) => ({ ...f, category: e.target.value, ...(kind === 'packages' ? { offer_confirmed: false, lessons_a: e.target.value === 'B' ? 0 : f.lessons_a, lessons_b: e.target.value === 'A' ? 0 : f.lessons_b } : {}) }))
+                setForm((f) => ({ ...f, category: e.target.value }))
               }
             >
               {["A", "B", "A+B"].map((c) => (
@@ -350,7 +342,6 @@ export function CatalogManager({ initialKind = "packages", instructorsOnly = fal
         {rows.map((r) => (
           <article className="admin-card" key={r.id}>
             <h3 className="font-bold">{r.name}</h3>
-            {kind === 'packages' && <p className="text-sm text-slate-600">Quadro: {experienceLevels.find(l => l.id === r.experience_level)?.title || 'Ainda não definido'}</p>}
             <p>
               {r.category} · {r.active ? "Ativo" : "Inativo"}
             </p>

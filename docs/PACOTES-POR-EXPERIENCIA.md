@@ -1,5 +1,11 @@
 # Prévia: pacotes por experiência
 
+## Versão final: formulário e cartões originais, apenas filtro
+
+Restaurados `CatalogManager` e cartões de `PublicPackages` da versão 53bc914. Único campo novo visível: Tipo de experiência. A página começa mostrando todos os pacotes ativos e os botões filtram categoria A/B/A+B e experiência, sem alterar preços, conteúdo ou links dos cartões. Cada filtro pode retornar vários pacotes. Sem correspondência, informa que não há opções e permite limpar os filtros.
+
+Aplicar `202610170006_package_experience_filter.sql` para retirar o índice único criado anteriormente e permitir vários pacotes do mesmo tipo. Não exclui cadastros. Os requisitos abaixo são histórico e foram substituídos por esta versão.
+
 ## Regra atual — simplificação solicitada pelo responsável
 
 O administrador mantém os campos originais do pacote e adiciona apenas **Tipo de experiência**. Categoria + tipo selecionam o quadro. Os valores cadastrados são exibidos independentemente dos antigos campos `offer_confirmed` e `pricing_demo`; duração, divisão de valores A/B e condições extras não bloqueiam a exibição. Parcelamento só aparece quando existe total e número de parcelas válidos. Não se inventam duração nem juros.
