@@ -9,6 +9,7 @@ import { DeleteRegistration } from "./DeleteRegistration";
 import { PackagePlacementFields } from "./PackagePlacementFields";
 export function CatalogManager({ initialKind = "packages", instructorsOnly = false }) {
   const installmentRatio = useRef(1);
+  const [offerType, setOfferType] = useState("package");
   const [accountEmail, setAccountEmail] = useState("");
   const [initialPassword, setInitialPassword] = useState("");
   const [createAccess, setCreateAccess] = useState(false);
@@ -50,13 +51,13 @@ export function CatalogManager({ initialKind = "packages", instructorsOnly = fal
           experience_level: "",
           lessons_a: 0,
           lessons_b: 2,
-          price_cents: 29900,
+          price_cents: 0,
           exam_vehicle: true,
           free_retest: true,
           retest_terms: "",
           card_installments: 12,
-          card_total_cents: 35880,
-          pricing_demo: true,
+          card_total_cents: 0,
+          pricing_demo: false,
           boleto_installments: 6,
           active: true,
         }
@@ -79,9 +80,12 @@ export function CatalogManager({ initialKind = "packages", instructorsOnly = fal
       <div className="flex gap-3">
         {!instructorsOnly && <><button onClick={() => setKind("packages")}>Pacotes</button>
         <button onClick={() => setKind("instructors")}>Instrutores</button></>}
-        <button disabled={busy} className="btn btn-green" onClick={() => { setAccountEmail(""); setInitialPassword(""); setCreateAccess(false); setPhotoFile(null); setForm(fresh()); }}>
+        <button disabled={busy} className="btn btn-green" onClick={() => { setAccountEmail(""); setInitialPassword(""); setCreateAccess(false); setPhotoFile(null); setOfferType("package"); setForm(fresh()); }}>
           {kind === "instructors" ? "Cadastrar instrutor" : "Novo cadastro"}
         </button>
+        {kind === 'packages' && <button disabled={busy} className="btn btn-outline" onClick={() => {
+          setOfferType('single'); setForm({...fresh(),name:'Aula avulsa',lessons_a:0,lessons_b:1,card_installments:1,exam_vehicle:false,free_retest:false});
+        }}>Cadastrar aula avulsa</button>}
       </div>
       {message && <p role="status">{message}</p>}
       {form && (
@@ -93,6 +97,9 @@ export function CatalogManager({ initialKind = "packages", instructorsOnly = fal
             setBusy(true);
             setMessage("");
             try {
+              if (kind === 'packages' && offerType === 'single' &&
+                (Number(form.lessons_a) + Number(form.lessons_b) !== 1 || !['A','B'].includes(form.category)))
+                throw new Error('A aula avulsa deve conter uma única aula de carro ou moto.');
               if (kind === "instructors" && createAccess && !form.id) {
                 const { error } = await supabase.rpc("admin_check_instructor_email", { p_email: accountEmail.trim() });
                 if (error) throw new Error(error.message === "account_exists"
@@ -107,7 +114,7 @@ export function CatalogManager({ initialKind = "packages", instructorsOnly = fal
                 throw new Error("Use uma foto HTTPS ou um caminho local.");
               const payload = {
                 ...form,
-                ...(kind === "packages" ? { experience_level: form.experience_level || null, offer_confirmed: false } : {}),
+                ...(kind === "packages" ? { experience_level: form.experience_level || null, offer_confirmed: false, pricing_demo: false } : {}),
                 slug: form.slug || crypto.randomUUID(),
               };
               if (kind === "instructors" && !payload.id) payload.id = crypto.randomUUID();
@@ -159,16 +166,20 @@ export function CatalogManager({ initialKind = "packages", instructorsOnly = fal
             <select
               value={form.category}
               onChange={(e) =>
-                setForm((f) => ({ ...f, category: e.target.value }))
+                setForm((f) => ({ ...f, category: e.target.value, ...(kind === "packages" && offerType === "single" ? {lessons_a:e.target.value === "A" ? 1 : 0, lessons_b:e.target.value === "B" ? 1 : 0} : {}) }))
               }
             >
-              {["A", "B", "A+B"].map((c) => (
+              {(kind === "packages" && offerType === "single" ? ["A", "B"] : ["A", "B", "A+B"]).map((c) => (
                 <option key={c}>{c}</option>
               ))}
             </select>
           </label>
           {kind === "packages" ? (
             <>
+              <label>Tipo de oferta<select value={offerType} onChange={e => {
+                const value=e.target.value;setOfferType(value);
+                if(value==='single')setForm(f=>({...f,category:f.category==='A'?'A':'B',lessons_a:f.category==='A'?1:0,lessons_b:f.category==='A'?0:1,exam_vehicle:false,free_retest:false}));
+              }}><option value="package">Pacote de aulas</option><option value="single">Aula avulsa — 1 aula</option></select></label>
               <PackagePlacementFields form={form} setForm={setForm} />
               {[
                 ["lessons_a", "Aulas de moto"],
@@ -179,6 +190,7 @@ export function CatalogManager({ initialKind = "packages", instructorsOnly = fal
                   {label}
                   <input
                     required
+                    disabled={offerType === "single" && k.startsWith("lessons")}
                     type="number"
                     min={k.startsWith("lessons") ? 0 : 1}
                     max={k.startsWith("lessons") ? 1000 : 12}
@@ -229,23 +241,12 @@ export function CatalogManager({ initialKind = "packages", instructorsOnly = fal
                   }
                 />
               </label>
-              <label className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  checked={form.pricing_demo ?? true}
-                  onChange={(e) =>
-                    setForm((f) => ({ ...f, pricing_demo: e.target.checked }))
-                  }
-                />
-                Valores fictícios para visualização
-              </label>
               <div className="sm:col-span-2">
-                <PackagePrice pack={form} />
+                <PackagePrice pack={form} showDemoLabel={false} savedOnly/>
                 <p className="text-xs text-slate-600">
                   Alterar o preço à vista recalcula o total e as parcelas, mantendo
                   a proporção atual entre à vista e parcelado. Você também pode ajustar
-                  o total parcelado manualmente. Desmarque a demonstração somente quando os
-                  preços estiverem definidos.
+                  o total parcelado manualmente. Informe os valores que serão cobrados.
                 </p>
               </div>
               <label>
@@ -345,10 +346,11 @@ export function CatalogManager({ initialKind = "packages", instructorsOnly = fal
             <p>
               {r.category} · {r.active ? "Ativo" : "Inativo"}
             </p>
+            {kind === 'packages' && <p className="mt-1 text-sm">{Number(r.lessons_a || 0)+Number(r.lessons_b || 0)===1?'Aula avulsa · 1 aula':'Pacote de aulas'}</p>}
             <button
               className="mt-3 text-green-700 underline"
               disabled={busy}
-              onClick={() => { setCreateAccess(false); setInitialPassword(""); setPhotoFile(null);
+              onClick={() => { setOfferType(Number(r.lessons_a || 0) + Number(r.lessons_b || 0) === 1 ? "single" : "package"); setCreateAccess(false); setInitialPassword(""); setPhotoFile(null);
                 setForm(
                   kind === "packages"
                     ? {

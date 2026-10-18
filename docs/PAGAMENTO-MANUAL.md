@@ -10,6 +10,14 @@ O código Pix e os dados comerciais são públicos; não cadastrar credenciais. 
 
 ## Aluno
 
+O catálogo do aluno é uma lista de ofertas cadastradas; selecionar um item abre a janela de contratação. Os preços exibidos são os valores cadastrados no admin, sem etiquetas de demonstração ou cálculo de um parcelamento substituto quando não há valor salvo.
+
+## Aulas avulsas
+
+Admin → Catálogo → Cadastrar aula avulsa. Escolher carro ou moto, tipo de experiência e preços. A quantidade fica fixada em uma aula da categoria selecionada. Não há preço de exemplo preenchido. A oferta usa a tabela de pacotes existente; registros com exatamente uma aula são identificados como avulsos, sem migration adicional. O aluno usa “Contratar 1 aula” e segue o mesmo fluxo manual; aprovação libera um crédito.
+
+## Contratação
+
 Escolher pacote → Pix ou cartão → aplicar cupom/conferir valor → continuar. Pix abre uma janela com os dados, botão copiar e envio de JPG/PNG/PDF de até 5 MB. Cartão permite de 1 até o limite de parcelas do pacote (máximo 12), mantendo o total de cartão cadastrado e dividindo nas parcelas escolhidas. Não há coleta de dados do cartão nem checkout automático. A equipe enviará o link manualmente pelo WhatsApp cadastrado.
 
 Pedidos entram em análise com status `pending`. Anexar comprovante não confirma pagamento e não libera aulas. O aluno pode reabrir o pagamento na aba Pagamentos. Pedidos antigos sem dados Pix continuam sem código; a equipe orienta esses alunos diretamente.

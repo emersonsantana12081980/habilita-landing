@@ -3,14 +3,17 @@ import { supabase } from "../lib/supabase";
 import { money } from "../store-data";
 import { PackagePrice } from "./PackagePrice";
 import { splitInstallments } from "../lib/package-pricing";
-export function StudentPackageOffer({ pack, pending, onRequested, guided = false }) {
-  const [expanded, setExpanded] = useState(!guided);
+export function StudentPackageOffer({ pack, pending, onRequested }) {
+  const [expanded, setExpanded] = useState(false);
   const [method, setMethod] = useState("card"),
     [code, setCode] = useState(""),
     [quote, setQuote] = useState(null),
     [message, setMessage] = useState(""),
     [busy, setBusy] = useState(false);
   const [installments, setInstallments] = useState(Math.max(1, Math.min(12, pack.card_installments || 1)));
+  const dialog = useRef(null);
+  useEffect(() => { if (expanded && dialog.current && !dialog.current.open) dialog.current.showModal(); }, [expanded]);
+  const single = Number(pack.lessons_a || 0) + Number(pack.lessons_b || 0) === 1;
   const generation = useRef(0);
   useEffect(() => {
     generation.current++;
@@ -67,21 +70,21 @@ export function StudentPackageOffer({ pack, pending, onRequested, guided = false
     ? splitInstallments(quote.total_cents, method === "card" ? installments : 1)
     : null;
   return (
-    <article className="admin-card min-w-0">
-      <h2 className="text-xl font-bold">{pack.name}</h2>
-      <p className="mt-3 text-sm">
-        {pack.lessons_a > 0 && `${pack.lessons_a} aulas de moto `}
-        {pack.lessons_b > 0 && `${pack.lessons_b} aulas de carro`}
-      </p>
-      <PackagePrice pack={pack} />
-      {pending ? (
-        <p className="rounded-xl bg-amber-50 p-3 text-sm">
-          Você já tem uma solicitação pendente deste pacote.
-        </p>
-      ) : !expanded ? (
-        <button className="btn btn-green w-full" onClick={() => setExpanded(true)}>Escolher este pacote</button>
-      ) : (
-        <>
+    <article className="rounded-xl border border-slate-200 bg-white p-4 sm:p-5">
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <div><p className="text-xs font-semibold text-green-800">{single ? 'Aula avulsa' : 'Pacote de aulas'}</p>
+          <h2 className="mt-1 text-lg font-bold">{pack.name}</h2>
+          <p className="mt-1 text-sm text-slate-600">{pack.lessons_a > 0 && `${pack.lessons_a} aula(s) de moto `}{pack.lessons_b > 0 && `${pack.lessons_b} aula(s) de carro`}</p>
+        </div>
+        <div className="sm:ml-auto"><strong className="text-xl text-green-800">{money(pack.price_cents / 100)}</strong><span className="ml-2 text-sm">à vista</span>
+          {pack.card_total_cents > 0 && <p className="text-sm text-slate-600">ou até {pack.card_installments || 1}x de {money(Math.ceil(pack.card_total_cents / (pack.card_installments || 1)) / 100)}</p>}
+        </div>
+        <button className="btn btn-green" disabled={pending} onClick={() => setExpanded(true)}>{pending ? 'Em análise' : single ? 'Contratar 1 aula' : 'Escolher este pacote'}</button>
+      </div>
+      {pending && <p className="mt-2 text-sm">Você já tem uma solicitação pendente deste pacote.</p>}
+      {expanded && <dialog ref={dialog} aria-label={`Contratar ${pack.name}`} onCancel={e => { if (busy) e.preventDefault(); else setExpanded(false); }} className="m-auto max-h-[90dvh] w-[calc(100%-2rem)] max-w-lg overflow-y-auto rounded-2xl p-6 text-slate-900 shadow-xl backdrop:bg-black/50">
+        <div className="flex items-start justify-between gap-3"><h2 className="text-xl font-bold">{pack.name}</h2><button type="button" disabled={busy} className="btn btn-outline" onClick={() => setExpanded(false)}>Fechar</button></div>
+        <PackagePrice pack={pack} showDemoLabel={false} savedOnly/>
           <fieldset disabled={busy} className="space-y-3">
             <label>
               Forma de pagamento
@@ -138,11 +141,6 @@ export function StudentPackageOffer({ pack, pending, onRequested, guided = false
                     : `${split.count}x de ${money(split.base / 100)}`}
                 </p>
               )}
-              {quote.pricing_demo && (
-                <p className="mt-2 text-xs font-bold text-amber-900">
-                  Simulação com valores fictícios. Nenhuma cobrança será feita.
-                </p>
-              )}
             </div>
           )}
           <button
@@ -163,6 +161,7 @@ export function StudentPackageOffer({ pack, pending, onRequested, guided = false
                 });
                 if (error) throw error;
                 if (!requestId) throw new Error("missing request");
+                setExpanded(false);
                 await onRequested(requestId);
                 setQuote(null);
                 setMessage("Solicitação enviada. Aguarde a análise da equipe.");
@@ -181,8 +180,7 @@ export function StudentPackageOffer({ pack, pending, onRequested, guided = false
               Confira o valor ou aplique o cupom para continuar. O pagamento será acompanhado manualmente pela equipe.
             </p>
           )}
-        </>
-      )}
+      </dialog>}
     </article>
   );
 }

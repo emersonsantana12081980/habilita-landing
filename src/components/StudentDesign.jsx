@@ -51,7 +51,7 @@ export function StudentPackageSummary({ requests, remaining, onBuy, compact = fa
   const approved = requests.filter(r => r.status === "approved");
   return <section className="student-panel"><div className="student-panel-title"><h2>Meus pacotes</h2><button onClick={onBuy}>Comprar aulas</button></div>
     <div className="package-balance"><Package size={26}/><div><strong>{remaining}</strong><span> aulas disponíveis para agendar</span></div></div>
-    {approved.length ? approved.slice(0, compact ? 2 : approved.length).map(r => <article className="student-package-line" key={r.id}><strong>{r.package_name}</strong><span className="student-status">Liberado</span><p>{money(r.price_cents / 100)}{r.pricing_demo ? " · demonstração" : ""}</p></article>) : <p className="student-muted">Você ainda não tem um pacote liberado. Escolha suas aulas e acompanhe a análise da equipe.</p>}
+    {approved.length ? approved.slice(0, compact ? 2 : approved.length).map(r => <article className="student-package-line" key={r.id}><strong>{r.package_name}</strong><span className="student-status">Liberado</span><p>{money(r.price_cents / 100)}</p></article>) : <p className="student-muted">Você ainda não tem um pacote liberado. Escolha suas aulas e acompanhe a análise da equipe.</p>}
     {!compact && requests.filter(r => r.status !== "approved").map(r => <article className="student-package-line" key={r.id}><strong>{r.package_name}</strong><span>{status[r.status] || r.status}</span><p>{money(r.price_cents / 100)}</p>{r.reason && <p>{r.reason}</p>}</article>)}
   </section>;
 }

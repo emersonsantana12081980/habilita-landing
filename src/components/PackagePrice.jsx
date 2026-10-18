@@ -1,7 +1,7 @@
 import React from "react";
 import { packagePricing, splitInstallments } from "../lib/package-pricing";
 import { money } from "../store-data";
-export function PackagePrice({ pack, showDemoLabel = true }) {
+export function PackagePrice({ pack, showDemoLabel = true, savedOnly = false }) {
   const { cash, total, count, demo } = packagePricing(pack);
   const split = splitInstallments(total, count);
   return (
@@ -15,7 +15,7 @@ export function PackagePrice({ pack, showDemoLabel = true }) {
       <p className="mt-1 text-3xl font-extrabold tracking-tight text-green-800">
         {money(cash / 100)}
       </p>
-      <p className="mt-4 text-base text-slate-700">
+      {(!savedOnly || pack.card_total_cents > 0) && <><p className="mt-4 text-base text-slate-700">
         ou <strong>{count}x de {money(Math.ceil(total / count) / 100)}</strong> no cartão
       </p>
       {split?.higher > 0 && (
@@ -26,7 +26,7 @@ export function PackagePrice({ pack, showDemoLabel = true }) {
       )}
       <p className="mt-2 text-xs text-slate-600">
         Total parcelado: {money(total / 100)}
-      </p>
+      </p></>}
     </div>
   );
 }

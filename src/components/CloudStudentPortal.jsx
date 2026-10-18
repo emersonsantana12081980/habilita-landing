@@ -516,7 +516,7 @@ export function CloudStudentPortal() {
                       Solicitar não gera cobrança. A equipe confirma as
                       condições e libera os créditos após análise.
                     </p>
-                    <div className="grid gap-4 md:grid-cols-3">
+                    <div className="space-y-3">
                       {data.packages.map((p) => (
                         <StudentPackageOffer
                           key={p.id}

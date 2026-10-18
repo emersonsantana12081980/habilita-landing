@@ -42,7 +42,6 @@ export function ManualPayment({ request, admin = false, autoOpen = false, onClos
   }
   const content = <div className="mt-4 space-y-3 text-sm">
       {!admin && <>
-        {request.pricing_demo && <p className="rounded-lg bg-amber-100 p-3 font-semibold">Pedido de demonstração. Não faça uma transferência real.</p>}
         <p className="font-bold">Total do pedido: {money(request.price_cents / 100)}</p>
         <p className="font-semibold">{request.status === 'pending' ? 'Em análise — aguardando confirmação da equipe.' : request.status === 'approved' ? 'Pedido aprovado pela equipe.' : 'Pedido recusado pela equipe.'}</p>
         {request.payment_method === "card" ? <>

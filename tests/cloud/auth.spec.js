@@ -606,7 +606,7 @@ test('cupom inválido, troca de forma e revalidação antes de solicitar',async(
   await page.getByRole('navigation',{name:'Área do aluno'}).getByRole('button',{name:'Comprar aulas',exact:true}).click();
   await page.getByRole('button',{name:'Quero aulas de carro',exact:true}).click();
   await page.getByRole('button',{name:'Escolher este pacote',exact:true}).click();
-  await expect(page.getByText('Valores fictícios para visualização')).toBeVisible();
+  await expect(page.getByText('Valores fictícios para visualização')).toHaveCount(0);
   await expect(page.getByRole('button',{name:'Continuar para pagamento',exact:true})).toBeDisabled();
   await page.getByLabel('Cupom de desconto (opcional)').fill('ERRADO');
   await page.getByRole('button',{name:'Aplicar cupom',exact:true}).click();
@@ -1025,4 +1025,50 @@ test('admin sees card installments in review and can open student WhatsApp', asy
   const review=page.getByRole('region',{name:'Em análise',exact:true});
   await expect(review).toContainText('Cartão de crédito · 3x');
   await expect(review.getByRole('link',{name:'Abrir WhatsApp do aluno'})).toHaveAttribute('href',/wa\.me\/5511999999999/);
+});
+
+test('admin registers one standalone motorcycle lesson with entered prices', async ({page}) => {
+  await mock(page,false,true); let saved;
+  await page.route('**/rest/v1/packages*',r=>{
+    if(r.request().method()==='POST'){saved=r.request().postDataJSON();return r.fulfill({json:null});}
+    return r.fulfill({json:saved?[{...saved,id:'single'}]:[]});
+  });
+  await page.goto('/admin');
+  await page.getByLabel('E-mail administrativo').fill('admin@example.com');
+  await page.getByLabel('Senha',{exact:true}).fill('senha-teste-123');
+  await page.getByRole('button',{name:'Entrar no painel',exact:true}).click();
+  await page.getByRole('button',{name:'Catálogo',exact:true}).click();
+  await page.getByRole('button',{name:'Cadastrar aula avulsa'}).click();
+  await page.getByLabel('Tipo de experiência').selectOption('experiencia');
+  await page.getByRole('combobox',{name:'Categoria',exact:true}).selectOption('A');
+  await expect(page.getByLabel('Aulas de moto')).toHaveValue('1');
+  await expect(page.getByLabel('Aulas de carro')).toHaveValue('0');
+  await expect(page.getByLabel('Aulas de moto')).toBeDisabled();
+  await page.getByLabel('Nome',{exact:true}).fill('Aula avulsa de moto');
+  await page.getByLabel('Preço à vista (R$)').fill('120');
+  await page.getByLabel('Valor total parcelado (R$)').fill('130');
+  await page.getByRole('button',{name:'Salvar no site'}).click();
+  await expect(page.getByRole('heading',{name:'Aula avulsa de moto'})).toBeVisible();
+  expect(saved).toMatchObject({category:'A',lessons_a:1,lessons_b:0,price_cents:12000,card_total_cents:13000,pricing_demo:false});
+});
+
+test('student catalog lists registered single lesson and opens purchase dialog', async ({page}) => {
+  await mock(page);
+  await page.route('**/rest/v1/packages*',r=>r.fulfill({json:[{id:'single',name:'Aula avulsa de carro',category:'B',lessons_a:0,lessons_b:1,price_cents:12000,card_total_cents:13000,card_installments:2,active:true,pricing_demo:true}]}));
+  await page.goto('/aluno');
+  await page.getByLabel('E-mail',{exact:true}).fill('aluno@example.com');
+  await page.getByLabel('Senha',{exact:true}).fill('senha-teste-123');
+  await page.getByRole('button',{name:'Entrar',exact:true}).click();
+  await page.getByRole('navigation',{name:'Área do aluno'}).getByRole('button',{name:'Comprar aulas',exact:true}).click();
+  await expect(page.getByRole('heading',{name:'Aula avulsa de carro'})).toBeVisible();
+  await expect(page.getByText('R$ 120,00',{exact:true})).toBeVisible();
+  await expect(page.getByLabel('Forma de pagamento')).toHaveCount(0);
+  await expect(page.getByText('Valores fictícios',{exact:false})).toHaveCount(0);
+  await page.getByRole('button',{name:'Contratar 1 aula'}).click();
+  const popup=page.getByRole('dialog',{name:'Contratar Aula avulsa de carro'});
+  await expect(popup).toBeVisible();
+  await expect(popup.getByLabel('Forma de pagamento')).toBeVisible();
+  await expect(popup.getByText('R$ 120,00',{exact:true})).toBeVisible();
+  await page.keyboard.press('Escape');
+  await expect(popup).toHaveCount(0);
 });

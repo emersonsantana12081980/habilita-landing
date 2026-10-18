@@ -76,7 +76,6 @@ export function StudentRequests({ requests }) {
         <p className="mt-1 text-xs font-semibold text-slate-600">{requestLabel(r)}</p>
         {r.payment_method === "card" && <p className="text-xs">{r.installment_count}x no cartão</p>}
         {r.coupon_code && <p className="text-xs">Cupom {r.coupon_code} · desconto de {money(r.discount_cents/100)}</p>}
-        {r.pricing_demo && <p className="text-xs text-amber-900">Valores fictícios para visualização</p>}
         <ManualPayment request={r}/>
         {r.reason && <p className="mt-1 break-words text-xs">{r.reason}</p>}
       </li>)}</ul>
