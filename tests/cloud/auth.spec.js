@@ -909,7 +909,7 @@ test('finished requests can be removed from board without deleting history', asy
 
 test('journey saves prerequisites, counts practice per category and sends exam date', async ({page}) => {
   await mock(page);
-  let student={id:'student1',name:'Aluno Teste',active:true,category:'A+B',journey_steps:{},practical_exam_dates:{},licensed_driver:false};
+  let student={id:'student1',name:'Aluno Teste',active:true,category:'A+B',journey_steps:{},practical_exam_dates:{},licensed_driver:false,ladv_confirmed_at:null};
   const lessons=[{id:'l1',student_id:'student1',category:'B',status:'completed',starts_at:'2026-01-01T10:00:00Z',ends_at:'2026-01-01T11:00:00Z'},{id:'l2',student_id:'student1',category:'B',status:'completed',starts_at:'2026-01-02T10:00:00Z',ends_at:'2026-01-02T11:00:00Z'}];
   await page.route('**/rest/v1/students*',r=>r.fulfill({json:student}));
   await page.route('**/rest/v1/lessons*',r=>r.fulfill({json:lessons}));
@@ -923,6 +923,10 @@ test('journey saves prerequisites, counts practice per category and sends exam d
     student={...student,practical_exam_dates:{B:body.p_date}};
     return r.fulfill({json:null});
   });
+  await page.route('**/rest/v1/rpc/declare_student_ladv',r=>{
+    expect(r.request().postDataJSON()).toEqual({p_student:'student1',p_has_ladv:true,p_truth:true});
+    student={...student,ladv_confirmed_at:'2026-10-18T10:00:00Z'}; return r.fulfill({json:null});
+  });
   await page.goto('/aluno');
   await page.getByLabel('E-mail',{exact:true}).fill('aluno@example.com');
   await page.getByLabel('Senha',{exact:true}).fill('senha-teste-123');
@@ -932,6 +936,10 @@ test('journey saves prerequisites, counts practice per category and sends exam d
   await page.getByRole('button',{name:'Atualizar minha jornada CNH'}).click();
   const selects=page.locator('section[aria-label="Minha jornada CNH"] select');
   for(let i=0;i<4;i++) { await selects.nth(i).selectOption('completed'); await expect(selects.nth(i)).toHaveValue('completed'); }
+  await page.locator('input[name=ladv]').check();
+  await page.locator('input[name=truth]').check();
+  await page.getByRole('button',{name:'Confirmar LADV e declara',exact:false}).click();
+  await expect(page.locator('input[name=ladv]')).toHaveCount(0);
   await expect(page.getByLabel('Data do exame de moto')).toBeDisabled();
   await page.getByLabel('Data do exame de carro').fill('2030-12-20');
   await page.getByRole('button',{name:'Salvar data do exame',exact:true}).last().click();

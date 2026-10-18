@@ -1,5 +1,13 @@
 # Jornada do aluno
 
+## LADV e ciência
+
+Para ativação manual, executar inteiro `docs/supabase-dashboard/ativar-jornada-ladv.sql`. Esse arquivo reúne a jornada e a LADV numa transação e pode ser reaplicado. Não substitui a migration anterior de exclusão de cadastros. Nenhum SQL foi executado remotamente nesta sessão.
+
+Primeira habilitação exige, além das quatro etapas, declaração explícita de LADV e veracidade. Duas caixas desmarcadas inicialmente; confirmação grava data no servidor e histórico append-only com autor, versão e aceites. Somente o próprio aluno pode declarar. Retirar a declaração bloqueia novas reservas. Habilitados continuam dispensados para reforço, conforme escolha do responsável.
+
+O trigger do banco cobre novas aulas, remarcações e reativação de reservas. Sem declaração, o frontend também bloqueia o botão mesmo antes da ativação do SQL. Não há validação oficial da LADV. Texto v1: “Informo que possuo LADV válida para a categoria das aulas que vou agendar.” e “Declaro que as informações prestadas são verdadeiras e estou ciente de que devo apresentar minha LADV à equipe antes das aulas práticas.”
+
 Ativar executando uma vez `supabase/migrations/202610180002_student_journey.sql`, após a migration de exclusão de cadastros. Até aplicar, o frontend preserva o fluxo anterior de agendamento e não habilita edição das etapas. Após aplicação, as novas colunas retornadas ao recarregar ativam a interface.
 
 Aluno informa cadastro no Detran, exames médico/psicológico, formação e avaliação teórica como não informado, em andamento ou concluído. Para primeira habilitação, as quatro etapas concluídas são pré-requisito de agendamento. O próprio aluno declara que já é habilitado para aulas de reforço, dispensando essas etapas. Não se trata de verificação oficial do Detran.

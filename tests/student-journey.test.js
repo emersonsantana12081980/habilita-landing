@@ -5,8 +5,9 @@ test('primeira habilitação exige quatro etapas; habilitado pode fazer reforço
   assert.equal(canBookJourney({}), false);
   assert.equal(canBookJourney({licensed_driver:true}), true);
   const steps={registration:'completed',medical:'completed',theory_course:'completed',theory_exam:'completed'};
-  assert.equal(canBookJourney({journey_steps:steps}), true);
-  assert.equal(canBookJourney({journey_steps:{...steps,medical:'in_progress'}}), false);
+  assert.equal(canBookJourney({journey_steps:steps}), false);
+  assert.equal(canBookJourney({journey_steps:steps,ladv_confirmed_at:'2026-10-18T10:00:00Z'}), true);
+  assert.equal(canBookJourney({journey_steps:{...steps,medical:'in_progress'},ladv_confirmed_at:'2026-10-18T10:00:00Z'}), false);
 });
 test('prática conta somente aulas realizadas distintas, separadas por categoria', () => {
   const lessons=[{id:'1',category:'A',status:'completed'},{id:'1',category:'A',status:'completed'},{id:'2',category:'B',status:'completed'},{id:'3',category:'B',status:'missed'},{id:'4',category:'A',status:'cancelled'}];

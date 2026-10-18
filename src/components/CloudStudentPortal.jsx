@@ -577,7 +577,7 @@ export function CloudStudentPortal() {
                 )}
                 {tab === "Agendar aula" && (
                   <div className="admin-card">
-                    {data.student.journey_steps && !canBookJourney(data.student) && <div className="mb-4 rounded-xl bg-amber-50 p-4 text-sm"><p>Antes de agendar, informe a conclusão das etapas anteriores às aulas práticas. Se já é habilitado, informe isso na jornada para agendar aulas de reforço.</p><button className="mt-2 font-bold underline" onClick={() => setTab('Minha jornada CNH')}>Atualizar minha jornada CNH</button></div>}
+                    {!canBookJourney(data.student) && <div className="mb-4 rounded-xl bg-amber-50 p-4 text-sm"><p>Antes de agendar, conclua as etapas anteriores e confirme sua LADV e a declaração de veracidade. Se já é habilitado, informe isso na jornada para agendar aulas de reforço.</p><button className="mt-2 font-bold underline" onClick={() => setTab('Minha jornada CNH')}>Atualizar minha jornada CNH</button></div>}
                     <BookingRules readOnly />
                     <h2 className="text-xl font-bold">
                       Escolha um horário livre
@@ -630,7 +630,7 @@ export function CloudStudentPortal() {
                             disabled={
                               busy ||
                               !canUse ||
-                              (data.student.journey_steps && !canBookJourney(data.student)) ||
+                              !canBookJourney(data.student) ||
                               available(category) <= 0 ||
                               !data.student.category.includes(category)
                             }

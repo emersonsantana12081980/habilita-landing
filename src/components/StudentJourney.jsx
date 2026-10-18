@@ -23,6 +23,21 @@ export function StudentJourney({ student = {}, lessons = [], compact = false, on
     {!compact && onSaved && !Object.hasOwn(student, 'journey_steps') && <p className="mt-3 text-sm">A edição da jornada ainda não foi habilitada. Fale com a equipe.</p>}
     {editable && <label className="mt-4 flex items-center gap-2 text-sm"><input type="checkbox" disabled={busy} checked={student.licensed_driver || false} onChange={e => save(() => supabase.rpc('update_student_journey', {p_student:student.id,p_steps:student.journey_steps || {},p_licensed:e.target.checked}))}/>Já sou habilitado e quero aulas de reforço</label>}
     {student.licensed_driver && <p className="mt-3 text-sm text-green-800">Aulas de reforço: etapas da primeira habilitação dispensadas para agendamento na plataforma.</p>}
+    {!student.licensed_driver && <div className="mt-4 rounded-xl border border-slate-200 p-4 text-sm">
+      <h3 className="font-bold">LADV e declaração de veracidade</h3>
+      <p className="mt-2">Para agendar aulas práticas, informe que possui sua Licença para Aprendizagem de Direção Veicular (LADV) e confirme a declaração abaixo.</p>
+      {student.ladv_confirmed_at ? <><p className="mt-3 font-semibold text-green-800">LADV e ciência confirmadas pelo aluno em {new Date(student.ladv_confirmed_at).toLocaleString('pt-BR', {timeZone:'America/Sao_Paulo'})}.</p>
+        {editable && <button disabled={busy} className="mt-2 underline" onClick={() => save(() => supabase.rpc('declare_student_ladv',{p_student:student.id,p_has_ladv:false,p_truth:false}))}>Retirar minha declaração</button>}</>
+        : editable && Object.hasOwn(student,'ladv_confirmed_at') ? <form className="mt-3 space-y-3" onSubmit={e => {
+          e.preventDefault(); const fields = new FormData(e.currentTarget);
+          save(() => supabase.rpc('declare_student_ladv',{p_student:student.id,p_has_ladv:fields.has('ladv'),p_truth:fields.has('truth')}));
+        }}>
+          <label className="flex items-start gap-2"><input type="checkbox" name="ladv" required disabled={busy}/>Informo que possuo LADV válida para a categoria das aulas que vou agendar.</label>
+          <label className="flex items-start gap-2"><input type="checkbox" name="truth" required disabled={busy}/>Declaro que as informações prestadas são verdadeiras e estou ciente de que devo apresentar minha LADV à equipe antes das aulas práticas.</label>
+          <button disabled={busy} className="btn btn-green">Confirmar LADV e declaração</button>
+        </form> : <p className="mt-3 text-amber-800">Declaração de LADV pendente.</p>}
+      <p className="mt-3 student-muted">Esta declaração é informada pelo aluno; não representa validação automática do documento.</p>
+    </div>}
     <ol className="journey-list">{journeySteps.map(([key,label]) => {
       const status = student.journey_steps?.[key] || 'pending';
       const Icon = status === 'completed' ? CheckCircle2 : status === 'in_progress' ? Clock3 : Circle;
