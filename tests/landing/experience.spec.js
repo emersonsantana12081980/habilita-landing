@@ -12,10 +12,12 @@ test('experience filters registered packages while preserving original price car
   });
   await page.goto('/');
   const section=page.locator('#pacotes');
-  await expect(section.locator('article')).toHaveCount(4);
-  await expect(section.locator('article').filter({hasText:'Carro inicial'})).toContainText('300,00');
+  await expect(section.locator('article')).toHaveCount(1);
+  await expect(section.locator('article')).toContainText('Moto revisao');
+  await expect(section.getByRole('button',{name:'tenho experi',exact:false})).toHaveAttribute('aria-pressed','true');
   await section.getByRole('button',{name:'Vou come',exact:false}).click();
   await expect(section.locator('article')).toHaveCount(2);
+  await expect(section.locator('article').filter({hasText:'Carro inicial'})).toContainText('300,00');
   await expect(section.locator('article').first().getByRole('link',{name:'Cadastre-se'})).toHaveAttribute('href','/cadastro?pacote=p1');
   await section.getByRole('button',{name:/^Moto/}).click();
   await expect(section.locator('article')).toHaveCount(0);

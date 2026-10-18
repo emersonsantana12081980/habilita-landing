@@ -158,7 +158,7 @@ function PublicPackage({ pack, contact, commercialInfo }) {
 
 export function PublicPackages({ packages, contact, commercialInfo = defaults }) {
   const [category, setCategory] = useState('all');
-  const [experience, setExperience] = useState('all');
+  const [experience, setExperience] = useState('experiencia');
   const active = packages.filter(p => p.active && (category === 'all' || p.category === category) && (experience === 'all' || p.experience_level === experience));
   return (
     <section
@@ -179,6 +179,9 @@ export function PublicPackages({ packages, contact, commercialInfo = defaults })
           </p>
         </div>
         <div className="mb-7 space-y-4">
+          <p className="rounded-xl border border-green-100 bg-green-50 p-4 text-sm text-slate-700">
+            Comece pelos pacotes para quem já tem experiência. Para ver mais opções, selecione nos botões abaixo a categoria e o tipo de experiência que combinam com você.
+          </p>
           <fieldset><legend className="mb-2 text-sm font-semibold">Categoria</legend>
             <div className="flex flex-wrap gap-2">{[{id:'all',label:'Todas'}, ...planCategories].map(c => <button type="button" key={c.id} aria-pressed={category === c.id} onClick={() => setCategory(c.id)} className={`min-h-11 rounded-full border px-4 py-2 text-sm font-bold ${category === c.id ? 'bg-slate-900 text-white' : 'bg-white text-slate-700'}`}>{c.label}</button>)}</div>
           </fieldset>
