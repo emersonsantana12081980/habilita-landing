@@ -193,7 +193,7 @@ test('admin consulta comprovante usando link temporário', async ({page}) => {
 test('Pix manual envia comprovante privado e mantém pedido pendente', async ({page}) => {
   await mock(page);
   let uploaded = false;
-  await page.route('**/rest/v1/package_requests*', route => route.fulfill({json:[{id:'request-pix',student_id:'student1',package_id:'package1',package_name:'Pacote Carro',price_cents:26910,status:'pending',payment_method:'cash',pricing_demo:true}]}));
+  await page.route('**/rest/v1/package_requests*', route => route.fulfill({json:[{id:'request-pix',student_id:'student1',package_id:'package1',package_name:'Pacote Carro',price_cents:26910,status:'pending',payment_method:'cash',pricing_demo:false,pix_payment:{code:'PIX-TESTE-SEM-VALIDADE',receiver:'Recebedor de teste',bank:'Banco de teste'}}]}));
   await page.route('**/storage/v1/object/package-receipts/**', route => {
     expect(route.request().method()).toBe('POST');
     expect(route.request().url()).toMatch(/request-pix\/[0-9a-f-]+\.pdf$/);
@@ -206,7 +206,8 @@ test('Pix manual envia comprovante privado e mantém pedido pendente', async ({p
   await page.getByLabel('Senha',{exact:true}).fill('senha-teste-123');
   await page.getByRole('button',{name:'Entrar',exact:true}).click();
   await page.getByRole('navigation',{name:'Área do aluno'}).getByRole('button',{name:'Pagamentos',exact:true}).click();
-  await expect(page.getByText('PIX-DEMONSTRACAO-SEM-VALIDADE',{exact:false})).toBeVisible();
+  await page.getByRole('button',{name:'Ver Pix e enviar comprovante'}).click();
+  await expect(page.getByLabel('Código ou chave Pix')).toHaveValue('PIX-TESTE-SEM-VALIDADE');
   const input = page.getByLabel('Anexar comprovante Pix',{exact:false});
   await input.setInputFiles({name:'teste.txt',mimeType:'text/plain',buffer:Buffer.from('teste')});
   await page.getByRole('button',{name:'Enviar comprovante para análise'}).click();
@@ -217,6 +218,7 @@ test('Pix manual envia comprovante privado e mantém pedido pendente', async ({p
   await expect(page.getByText('Comprovante enviado.',{exact:false})).toBeVisible();
   await page.getByRole('button',{name:'Atualizar comprovantes'}).click();
   await expect(page.getByRole('button',{name:'Preparar comprovante 1'})).toBeVisible();
+  await page.getByRole('button',{name:'Fechar',exact:true}).click();
   await page.getByRole('navigation',{name:'Área do aluno'}).getByRole('button',{name:'Agendar aula',exact:true}).click();
   await expect(page.getByText('Você pode consultar horários, mas precisa de créditos',{exact:false})).toBeVisible();
   expect(await page.evaluate(()=>document.documentElement.scrollWidth <= innerWidth)).toBeTruthy();
@@ -225,9 +227,9 @@ test('Pix manual envia comprovante privado e mantém pedido pendente', async ({p
 test('primeiro acesso orienta escolha e acompanha interesse sem duplicar', async ({page}) => {
   await mock(page);
   let requested = false, submissions = 0;
-  await page.route('**/rest/v1/package_requests*', route => route.fulfill({json:requested ? [{id:'request-new',student_id:'student1',package_id:'package1',package_name:'Pacote Carro',price_cents:35880,status:'pending'}] : []}));
+  await page.route('**/rest/v1/package_requests*', route => route.fulfill({json:requested ? [{id:'request-new',student_id:'student1',package_id:'package1',package_name:'Pacote Carro',price_cents:35880,status:'pending',payment_method:'card',installment_count:3,review_started_at:'2026-10-18T12:00:00Z'}] : []}));
   await page.route('**/rest/v1/rpc/quote_package', route => route.fulfill({json:[{original_cents:35880,discount_cents:0,total_cents:35880,installment_count:12,pricing_demo:true}]}));
-  await page.route('**/rest/v1/rpc/request_package_offer', route => {requested=true;submissions++;return route.fulfill({json:'request-new'});});
+  await page.route('**/rest/v1/rpc/request_manual_package', route => {requested=true;submissions++;return route.fulfill({json:'request-new'});});
   await page.goto('/aluno');
   await page.getByLabel('E-mail',{exact:true}).fill('aluno@example.com');
   await page.getByLabel('Senha',{exact:true}).fill('senha-teste-123');
@@ -237,8 +239,12 @@ test('primeiro acesso orienta escolha e acompanha interesse sem duplicar', async
   await expect(page.getByText('Não há um pacote disponível nesta opção',{exact:false})).toBeVisible();
   await page.getByRole('button',{name:'Quero aulas de carro',exact:true}).click();
   await page.getByRole('button',{name:'Escolher este pacote'}).click();
+  await page.getByLabel('Quantidade de parcelas').selectOption('3');
   await page.getByRole('button',{name:'Conferir valor',exact:true}).click();
   await page.getByRole('button',{name:'Continuar para pagamento'}).click();
+  await expect(page.getByRole('dialog',{name:'Pagamento no cartão'})).toBeVisible();
+  await expect(page.getByRole('dialog').getByText('Cartão de crédito · 3 parcelas.',{exact:true})).toBeVisible();
+  await page.getByRole('button',{name:'Fechar',exact:true}).click();
   await page.getByRole('navigation',{name:'Área do aluno'}).getByRole('button',{name:'Comprar aulas',exact:true}).click();
   await expect(page.getByRole('heading',{name:'Recebemos seu interesse',exact:true})).toBeVisible();
   await expect(page.getByText('Não é necessário solicitar este pacote novamente.')).toBeVisible();
@@ -354,9 +360,15 @@ test('admin salva informações públicas e valida links',async({page})=>{
   await expect(page.getByText('Use links HTTPS sem credenciais.')).toBeVisible();
   expect(saved).toBeUndefined();
   await page.getByLabel('Link do Instagram').fill('https://example.com');
+  await page.getByLabel('Código Pix copia e cola ou chave Pix').fill('PIX-TESTE-SEM-VALIDADE');
+  await page.getByLabel('Nome do recebedor Pix').fill('Recebedor de teste');
+  await page.getByLabel('Banco do recebedor Pix').fill('Banco de teste');
   await page.getByRole('button',{name:'Salvar configurações do site'}).click();
   await expect(page.getByText('Configurações salvas. Reabra ou atualize a página pública para conferir.')).toBeVisible();
   expect(saved.commercial_info.lessonMinutes).toBe(50);expect(saved.commercial_info.lessonLocation).toBe('Praça de teste');
+  expect(saved.commercial_info.pixCode).toBe('PIX-TESTE-SEM-VALIDADE');
+  expect(saved.commercial_info.pixReceiver).toBe('Recebedor de teste');
+  expect(saved.commercial_info.pixBank).toBe('Banco de teste');
 });
 test('resumo consulta vagas e abre listas com filtros corretos',async({page})=>{
   await mock(page,false,true);
@@ -582,7 +594,7 @@ test('cupom inválido, troca de forma e revalidação antes de solicitar',async(
     const original=p.p_method==='cash'?29900:35880,discount=p.p_coupon?Math.round(original*.1):0;
     return route.fulfill({json:[{original_cents:original,discount_cents:discount,total_cents:original-discount,installment_count:p.p_method==='cash'?1:12,coupon_code:p.p_coupon||null,pricing_demo:true}]});
   });
-  await page.route('**/rest/v1/rpc/request_package_offer',route=>{
+  await page.route('**/rest/v1/rpc/request_manual_package',route=>{
     sent.push(route.request().postDataJSON());
     if(failSubmit){failSubmit=false;return route.fulfill({status:400,json:{code:'P0001',message:'Cupom inválido, expirado ou não aplicável a este pacote'}});}
     return route.fulfill({json:'request2'});
@@ -591,7 +603,7 @@ test('cupom inválido, troca de forma e revalidação antes de solicitar',async(
   await page.getByLabel('E-mail',{exact:true}).fill('aluno@example.com');
   await page.getByLabel('Senha',{exact:true}).fill('senha-teste-123');
   await page.getByRole('button',{name:'Entrar',exact:true}).click();
-  await page.getByRole('button',{name:'Meus pacotes',exact:true}).click();
+  await page.getByRole('navigation',{name:'Área do aluno'}).getByRole('button',{name:'Comprar aulas',exact:true}).click();
   await page.getByRole('button',{name:'Quero aulas de carro',exact:true}).click();
   await page.getByRole('button',{name:'Escolher este pacote',exact:true}).click();
   await expect(page.getByText('Valores fictícios para visualização')).toBeVisible();
@@ -613,7 +625,7 @@ test('cupom inválido, troca de forma e revalidação antes de solicitar',async(
   await page.getByRole('button',{name:'Conferir valor',exact:true}).click();
   await page.getByRole('button',{name:'Continuar para pagamento',exact:true}).click();
   await expect(page.getByText('Recebemos seu interesse. Acompanhe os próximos passos abaixo.')).toBeVisible();
-  expect(sent[0]).toEqual({p_package:'package1',p_coupon:'HABILITA10',p_method:'cash',p_expected_total:26910,p_expected_installments:1});
+  expect(sent[0]).toEqual({p_package:'package1',p_coupon:'HABILITA10',p_method:'cash',p_expected_total:26910,p_expected_installments:1,p_installments:1});
   expect(sent[1].p_coupon).toBe('');expect(sent[1].p_expected_total).toBe(29900);
 });
 
@@ -970,4 +982,47 @@ test('signup opens student portal immediately when email confirmation is disable
   await page.getByRole('button',{name:'Criar conta grátis'}).click();
   await expect(page.getByRole('navigation',{name:'Área do aluno'})).toBeVisible();
   await expect(page.getByText('Confira seu e-mail',{exact:false})).toHaveCount(0);
+});
+
+test('new Pix request opens payment popup with saved receiver and remains in review', async ({page}) => {
+  await mock(page); let request=null;
+  await page.route('**/rest/v1/package_requests*',r=>r.fulfill({json:request?[request]:[]}));
+  await page.route('**/rest/v1/rpc/quote_package',r=>r.fulfill({json:[{original_cents:29900,discount_cents:0,total_cents:29900,installment_count:1,pricing_demo:false}]}));
+  await page.route('**/rest/v1/rpc/request_manual_package',r=>{
+    expect(r.request().postDataJSON()).toEqual({p_package:'package1',p_coupon:'',p_method:'cash',p_expected_total:29900,p_expected_installments:1,p_installments:1});
+    request={id:'pix-new',student_id:'student1',package_id:'package1',package_name:'Pacote Carro',price_cents:29900,payment_method:'cash',installment_count:1,status:'pending',review_started_at:'2026-10-18T12:00:00Z',pix_payment:{code:'PIX-TESTE',receiver:'Recebedor teste',bank:'Banco teste'}};
+    return r.fulfill({json:request.id});
+  });
+  await page.goto('/aluno');
+  await page.getByLabel('E-mail',{exact:true}).fill('aluno@example.com');
+  await page.getByLabel('Senha',{exact:true}).fill('senha-teste-123');
+  await page.getByRole('button',{name:'Entrar',exact:true}).click();
+  await page.getByRole('navigation',{name:'Área do aluno'}).getByRole('button',{name:'Comprar aulas',exact:true}).click();
+  await page.getByRole('button',{name:'Quero aulas de carro',exact:true}).click();
+  await page.getByRole('button',{name:'Escolher este pacote'}).click();
+  await page.getByLabel('Forma de pagamento').selectOption('cash');
+  await page.getByRole('button',{name:'Conferir valor'}).click();
+  await page.getByRole('button',{name:'Continuar para pagamento'}).click();
+  const popup=page.getByRole('dialog',{name:'Pagamento Pix'});
+  await expect(popup).toBeVisible();
+  await expect(popup.getByLabel('Código ou chave Pix')).toHaveValue('PIX-TESTE');
+  await expect(popup).toContainText('Recebedor teste');
+  await expect(popup).toContainText('Em análise');
+  await expect(popup.getByLabel('Anexar comprovante Pix',{exact:false})).toBeVisible();
+  expect(request.status).toBe('pending');
+  await page.keyboard.press('Escape');
+  await expect(popup).toHaveCount(0);
+});
+
+test('admin sees card installments in review and can open student WhatsApp', async ({page}) => {
+  await mock(page,false,true);
+  await page.route('**/rest/v1/package_requests*',r=>r.fulfill({json:[{id:'card-request',student_id:'student1',package_name:'Pacote Carro',price_cents:35880,lessons_b:2,lessons_a:0,payment_method:'card',installment_count:3,status:'pending',review_started_at:'2026-10-18T12:00:00Z'}]}));
+  await page.goto('/admin');
+  await page.getByLabel('E-mail administrativo').fill('admin@example.com');
+  await page.getByLabel('Senha',{exact:true}).fill('senha-teste-123');
+  await page.getByRole('button',{name:'Entrar no painel',exact:true}).click();
+  await page.getByRole('button',{name:'Pedidos (1)',exact:true}).click();
+  const review=page.getByRole('region',{name:'Em análise',exact:true});
+  await expect(review).toContainText('Cartão de crédito · 3x');
+  await expect(review.getByRole('link',{name:'Abrir WhatsApp do aluno'})).toHaveAttribute('href',/wa\.me\/5511999999999/);
 });

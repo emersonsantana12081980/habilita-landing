@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { ManualPayment } from "./ManualPayment";
-import { money } from "../store-data";
+import { money, whatsappUrl, normalizePhone } from "../store-data";
 import { supabase } from "../lib/supabase";
 
 export const requestStage = (r) => r.status !== "pending" ? "finished" : r.review_started_at ? "review" : "requested";
@@ -42,6 +42,8 @@ export function RequestBoard({ requests, students, reasons, setReasons, act, fil
           <p className={`mt-2 text-xs font-bold ${r.status === "rejected" ? "text-red-700" : "text-green-800"}`}>{requestLabel(r)}</p>
           <p className="mt-3 font-bold">{money(r.price_cents/100)}</p>
           <p className="text-xs text-slate-500">{r.lessons_a} aulas de moto · {r.lessons_b} aulas de carro</p>
+          <p className="mt-2 text-sm font-semibold">{r.payment_method === 'card' ? `Cartão de crédito · ${r.installment_count || 1}x · enviar link pelo WhatsApp` : 'Pix à vista · conferir comprovante'}</p>
+          {r.payment_method === 'card' && r.status === 'pending' && normalizePhone(students.find(s=>s.id===r.student_id)?.phone || '') && <a className="btn btn-outline mt-3" target="_blank" rel="noreferrer" href={whatsappUrl(students.find(s=>s.id===r.student_id).phone,`Olá! Sobre o pacote ${r.package_name}: pagamento em ${r.installment_count || 1} parcelas, total de ${money(r.price_cents/100)}. Vou encaminhar o link de pagamento por aqui.`)}>Abrir WhatsApp do aluno</a>}
           {r.original_price_cents && <p className="mt-2 text-xs text-slate-600">Original: {money(r.original_price_cents/100)} · Desconto: {money(r.discount_cents/100)}{r.coupon_code && ` · Cupom: ${r.coupon_code}`} · {r.payment_method === "card" ? `${r.installment_count}x no cartão` : "À vista"}{r.pricing_demo && " · Valores fictícios"}</p>}
           <ManualPayment request={r} admin/>
           {stage === 'finished' && <button type="button" className="mt-3 rounded-lg border border-red-200 px-3 py-2 text-sm font-semibold text-red-800" onClick={() => {

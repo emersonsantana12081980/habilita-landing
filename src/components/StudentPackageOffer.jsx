@@ -10,6 +10,7 @@ export function StudentPackageOffer({ pack, pending, onRequested, guided = false
     [quote, setQuote] = useState(null),
     [message, setMessage] = useState(""),
     [busy, setBusy] = useState(false);
+  const [installments, setInstallments] = useState(Math.max(1, Math.min(12, pack.card_installments || 1)));
   const generation = useRef(0);
   useEffect(() => {
     generation.current++;
@@ -63,7 +64,7 @@ export function StudentPackageOffer({ pack, pending, onRequested, guided = false
     }
   }
   const split = quote
-    ? splitInstallments(quote.total_cents, quote.installment_count)
+    ? splitInstallments(quote.total_cents, method === "card" ? installments : 1)
     : null;
   return (
     <article className="admin-card min-w-0">
@@ -88,10 +89,17 @@ export function StudentPackageOffer({ pack, pending, onRequested, guided = false
                 value={method}
                 onChange={(e) => change(() => setMethod(e.target.value))}
               >
-                <option value="card">Cartão de crédito parcelado</option>
+                <option value="card">Cartão de crédito — link pelo WhatsApp</option>
                 <option value="cash">Pix à vista</option>
               </select>
             </label>
+            {method === 'card' && <>
+              <label>Quantidade de parcelas<select value={installments} onChange={e => setInstallments(Number(e.target.value))}>
+                {Array.from({length:Math.max(1,Math.min(12,pack.card_installments || 1))},(_,i) => <option key={i+1} value={i+1}>{i+1}x</option>)}
+              </select></label>
+              <p className="text-sm">A equipe enviará o link de pagamento pelo WhatsApp cadastrado. O pedido ficará em análise até a confirmação do pagamento. O total do cartão é o apresentado abaixo, dividido nas parcelas escolhidas.</p>
+            </>}
+            {method === 'cash' && <p className="text-sm">Ao continuar, abriremos o Pix para copiar e anexar o comprovante. A equipe conferirá o pagamento antes de liberar o pacote.</p>}
             <label>
               Cupom de desconto (opcional)
               <input
@@ -145,15 +153,17 @@ export function StudentPackageOffer({ pack, pending, onRequested, guided = false
               setBusy(true);
               setMessage("");
               try {
-                const { error } = await supabase.rpc("request_package_offer", {
+                const { data: requestId, error } = await supabase.rpc("request_manual_package", {
                   p_package: pack.id,
                   p_coupon: normalized,
                   p_method: method,
                   p_expected_total: quote.total_cents,
                   p_expected_installments: quote.installment_count,
+                  p_installments: method === "card" ? installments : 1,
                 });
                 if (error) throw error;
-                await onRequested();
+                if (!requestId) throw new Error("missing request");
+                await onRequested(requestId);
                 setQuote(null);
                 setMessage("Solicitação enviada. Aguarde a análise da equipe.");
               } catch (e) {
@@ -168,7 +178,7 @@ export function StudentPackageOffer({ pack, pending, onRequested, guided = false
           </button>
           {!quote && (
             <p className="mt-2 text-xs text-slate-500">
-              Confira o valor ou aplique o cupom para continuar. O pagamento ser? acompanhado manualmente pela equipe.
+              Confira o valor ou aplique o cupom para continuar. O pagamento será acompanhado manualmente pela equipe.
             </p>
           )}
         </>

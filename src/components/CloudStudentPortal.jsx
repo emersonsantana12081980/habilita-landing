@@ -5,7 +5,7 @@ import { PlanChoice } from "./PlanChoice";
 import { readPlanChoice } from "../data/experience-plans";
 import { PortalNavIcon } from "./PortalNavIcon";
 import { StudentStart } from "./StudentStart";
-import { PackageCheckoutTest } from "./PackageCheckoutTest";
+import { ManualPayment } from "./ManualPayment";
 import { StudentRequests } from "./RequestBoard";
 import { StudentPackageOffer } from "./StudentPackageOffer";
 import { StudentLessons } from "./StudentLessons";
@@ -79,6 +79,7 @@ export function CloudStudentPortal() {
   const [tab, setTab] = useState(requestedPackage || new URLSearchParams(location.search).get("checkout") === "teste" ? "Comprar aulas" : "Início");
   const [day, setDay] = useState("");
   const [category, setCategory] = useState("B");
+  const [paymentRequestId, setPaymentRequestId] = useState(null);
   const [slots, setSlots] = useState(null);
   const [slotLoading, setSlotLoading] = useState(false);
   const version = useRef(0);
@@ -97,6 +98,7 @@ export function CloudStudentPortal() {
           version.current++;
           identity.current = next?.user.id;
           setData(empty);
+          setPaymentRequestId(null);
         }
         slotsVersion.current++;
         setSlots(null);
@@ -131,7 +133,7 @@ export function CloudStudentPortal() {
           .order("starts_at"),
         supabase
           .from("package_requests")
-          .select("id,student_id,package_id,package_name,status,reason,price_cents,created_at,review_started_at,payment_method,installment_count,coupon_code,discount_cents,pricing_demo"),
+          .select("*"),
         supabase.from("site_settings").select("whatsapp,ai_enabled").single(),
       ]);
       const bad = responses.find((r) => r.error);
@@ -281,7 +283,7 @@ export function CloudStudentPortal() {
   const initialCategory = data.packages.find(p => p.id === requestedPackage || p.slug === requestedPackage)?.category || readPlanChoice(location.search)?.category.id || "";
   const startView = <StudentStart packages={data.packages} requests={data.requests}
     initialCategory={initialCategory} contact={whatsappUrl(data.settings?.whatsapp || "5512996225250", "Olá! Quero ajuda para escolher e combinar meu pacote de aulas.")}
-    onRequested={async () => { await refresh(session.user.id); setTab("Início"); setMessage("Recebemos seu interesse. Acompanhe os próximos passos abaixo."); }} />;
+    onRequested={async (id) => { setPaymentRequestId(id); await refresh(session.user.id); setTab("Início"); setMessage("Recebemos seu interesse. Acompanhe os próximos passos abaixo."); }} />;
 
   return (
     <main className="portal-shell student-shell student-redesign min-h-screen bg-slate-50 pb-28 text-slate-900">
@@ -508,10 +510,6 @@ export function CloudStudentPortal() {
                 {tab === "Suporte" && <StudentSupport contact={contact}/>}
                 {tab === "Comprar aulas" && (
                   <>
-                    <PackageCheckoutTest requests={data.requests} />
-                    {new URLSearchParams(location.search).get("checkout") === "teste" && (
-                      <p role="status" className="mb-4 rounded-xl bg-blue-50 p-4 text-sm">Você retornou do checkout de teste. Este retorno não confirma pagamento nem libera créditos. A confirmação automática será implementada na próxima etapa.</p>
-                    )}
                     <StudentRequests requests={data.requests} />
                     {starting ? startView : <>
                     <p className="mb-5 text-sm text-slate-600">
@@ -527,7 +525,8 @@ export function CloudStudentPortal() {
                             (r) =>
                               r.package_id === p.id && r.status === "pending",
                           )}
-                          onRequested={async () => {
+                          onRequested={async (id) => {
+                            setPaymentRequestId(id);
                             await refresh(session.user.id);
                             setMessage(
                               "Solicitação enviada. Aguarde a liberação pela equipe.",
@@ -670,6 +669,8 @@ export function CloudStudentPortal() {
           Falar pelo WhatsApp
         </a>
       </div>
+      {canUse && paymentRequestId && data.requests.find(r => r.id === paymentRequestId) && <ManualPayment
+        key={paymentRequestId} request={data.requests.find(r => r.id === paymentRequestId)} autoOpen onClose={() => setPaymentRequestId(null)}/>}
       {data.settings?.ai_enabled !== false && (
         <SpecialistChat
           contact={() => window.open(contact, "_blank", "noopener,noreferrer")}

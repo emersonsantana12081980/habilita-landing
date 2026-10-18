@@ -8,6 +8,8 @@ const fields = [
   ["privacyUrl","Link da política de privacidade"], ["termsUrl","Link dos termos de uso"],
   ["instagramUrl","Link do Instagram"], ["mapsUrl","Link da localização"],
   ["legalName","Nome institucional"], ["cnpj","CNPJ (se aplicável)"],
+  ["pixCode","Código Pix copia e cola ou chave Pix"],
+  ["pixReceiver","Nome do recebedor Pix"], ["pixBank","Banco do recebedor Pix"],
 ];
 export function SiteSettings() {
   const [form,setForm]=useState(null),[message,setMessage]=useState(""),[busy,setBusy]=useState(false);
@@ -45,7 +47,8 @@ export function SiteSettings() {
     <label>WhatsApp de atendimento<input type="tel" value={form.whatsapp} onChange={e=>setForm(f=>({...f,whatsapp:e.target.value}))}/></label>
     <label>Duração padrão da aula (minutos)<input type="number" min="15" max="180" value={form.commercial_info.lessonMinutes ?? ""} onChange={e=>change('lessonMinutes',e.target.value)}/></label>
     <label className="flex items-center gap-2"><input type="checkbox" checked={form.ai_enabled} onChange={e=>setForm(f=>({...f,ai_enabled:e.target.checked}))}/>Exibir agente de atendimento</label>
-    {fields.map(([key,label])=><label key={key}>{label}{['cancellationPolicy','retestTerms','lessonLocation','serviceRegion'].includes(key)?<textarea maxLength={2000} rows={3} value={form.commercial_info[key] || ""} onChange={e=>change(key,e.target.value)}/>:<input type={key.endsWith('Url')?'url':'text'} maxLength={500} value={form.commercial_info[key] || ""} onChange={e=>change(key,e.target.value)}/>}</label>)}
+    <p className="sm:col-span-2 text-sm">Pagamento manual: cadastre o Pix e o recebedor para disponibilizar essa opção aos alunos. No cartão, a equipe envia o link pelo WhatsApp após conferir o pedido e as parcelas.</p>
+    {fields.map(([key,label])=><label key={key}>{label}{['pixCode','cancellationPolicy','retestTerms','lessonLocation','serviceRegion'].includes(key)?<textarea maxLength={2000} rows={3} value={form.commercial_info[key] || ""} onChange={e=>change(key,e.target.value)}/>:<input type={key.endsWith('Url')?'url':'text'} maxLength={500} value={form.commercial_info[key] || ""} onChange={e=>change(key,e.target.value)}/>}</label>)}
     {message && <p role="status" className="sm:col-span-2">{message}</p>}
     <button disabled={busy} className="btn btn-green sm:col-span-2">{busy?"Salvando…":"Salvar configurações do site"}</button>
   </form>;
