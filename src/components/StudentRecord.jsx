@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { money } from "../store-data";
 import { requestLabel } from "./RequestBoard";
+import { StudentJourney } from './StudentJourney';
 
 const date = value => value ? new Date(value).toLocaleString("pt-BR", {timeZone:"America/Sao_Paulo",dateStyle:"short",timeStyle:"short"}) : "Data não registrada";
 const labels = {scheduled:"Agendada",completed:"Realizada",missed:"Falta",cancelled:"Cancelada"};
@@ -29,6 +30,7 @@ export function StudentRecord({student, data, onClose, onEdit, onStatus}) {
     <p className="mt-2 text-sm text-slate-600">{student.phone || "Sem WhatsApp"} · Categoria {student.category} · {student.active?"Ativo":"Arquivado"}</p>
     <nav aria-label="Seções da ficha" className="my-5 flex flex-wrap gap-2">{["Resumo","Pedidos","Aulas","Extrato"].map(t=><button key={t} onClick={()=>setTab(t)} aria-current={tab===t?"page":undefined} className={`rounded-lg px-4 py-2 text-sm font-semibold ${tab===t?"bg-slate-900 text-white":"bg-slate-100"}`}>{t}</button>)}</nav>
     {tab==="Resumo" && <>
+      <StudentJourney student={student} lessons={lessons} compact/>
       <div className="grid gap-3 sm:grid-cols-2">{totals.map(t=><section key={t.category} aria-label={`Saldo ${t.category}`} className="rounded-xl border p-4"><h3 className="font-bold">{t.category==="A"?"Moto":"Carro"}</h3><p className="my-2 text-3xl font-bold">{t.balance} <span className="text-sm font-normal">disponíveis</span></p><p className="text-sm text-slate-600">Recebidos: {t.received} · Reservados: {t.reserved} · Utilizados: {t.used}</p></section>)}</div>
       <p className="mt-3 text-sm text-slate-600">Aulas realizadas e faltas utilizam crédito. Aulas canceladas não descontam do saldo. Os créditos são agrupados por categoria, sem atribuir consumo a um pacote específico.</p>
       <div className="mt-5 flex flex-wrap gap-3"><button className="btn btn-green" onClick={()=>onEdit(student)}>Editar aluno</button><button className="rounded-xl border px-4 py-3" onClick={()=>{if(window.confirm(student.active?"Arquivar este aluno? Créditos, histórico e aulas marcadas serão mantidos; novos agendamentos ficarão bloqueados.":"Restaurar este cadastro como ativo?"))onStatus(student,!student.active);}}>{student.active?"Enviar ao arquivo morto":"Restaurar cadastro"}</button></div>

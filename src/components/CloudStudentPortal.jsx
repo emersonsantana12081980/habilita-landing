@@ -1,3 +1,4 @@
+import { canBookJourney } from '../lib/student-journey';
 import { studentPages, StudentIdentity, StudentSupport, StudentDashboard, StudentJourney, StudentProgress, StudentPackageSummary, StudentUpdates, StudentPayments, StudentMonth } from "./StudentDesign";
 import { Bell, UserRound } from "lucide-react";
 import { PlanChoice } from "./PlanChoice";
@@ -116,7 +117,7 @@ export function CloudStudentPortal() {
       const responses = await Promise.all([
         supabase
           .from("students")
-          .select("id,name,phone,category,active")
+          .select("*")
           .eq("user_id", userId)
           .maybeSingle(),
         supabase
@@ -500,7 +501,7 @@ export function CloudStudentPortal() {
                 {tab === "Início" && <StudentDashboard data={data} available={available} onNavigate={setTab}/>}
                 {tab !== "Início" && <div className="student-section-heading"><p>SEU ESPAÇO HABILITA+</p><h1>{tab}</h1></div>}
                 {tab === "Meus pacotes" && <StudentPackageSummary requests={data.requests} remaining={Math.max(0, available("A") + available("B"))} onBuy={() => setTab("Comprar aulas")}/>}
-                {tab === "Minha jornada CNH" && <StudentJourney/>}
+                {tab === "Minha jornada CNH" && <StudentJourney student={data.student} lessons={data.lessons} onSaved={() => refresh(session.user.id)}/>}
                 {tab === "Meu progresso" && <StudentProgress lessons={data.lessons} onHistory={() => setTab("Histórico de aulas")}/>}
                 {tab === "Pagamentos" && <StudentPayments requests={data.requests}/>}
                 {tab === "Notificações" && <StudentUpdates requests={data.requests}/>}
@@ -576,6 +577,7 @@ export function CloudStudentPortal() {
                 )}
                 {tab === "Agendar aula" && (
                   <div className="admin-card">
+                    {data.student.journey_steps && !canBookJourney(data.student) && <div className="mb-4 rounded-xl bg-amber-50 p-4 text-sm"><p>Antes de agendar, informe a conclusão das etapas anteriores às aulas práticas. Se já é habilitado, informe isso na jornada para agendar aulas de reforço.</p><button className="mt-2 font-bold underline" onClick={() => setTab('Minha jornada CNH')}>Atualizar minha jornada CNH</button></div>}
                     <BookingRules readOnly />
                     <h2 className="text-xl font-bold">
                       Escolha um horário livre
@@ -628,6 +630,7 @@ export function CloudStudentPortal() {
                             disabled={
                               busy ||
                               !canUse ||
+                              (data.student.journey_steps && !canBookJourney(data.student)) ||
                               available(category) <= 0 ||
                               !data.student.category.includes(category)
                             }
