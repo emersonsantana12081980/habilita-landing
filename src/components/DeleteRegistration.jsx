@@ -7,7 +7,12 @@ export function DeleteRegistration({ kind, record, onDeleted, disabled = false }
   const locked = useRef(false);
   const label = { students: 'aluno', instructors: 'instrutor', packages: 'pacote' }[kind];
   return <div><button type="button" className="rounded-lg border border-red-200 px-3 py-2 text-sm font-semibold text-red-800" disabled={busy || disabled} onClick={async () => {
-    if (locked.current || !window.confirm(`Excluir definitivamente o cadastro de ${label} “${record.name}”? Esta ação não pode ser desfeita. Cadastros com histórico vinculado não serão apagados.${kind !== 'packages' ? ' A conta de login não será excluída.' : ''}`)) return;
+    const confirmation = kind === 'students'
+      ? `Excluir o cadastro de “${record.name}”? Ele sairá das listas, as aulas futuras serão canceladas e os pedidos pendentes serão encerrados. O histórico será preservado. A conta de login não será apagada.`
+      : kind === 'packages'
+      ? `Excluir o pacote “${record.name}”? Ele sairá do catálogo. Os pedidos e créditos já existentes serão preservados.`
+      : `Excluir definitivamente o instrutor “${record.name}”? Cadastros com histórico vinculado não serão apagados. A conta de login não será excluída.`;
+    if (locked.current || !window.confirm(confirmation)) return;
     locked.current = true; setBusy(true); setMessage('');
     try {
       const { error } = await supabase.rpc('admin_delete_registration', { p_kind: kind, p_id: record.id });

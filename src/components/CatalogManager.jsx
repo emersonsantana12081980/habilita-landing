@@ -34,7 +34,7 @@ export function CatalogManager({ initialKind = "packages", instructorsOnly = fal
           : "*",
       );
     if (error) setMessage("Não foi possível carregar o catálogo.");
-    else setRows(data);
+    else setRows(data.filter(row => !row.deleted_at));
   }
   useEffect(() => {
     setRows([]);

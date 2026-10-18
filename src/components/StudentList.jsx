@@ -11,7 +11,7 @@ export function StudentList({ students, balance, onEdit, onHistory, onStatus, on
   const visible = students.filter((s) => {
     const query = normalize(search.trim());
     const digits = search.replace(/\D/g, "");
-    return (status === "all" || (status === "active" ? s.active : !s.active)) &&
+    return !s.deleted_at && (status === "all" || (status === "active" ? s.active : !s.active)) &&
       (!category || s.category === category) &&
       (!query || normalize(s.name).includes(query) || normalize(s.phone).includes(query) ||
         (digits.length > 0 && /^[\d\s()+.-]+$/.test(search) && String(s.phone || "").replace(/\D/g, "").includes(digits)));

@@ -860,3 +860,49 @@ test('lista de alunos filtra, arquiva e restaura sem excluir histórico', async 
   await expect(list.getByText('João Silva',{exact:true})).toBeVisible();
   expect(changes).toBe(2);
 });
+
+for (const [kind,menu] of [['students','Alunos'],['packages', 'Catálogo']]) {
+  test(`active ${kind} can be removed from lists with history retained`, async ({page}) => {
+    await mock(page,false,true);
+    let row={id:'delete-active',name:'Active record',phone:'12999999999',category:'B',active:true,lessons_a:0,lessons_b:2,price_cents:30000};
+    await page.route(`**/rest/v1/${kind}*`,route=>route.fulfill({json:[row]}));
+    await page.route('**/rest/v1/rpc/admin_delete_registration',route=>{
+      expect(route.request().postDataJSON()).toEqual({p_kind:kind,p_id:row.id});
+      row={...row,active:false,deleted_at:new Date().toISOString()};
+      return route.fulfill({json:null});
+    });
+    await page.goto('/admin');
+    await page.getByLabel('E-mail administrativo').fill('admin@example.com');
+    await page.getByLabel('Senha',{exact:true}).fill('senha-teste-123');
+    await page.getByRole('button',{name:'Entrar no painel',exact:true}).click();
+    await page.getByRole('button',{name:menu,exact:true}).click();
+    page.once('dialog',d=>d.accept());
+    await page.getByRole('button',{name:'Excluir cadastro',exact:true}).click();
+    await expect(page.getByRole('button',{name:'Excluir cadastro',exact:true})).toHaveCount(0);
+    expect(row.deleted_at).toBeTruthy();
+  });
+}
+test('finished requests can be removed from board without deleting history', async ({page}) => {
+  await mock(page,false,true);
+  let rows=['approved','rejected','pending'].map((status,i)=>({id:`r${i}`,student_id:'student1',package_name:`Order ${i}`,price_cents:30000,lessons_a:0,lessons_b:2,status}));
+  await page.route('**/rest/v1/package_requests*',route=>route.fulfill({json:rows}));
+  await page.route('**/rest/v1/rpc/admin_archive_finished_request',route=>{
+    const id=route.request().postDataJSON().p_request;
+    rows=rows.map(r=>r.id===id?{...r,board_archived_at:new Date().toISOString()}:r);
+    return route.fulfill({json:null});
+  });
+  await page.goto('/admin');
+  await page.getByLabel('E-mail administrativo').fill('admin@example.com');
+  await page.getByLabel('Senha',{exact:true}).fill('senha-teste-123');
+  await page.getByRole('button',{name:'Entrar no painel',exact:true}).click();
+  await page.getByRole('button',{name:'Pedidos (1)',exact:true}).click();
+  await expect(page.getByRole('button',{name:'Excluir do quadro',exact:true})).toHaveCount(2);
+  for(let remaining=1;remaining>=0;remaining--) {
+    page.once('dialog',d=>d.accept());
+    await page.getByRole('button',{name:'Excluir do quadro',exact:true}).first().click();
+    await expect(page.getByRole('button',{name:'Excluir do quadro',exact:true})).toHaveCount(remaining);
+  }
+  expect(rows).toHaveLength(3);
+  expect(rows.filter(r=>r.board_archived_at)).toHaveLength(2);
+  expect(rows[2].status).toBe('pending');
+});

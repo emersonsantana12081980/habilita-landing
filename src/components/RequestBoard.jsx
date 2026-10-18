@@ -12,6 +12,7 @@ export function RequestBoard({ requests, students, reasons, setReasons, act, fil
   const change = (key,value) => {setFilters(f=>({...f,[key]:value}));setLimit(12);};
   const invalidDates = filters.from && filters.to && filters.from > filters.to;
   const filtered = requests.filter(r=>{
+    if (r.board_archived_at) return false;
     const student=students.find(s=>s.id===r.student_id);
     const category=r.lessons_a>0 ? r.lessons_b>0 ? "A+B" : "A" : "B";
     const day=r.created_at ? new Intl.DateTimeFormat('en-CA',{timeZone:'America/Sao_Paulo'}).format(new Date(r.created_at)) : "";
@@ -43,6 +44,10 @@ export function RequestBoard({ requests, students, reasons, setReasons, act, fil
           <p className="text-xs text-slate-500">{r.lessons_a} aulas de moto · {r.lessons_b} aulas de carro</p>
           {r.original_price_cents && <p className="mt-2 text-xs text-slate-600">Original: {money(r.original_price_cents/100)} · Desconto: {money(r.discount_cents/100)}{r.coupon_code && ` · Cupom: ${r.coupon_code}`} · {r.payment_method === "card" ? `${r.installment_count}x no cartão` : "À vista"}{r.pricing_demo && " · Valores fictícios"}</p>}
           <ManualPayment request={r} admin/>
+          {stage === 'finished' && <button type="button" className="mt-3 rounded-lg border border-red-200 px-3 py-2 text-sm font-semibold text-red-800" onClick={() => {
+            if (window.confirm('Excluir este pedido do quadro? O histórico, os pagamentos e os créditos serão mantidos.'))
+              act(() => supabase.rpc('admin_archive_finished_request', {p_request:r.id}), 'Pedido retirado do quadro. Histórico e créditos preservados.');
+          }}>Excluir do quadro</button>}
           {stage === "requested" && <button className="mt-3 w-full rounded-lg bg-blue-50 px-3 py-2 font-semibold text-blue-800" onClick={()=>act(()=>supabase.rpc("start_package_review",{p_request:r.id}),"Pedido em análise.")}>Iniciar análise</button>}
           {r.status === "pending" ? <details className="mt-3" open={stage === "review" || undefined}>
             <summary className="cursor-pointer text-sm font-semibold">Decidir pedido</summary>
