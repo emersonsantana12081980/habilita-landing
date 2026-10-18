@@ -8,7 +8,13 @@ Primeira habilitação exige, além das quatro etapas, declaração explícita d
 
 O trigger do banco cobre novas aulas, remarcações e reativação de reservas. Sem declaração, o frontend também bloqueia o botão mesmo antes da ativação do SQL. Não há validação oficial da LADV. Texto v1: “Informo que possuo LADV válida para a categoria das aulas que vou agendar.” e “Declaro que as informações prestadas são verdadeiras e estou ciente de que devo apresentar minha LADV à equipe antes das aulas práticas.”
 
-Ativar executando uma vez `supabase/migrations/202610180002_student_journey.sql`, após a migration de exclusão de cadastros. Até aplicar, o frontend preserva o fluxo anterior de agendamento e não habilita edição das etapas. Após aplicação, as novas colunas retornadas ao recarregar ativam a interface.
+LADV por categoria: aplicar o arquivo consolidado acima ou, se as migrations 002 e 003 já foram aplicadas, executar `supabase/migrations/202610180004_ladv_by_category.sql`. A declaração v2 registra categoria, autor, data e os dois aceites. Declarações antigas não liberam automaticamente carro e moto: o aluno confirma novamente cada categoria. A confirmação salva substitui o formulário pelo status; retirar a declaração bloqueia somente a categoria correspondente. A aprovação de um pacote não confirma LADV. O trigger também cobre alterações de categoria da aula.
+
+Até aplicar a atualização, o frontend bloqueia agendamentos de primeira habilitação sem a confirmação da categoria. Após aplicação, as novas colunas retornadas ao recarregar ativam os formulários.
+
+## Cadastro sem confirmação de e-mail
+
+No Supabase, em Authentication → Sign In / Providers → Email, desligar **Confirm email** e salvar. É uma configuração do projeto, não do formulário React. O fluxo existente aceita a sessão retornada no cadastro e abre imediatamente a área do aluno. Mantém e-mail para login e recuperação e não pede endereço residencial. A opção afeta também outros cadastros desse projeto. Enquanto estiver ligada, a interface continua informando a exigência real do servidor. Na verificação de 18/10/2026, `mailer_autoconfirm` ainda retornou `false`; não foi possível alterar a configuração com as credenciais públicas disponíveis.
 
 Aluno informa cadastro no Detran, exames médico/psicológico, formação e avaliação teórica como não informado, em andamento ou concluído. Para primeira habilitação, as quatro etapas concluídas são pré-requisito de agendamento. O próprio aluno declara que já é habilitado para aulas de reforço, dispensando essas etapas. Não se trata de verificação oficial do Detran.
 

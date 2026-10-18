@@ -909,7 +909,7 @@ test('finished requests can be removed from board without deleting history', asy
 
 test('journey saves prerequisites, counts practice per category and sends exam date', async ({page}) => {
   await mock(page);
-  let student={id:'student1',name:'Aluno Teste',active:true,category:'A+B',journey_steps:{},practical_exam_dates:{},licensed_driver:false,ladv_confirmed_at:null};
+  let student={id:'student1',name:'Aluno Teste',active:true,category:'A+B',journey_steps:{},practical_exam_dates:{},licensed_driver:false,ladv_confirmations:{}};
   const lessons=[{id:'l1',student_id:'student1',category:'B',status:'completed',starts_at:'2026-01-01T10:00:00Z',ends_at:'2026-01-01T11:00:00Z'},{id:'l2',student_id:'student1',category:'B',status:'completed',starts_at:'2026-01-02T10:00:00Z',ends_at:'2026-01-02T11:00:00Z'}];
   await page.route('**/rest/v1/students*',r=>r.fulfill({json:student}));
   await page.route('**/rest/v1/lessons*',r=>r.fulfill({json:lessons}));
@@ -924,8 +924,8 @@ test('journey saves prerequisites, counts practice per category and sends exam d
     return r.fulfill({json:null});
   });
   await page.route('**/rest/v1/rpc/declare_student_ladv',r=>{
-    expect(r.request().postDataJSON()).toEqual({p_student:'student1',p_has_ladv:true,p_truth:true});
-    student={...student,ladv_confirmed_at:'2026-10-18T10:00:00Z'}; return r.fulfill({json:null});
+    expect(r.request().postDataJSON()).toEqual({p_student:'student1',p_category:'B',p_has_ladv:true,p_truth:true});
+    student={...student,ladv_confirmations:{B:'2026-10-18T10:00:00Z'}}; return r.fulfill({json:null});
   });
   await page.goto('/aluno');
   await page.getByLabel('E-mail',{exact:true}).fill('aluno@example.com');
@@ -936,14 +936,38 @@ test('journey saves prerequisites, counts practice per category and sends exam d
   await page.getByRole('button',{name:'Atualizar minha jornada CNH'}).click();
   const selects=page.locator('section[aria-label="Minha jornada CNH"] select');
   for(let i=0;i<4;i++) { await selects.nth(i).selectOption('completed'); await expect(selects.nth(i)).toHaveValue('completed'); }
-  await page.locator('input[name=ladv]').check();
-  await page.locator('input[name=truth]').check();
-  await page.getByRole('button',{name:'Confirmar LADV e declara',exact:false}).click();
-  await expect(page.locator('input[name=ladv]')).toHaveCount(0);
+  const declaration=page.getByRole('form',{name:'LADV B',exact:true});
+  await declaration.getByRole('button').click();
+  expect(student.ladv_confirmations).toEqual({});
+  await declaration.locator('input[name=ladv]').check();
+  await declaration.getByRole('button').click();
+  expect(student.ladv_confirmations).toEqual({});
+  await declaration.locator('input[name=truth]').check();
+  await declaration.getByRole('button').click();
+  await expect(declaration).toHaveCount(0);
+  await expect(page.getByRole('form',{name:'LADV A',exact:true})).toBeVisible();
   await expect(page.getByLabel('Data do exame de moto')).toBeDisabled();
   await page.getByLabel('Data do exame de carro').fill('2030-12-20');
   await page.getByRole('button',{name:'Salvar data do exame',exact:true}).last().click();
   await expect(page.getByText('Data informada: 20/12/2030',{exact:false})).toBeVisible();
   await page.getByRole('button',{name:'Agendar aula',exact:true}).click();
   await expect(page.getByRole('button',{name:'Atualizar minha jornada CNH'})).toHaveCount(0);
+  await page.getByRole('combobox',{name:'Categoria',exact:true}).selectOption('A');
+  await expect(page.getByRole('button',{name:'Atualizar minha jornada CNH'})).toBeVisible();
+});
+
+test('signup opens student portal immediately when email confirmation is disabled', async ({page}) => {
+  await mock(page);
+  await page.route('**/auth/v1/signup*', route => route.fulfill({json:{
+    access_token:jwt(),refresh_token:'refresh-test',token_type:'bearer',expires_in:3600,user,
+  }}));
+  await page.goto('/cadastro');
+  await page.getByLabel('Nome completo').fill('Novo Aluno');
+  await page.getByLabel('WhatsApp com DDD').fill('11999999999');
+  await page.getByLabel('E-mail',{exact:true}).fill('aluno@example.com');
+  await page.getByLabel('Senha',{exact:true}).fill('senha-teste-123');
+  await page.getByLabel('Confirme a senha').fill('senha-teste-123');
+  await page.getByRole('button',{name:'Criar conta grátis'}).click();
+  await expect(page.getByRole('navigation',{name:'Área do aluno'})).toBeVisible();
+  await expect(page.getByText('Confira seu e-mail',{exact:false})).toHaveCount(0);
 });
