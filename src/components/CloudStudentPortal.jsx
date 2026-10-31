@@ -1,3 +1,4 @@
+import { isConfirmedOffer } from '../lib/confirmed-offer';
 import { canBookJourney } from '../lib/student-journey';
 import { studentPages, StudentIdentity, StudentSupport, StudentDashboard, StudentJourney, StudentProgress, StudentPackageSummary, StudentUpdates, StudentPayments, StudentMonth } from "./StudentDesign";
 import { Bell, UserRound } from "lucide-react";
@@ -124,7 +125,7 @@ export function CloudStudentPortal() {
           .maybeSingle(),
         supabase
           .from("packages")
-          .select("id,slug,name,category,lessons_a,lessons_b,price_cents,card_total_cents,card_installments,pricing_demo")
+          .select("*")
           .eq("active", true),
         supabase.from("credit_grants").select("student_id,lessons_a,lessons_b"),
         supabase
@@ -281,7 +282,7 @@ export function CloudStudentPortal() {
   const hasLessons = data.lessons.some(l => l.status !== "cancelled");
   const starting = !hasCredit && !hasLessons && !data.credits.length;
   const initialCategory = data.packages.find(p => p.id === requestedPackage || p.slug === requestedPackage)?.category || readPlanChoice(location.search)?.category.id || "";
-  const startView = <StudentStart packages={data.packages} requests={data.requests}
+  const startView = <StudentStart packages={data.packages.filter(isConfirmedOffer)} requests={data.requests}
     initialCategory={initialCategory} contact={whatsappUrl(data.settings?.whatsapp || "5512996225250", "Olá! Quero ajuda para escolher e combinar meu pacote de aulas.")}
     onRequested={async (id) => { setPaymentRequestId(id); await refresh(session.user.id); setTab("Início"); setMessage("Recebemos seu interesse. Acompanhe os próximos passos abaixo."); }} />;
 
@@ -517,7 +518,8 @@ export function CloudStudentPortal() {
                       condições e libera os créditos após análise.
                     </p>
                     <div className="space-y-3">
-                      {data.packages.map((p) => (
+                      {!data.packages.some(isConfirmedOffer) && <p>Os valores e condições estão em revisão. Consulte a equipe pelo WhatsApp para escolher suas aulas.</p>}
+                      {data.packages.filter(isConfirmedOffer).map((p) => (
                         <StudentPackageOffer
                           key={p.id}
                           pack={p}

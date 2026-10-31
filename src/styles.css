@@ -431,6 +431,8 @@
 .public-landing :is(a,button,summary) { scroll-margin-block: 110px 100px; }
 @media (max-width: 639px) {
   .public-landing { padding-bottom: calc(90px + env(safe-area-inset-bottom)); }
+  .public-landing .chat-widget { bottom: calc(90px + env(safe-area-inset-bottom)); }
+  .mobile-contact-bar .btn { white-space: normal; text-align: center; }
 }
 @keyframes gentle-pulse {
   0%,

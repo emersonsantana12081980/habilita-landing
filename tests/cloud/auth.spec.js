@@ -1,5 +1,28 @@
 import { test, expect } from "@playwright/test";
 
+test('admin precisa reconfirmar oferta depois de alterar preço', async ({page})=>{
+ const calls=await mock(page,false,true);
+ await page.goto('/admin');
+ await page.getByLabel('E-mail administrativo').fill('admin@example.com');
+ await page.getByLabel('Senha',{exact:true}).fill('senha-teste-123');
+ await page.getByRole('button',{name:'Entrar no painel',exact:true}).click();
+ await page.getByRole('button',{name:'Catálogo',exact:true}).click();
+ await page.getByRole('button',{name:'Editar',exact:true}).click();
+ const confirmation=page.getByRole('checkbox',{name:'Confirmo que os preços estão vigentes',exact:false});
+ await expect(confirmation).toBeChecked();
+ await page.getByLabel('Preço à vista (R$)').fill('310');
+ await expect(confirmation).not.toBeChecked();
+ await page.getByLabel('Reteste: prazo e início da contagem').fill('');
+ await confirmation.check();
+ await page.getByRole('button',{name:'Salvar no site'}).click();
+ await expect(page.getByRole('status')).toContainText('Complete:');
+ await page.getByLabel('Reteste: prazo e início da contagem').fill('30 dias após o exame');
+ await confirmation.check();
+ await page.getByRole('button',{name:'Salvar no site'}).click();
+ await expect(page.getByRole('status')).toContainText('Catálogo atualizado');
+ expect(calls.find(c=>c.path.endsWith('/packages')&&c.body?.price_cents===31000)?.body).toMatchObject({offer_confirmed:true,pricing_demo:false,retest_validity:'30 dias após o exame'});
+});
+
 for (const [kind, menu] of [['students','Alunos'],['instructors','Instrutores'],['packages','Catálogo']]) {
   test(`exclusão de ${kind} confirma, preserva histórico e atualiza lista`, async ({page}) => {
     await mock(page,false,true);
@@ -546,7 +569,7 @@ async function mock(page, broken = false, admin = false) {
   const calls = [];
   let rules = [], exceptions = [];
   let studentName='Aluno Teste';
-  let packages=[{id:'package1',slug:'carro',name:'Pacote Carro',category:'B',lessons_a:0,lessons_b:2,price_cents:29900,card_total_cents:35880,pricing_demo:true,exam_vehicle:true,free_retest:true,retest_terms:'',card_installments:12,boleto_installments:6,active:true}];
+  let packages=[{offer_confirmed:true,experience_level:'experiencia',lesson_minutes_b:50,card_contract:'Acrescimo incluido no total.',exam_terms:'Conforme disponibilidade.',exclusions:'Taxas oficiais separadas.',cancellation_terms:'Avisar com 24 horas.',retest_coverage:'Veiculo',retest_validity:'30 dias',retest_uses:1,retest_costs:'Taxas separadas',id:'package1',slug:'carro',name:'Pacote Carro',category:'B',lessons_a:0,lessons_b:2,price_cents:29900,card_total_cents:35880,pricing_demo:false,exam_vehicle:true,free_retest:true,retest_terms:'',card_installments:12,boleto_installments:6,active:true}];
   let bookingSettings={id:true,minimum_notice_hours:2,cancellation_notice_hours:24,daily_limit:2};
   await page.route("https://test.supabase.co/**", async route => {
     const req = route.request(), path = new URL(req.url()).pathname;
@@ -1054,7 +1077,7 @@ test('admin registers one standalone motorcycle lesson with entered prices', asy
 
 test('student catalog lists registered single lesson and opens purchase dialog', async ({page}) => {
   await mock(page);
-  await page.route('**/rest/v1/packages*',r=>r.fulfill({json:[{id:'single',name:'Aula avulsa de carro',category:'B',lessons_a:0,lessons_b:1,price_cents:12000,card_total_cents:13000,card_installments:2,active:true,pricing_demo:true}]}));
+  await page.route('**/rest/v1/packages*',r=>r.fulfill({json:[{offer_confirmed:true,experience_level:'experiencia',lesson_minutes_b:50,card_contract:'Acrescimo incluido no total.',exam_terms:'Nao incluido.',exclusions:'Taxas separadas.',cancellation_terms:'Avisar com 24 horas.',id:'single',name:'Aula avulsa de carro',category:'B',lessons_a:0,lessons_b:1,price_cents:12000,card_total_cents:13000,card_installments:2,active:true,pricing_demo:false}]}));
   await page.goto('/aluno');
   await page.getByLabel('E-mail',{exact:true}).fill('aluno@example.com');
   await page.getByLabel('Senha',{exact:true}).fill('senha-teste-123');
