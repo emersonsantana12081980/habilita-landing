@@ -1,4 +1,3 @@
-import { OfferConditions } from './OfferConditions';
 import React, { useEffect, useRef, useState } from "react";
 import { supabase } from "../lib/supabase";
 import { money } from "../store-data";
@@ -86,7 +85,6 @@ export function StudentPackageOffer({ pack, pending, onRequested }) {
       {expanded && <dialog ref={dialog} aria-label={`Contratar ${pack.name}`} onCancel={e => { if (busy) e.preventDefault(); else setExpanded(false); }} className="m-auto max-h-[90dvh] w-[calc(100%-2rem)] max-w-lg overflow-y-auto rounded-2xl p-6 text-slate-900 shadow-xl backdrop:bg-black/50">
         <div className="flex items-start justify-between gap-3"><h2 className="text-xl font-bold">{pack.name}</h2><button type="button" disabled={busy} className="btn btn-outline" onClick={() => setExpanded(false)}>Fechar</button></div>
         <PackagePrice pack={pack} showDemoLabel={false} savedOnly/>
-        <OfferConditions pack={pack}/>
           <fieldset disabled={busy} className="space-y-3">
             <label>
               Forma de pagamento

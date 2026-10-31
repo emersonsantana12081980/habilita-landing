@@ -1,12 +1,12 @@
-import { isConfirmedOffer } from '../lib/confirmed-offer';
-import { OfferConditions } from './OfferConditions';
 import React, { useEffect, useRef, useState } from "react";
 import { experienceLevels, planCategories } from "../data/experience-plans";
-import { Bike, CarFront } from "lucide-react";
+import { Bike, CarFront, Check, Plus } from "lucide-react";
+import { lessonLabel } from "../data/packages";
 import { commercialInfo as defaults } from "../data/landing";
 import { money } from "../store-data";
 import { trackLanding } from "../lib/landing-events";
 import { PackagePrice } from "./PackagePrice";
+import { packagePricing } from "../lib/package-pricing";
 
 export function installmentText(totalCents, count) {
   if (
@@ -25,7 +25,11 @@ export function installmentText(totalCents, count) {
 
 function PublicPackage({ pack, contact, commercialInfo }) {
   const ref = useRef(null);
+  const details = commercialInfo.packages[pack.slug || pack.id] || {};
+  const duration = details.lessonMinutes || commercialInfo.lessonMinutes;
+  const retest = details.retestTerms || pack.retestTerms || commercialInfo.retestTerms;
   const category = pack.category.replace("+", "/");
+  const pricing = packagePricing(pack);
   useEffect(() => {
     const observer = new IntersectionObserver(
       ([entry]) => {
@@ -65,11 +69,89 @@ function PublicPackage({ pack, contact, commercialInfo }) {
             ? "Para praticar manobras e direção com carro."
             : "Para quem quer se preparar nas duas categorias."}
       </p>
-      <PackagePrice pack={pack} showDemoLabel={false} savedOnly />
-      <OfferConditions pack={pack}/>
-      <button className="btn btn-green mt-auto w-full" onClick={() => contact(`Olá! Quero consultar horários e valores do pacote ${pack.name}, categoria ${category}. Meu bairro é: `, 'package_whatsapp_click', {package_id:pack.id})}>Consultar horários e valores no WhatsApp</button>
-      <a className="btn btn-outline mt-3 w-full" href={`/cadastro?pacote=${encodeURIComponent(pack.id)}`}>Criar conta gratuita</a>
-      <p className="mt-2 text-center text-xs text-slate-500">Cadastro não gera cobrança nem libera créditos.</p>
+      <PackagePrice pack={pack} showDemoLabel={false} />
+      <p className="mb-4 text-sm text-slate-600">
+        Pacote prático · não é a CNH completa
+      </p>
+      <ul className="space-y-3 text-sm leading-6">
+        {[
+          lessonLabel(pack),
+          pack.examVehicle
+            ? pack.category === "A+B"
+              ? "Carro e moto para o exame, conforme condições"
+              : "Veículo para o exame, conforme condições"
+            : "Veículo para o exame não informado neste pacote",
+        ].map((t) => (
+          <li key={t} className="flex gap-2">
+            <Check
+              size={18}
+              className="mt-1 shrink-0 text-green-700"
+              aria-hidden="true"
+            />
+            {t}
+          </li>
+        ))}
+      </ul>
+      <p className="mt-3 text-sm text-slate-600">
+        Duração:{" "}
+        {duration
+          ? `${duration} minutos por aula`
+          : "a confirmar com o instrutor"}
+        .
+      </p>
+      <p className="mt-3 text-sm leading-6 text-slate-600">
+        Taxas e outras etapas da CNH não estão anunciadas como incluídas.
+      </p>
+      <details
+        className="group my-5 rounded-xl bg-slate-50 p-4"
+        onToggle={(e) => {
+          if (e.currentTarget.open)
+            trackLanding("package_conditions_open", {
+              package_id: pack.id,
+              category: pack.category,
+            });
+        }}
+      >
+        <summary className="flex min-h-6 cursor-pointer list-none items-center justify-between gap-2 text-sm font-semibold">
+          Ver condições{" "}
+          <Plus
+            size={16}
+            className="shrink-0 group-open:rotate-45"
+            aria-hidden="true"
+          />
+        </summary>
+        <div className="mt-4 space-y-3 text-sm leading-6 text-slate-600">
+          {[["Cartão", pricing.count, pricing.total]].map(
+            ([label, count, total]) =>
+              count > 0 && (
+                <p key={label}>
+                  <strong className="text-slate-800">{label}:</strong>{" "}
+                  {installmentText(total, count) ||
+                    `${count}x anunciado. Valor das parcelas, juros e total a confirmar antes de contratar.`}
+                </p>
+              ),
+          )}
+          {!pack.cardInstallments && !pack.boletoInstallments && (
+            <p>Consulte as formas de pagamento disponíveis.</p>
+          )}
+          <p>
+            <strong className="text-slate-800">Reteste:</strong>{" "}
+            {retest ||
+              (pack.freeRetest
+                ? "condição anunciada, com cobertura, prazo, utilizações e eventuais taxas a confirmar. Não considere o exame inteiro gratuito."
+                : "não anunciado como incluído. Consulte a equipe.")}
+          </p>
+          <p>
+            Confirme o local, a duração das aulas e a disponibilidade do veículo
+            na data do exame. Não há garantia de aprovação.
+          </p>
+        </div>
+      </details>
+      <a className="btn btn-green mt-auto w-full" href={`/cadastro?pacote=${encodeURIComponent(pack.id)}`} onClick={() => trackLanding("signup_start", { source: "package", category: pack.category, package_id: pack.id })}>
+        Cadastre-se grátis
+      </a>
+      <p className="mt-2 text-center text-xs text-slate-500">Criar sua conta não gera cobrança.</p>
+      <a className="mt-3 min-h-11 py-3 text-center text-sm font-semibold text-green-800 underline underline-offset-4" href={`/aluno?pacote=${encodeURIComponent(pack.id)}`}>Tem cupom? Aplique na área do aluno</a>
     </article>
   );
 }
@@ -77,7 +159,7 @@ function PublicPackage({ pack, contact, commercialInfo }) {
 export function PublicPackages({ packages, contact, commercialInfo = defaults }) {
   const [category, setCategory] = useState('all');
   const [experience, setExperience] = useState('experiencia');
-  const active = packages.filter(p => isConfirmedOffer(p) && (category === 'all' || p.category === category) && (experience === 'all' || p.experience_level === experience));
+  const active = packages.filter(p => p.active && (category === 'all' || p.category === category) && (experience === 'all' || p.experience_level === experience));
   return (
     <section
       id="pacotes"
@@ -116,13 +198,12 @@ export function PublicPackages({ packages, contact, commercialInfo = defaults })
         ) : (
           <div className="rounded-2xl border border-slate-200 bg-white p-7">
             <h3 className="text-xl font-bold">
-              Consulte os valores e horários com a equipe.
+              Nenhum pacote disponível para este filtro.
             </h3>
             <p className="my-4 text-slate-600">
-              Mostramos apenas ofertas com preços e condições confirmados. Informe sua categoria e bairro pelo WhatsApp.
+              Escolha outro tipo ou veja todos os pacotes.
             </p>
-            <button className="btn btn-green" onClick={() => contact(undefined, 'empty_offers_whatsapp_click')}>Consultar horários e valores no WhatsApp</button>
-            <button className="ml-4 min-h-11 underline" onClick={() => { setCategory('all'); setExperience('all'); }}>Ver todos os pacotes</button>
+            <button className="btn btn-green" onClick={() => { setCategory('all'); setExperience('all'); }}>Ver todos os pacotes</button>
           </div>
         )}
         <div className="mt-6 flex flex-wrap items-center justify-between gap-4 rounded-xl border border-slate-200 bg-white p-5">

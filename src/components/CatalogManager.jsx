@@ -1,9 +1,8 @@
-import { offerProblems } from '../lib/confirmed-offer';
-import { OfferConditionsEditor } from './OfferConditions';
 import React, { useEffect, useRef, useState } from "react";
 import { supabase } from "../lib/supabase";
 import { CouponManager } from "./CouponManager";
 import { PackagePrice } from "./PackagePrice";
+import { packagePricing } from "../lib/package-pricing";
 import { InstructorAccess } from "./InstructorAccess";
 import { createInstructorAccount } from "../lib/instructor-account";
 import { DeleteRegistration } from "./DeleteRegistration";
@@ -92,7 +91,6 @@ export function CatalogManager({ initialKind = "packages", instructorsOnly = fal
       {form && (
         <form
           className="admin-card grid gap-4 sm:grid-cols-2"
-          onChangeCapture={e => { if (kind === 'packages' && e.target.name !== 'offer_confirmed') setForm(f => ({...f, offer_confirmed:false})); }}
           onSubmit={async (e) => {
             e.preventDefault();
             if (busy) return;
@@ -114,10 +112,9 @@ export function CatalogManager({ initialKind = "packages", instructorsOnly = fal
                 !/^(https:\/\/|\/(?!\/))/.test(form.photo_url)
               )
                 throw new Error("Use uma foto HTTPS ou um caminho local.");
-              if (kind === "packages" && form.offer_confirmed && offerProblems(form).length) throw new Error("Complete: " + offerProblems(form).join(", "));
               const payload = {
                 ...form,
-                ...(kind === "packages" ? { experience_level: form.experience_level || null, offer_confirmed: form.offer_confirmed === true, pricing_demo: false } : {}),
+                ...(kind === "packages" ? { experience_level: form.experience_level || null, offer_confirmed: false, pricing_demo: false } : {}),
                 slug: form.slug || crypto.randomUUID(),
               };
               if (kind === "instructors" && !payload.id) payload.id = crypto.randomUUID();
@@ -324,7 +321,6 @@ export function CatalogManager({ initialKind = "packages", instructorsOnly = fal
               </label>
             </>
           )}
-          {kind === "packages" && <OfferConditionsEditor form={form} setForm={setForm}/>}
           <label>
             <input
               type="checkbox"
@@ -359,9 +355,9 @@ export function CatalogManager({ initialKind = "packages", instructorsOnly = fal
                   kind === "packages"
                     ? {
                         ...r,
-                        card_total_cents: r.card_total_cents ?? 0,
-                        card_installments: r.card_installments ?? 1,
-                        pricing_demo: r.pricing_demo,
+                        card_total_cents: packagePricing(r).total,
+                        card_installments: packagePricing(r).count,
+                        pricing_demo: packagePricing(r).demo,
                       }
                     : r,
                 ); }}

@@ -1,4 +1,3 @@
-import { approvedPhotos, approvedTestimonials, instructorEvidence, safePublicUrl } from '../lib/trust-content';
 import React, { useEffect, useRef, useState } from "react";
 import {
   ArrowUpRight,
@@ -32,16 +31,21 @@ export function LandingPage({ data, error }) {
   const [menu, setMenu] = useState(false),
     [notice, setNotice] = useState("");
   const menuButton = useRef(null);
-
-  const photos=approvedPhotos(commercialInfo);
-  const testimonials=approvedTestimonials(commercialInfo);
-  const primaryLabel='Consultar horários e valores no WhatsApp';
-  const primaryMessage='Olá! Quero consultar horários e valores. Meu bairro é: __. Categoria: __. Gostaria de começar em: __.';
+  const heroButton = useRef(null);
+  const [showMobileContact, setShowMobileContact] = useState(false);
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => setShowMobileContact(!entry.isIntersecting),
+      { rootMargin: "-84px 0px 0px 0px" },
+    );
+    observer.observe(heroButton.current);
+    return () => observer.disconnect();
+  }, []);
   useLandingEvents();
   function contact(message, event = "whatsapp_click", fields = {}) {
     const text =
       message ||
-      primaryMessage;
+      "Olá! Vim pelo site da HABILITA+ e quero conversar com um instrutor sobre aulas práticas.";
     const url = whatsappUrl(data.whatsapp, text);
     if (!url) {
       setNotice(
@@ -79,7 +83,7 @@ export function LandingPage({ data, error }) {
           </nav>
           <button className="btn btn-green hidden sm:inline-flex"
             onClick={() => contact(undefined, "header_whatsapp_click")}>
-            <MessageCircle size={18} aria-hidden="true" /> {primaryLabel}
+            <MessageCircle size={18} aria-hidden="true" /> WhatsApp
           </button>
           <button
             ref={menuButton}
@@ -129,7 +133,7 @@ export function LandingPage({ data, error }) {
                 Aulas práticas em {data.city} e região
               </p>
               <h1 className="mt-6 text-[clamp(2.1rem,4vw,3.5rem)] font-extrabold leading-[1.08] tracking-[-.04em]">
-                Aulas práticas com segurança{" "}
+                Sua CNH com segurança{" "}
                 <span className="text-green-700">
                   e confiança.
                 </span>
@@ -138,12 +142,6 @@ export function LandingPage({ data, error }) {
                 Carro, moto ou os dois. Combine seus horários e pratique com
                 orientação próxima de um instrutor autônomo.
               </p>
-              <div className="mt-5 rounded-xl border border-green-100 bg-green-50 p-4 text-sm leading-6">
-                <p><strong>Atende meu bairro?</strong> {commercialInfo.serviceRegion || `Informe seu bairro para confirmar o atendimento em ${data.city}.`}</p>
-                <p><strong>Qual categoria?</strong> Moto (A), carro (B) ou ambos (A/B), conforme instrutor e oferta.</p>
-                <p><strong>Quanto custa?</strong> Veja as ofertas confirmadas abaixo ou solicite um orçamento.</p>
-                <p><strong>Quando posso começar?</strong> Consulte a próxima vaga pelo WhatsApp. O início depende da agenda e dos requisitos do aluno.</p>
-              </div>
               <ul className="mt-5 grid gap-3 text-sm text-slate-700 sm:grid-cols-2">
                 {[
                   "Categorias A, B e A/B",
@@ -162,10 +160,14 @@ export function LandingPage({ data, error }) {
                 ))}
               </ul>
               <div className="mt-7 flex flex-wrap gap-3">
-                <button className="btn btn-green min-h-13 w-full sm:w-auto" onClick={() => contact(primaryMessage,'hero_whatsapp_click')}>{primaryLabel}</button>
-                <a className="btn btn-outline w-full sm:w-auto" href="/cadastro" onClick={() => trackLanding('signup_start',{source:'hero'})}>Criar conta gratuita</a>
-                <p className="w-full text-sm text-slate-600">Cadastro não gera cobrança nem libera créditos.</p>
-                <a href="#pacotes" className="py-2 text-sm underline">Ver ofertas confirmadas</a>
+                <a className="btn btn-green min-h-13 w-full sm:w-auto"
+                  ref={heroButton}
+                  href="/cadastro" onClick={() => trackLanding("signup_start", { source: "hero" })}>
+            Cadastre-se grátis <ArrowUpRight size={18} aria-hidden="true" />
+          </a>
+                <a href="#pacotes" className="btn btn-outline w-full sm:w-auto">
+                  Ver pacotes e valores
+                </a>
               </div>
               <p className="mt-4 max-w-lg text-sm leading-6 text-slate-600">
                 Pacotes de aulas práticas. Taxas e demais etapas da CNH devem
@@ -173,7 +175,16 @@ export function LandingPage({ data, error }) {
               </p>
             </div>
             <figure className="overflow-hidden rounded-3xl bg-[#0e213b] shadow-xl shadow-slate-900/10">
-              {photos[0] && <img src={photos[0].url} alt={photos[0].caption} width="960" height="540" fetchPriority="high" className="aspect-video w-full object-cover"/>}
+              <img
+                src="/images/hero-960.webp"
+                srcSet="/images/hero-640.webp 640w, /images/hero-960.webp 960w"
+                sizes="(min-width: 1024px) 520px, calc(100vw - 40px)"
+                width="960"
+                height="382"
+                fetchPriority="high"
+                alt="Fiat Mobi prata com a identidade visual HABILITA+"
+                className="aspect-[2.51/1] w-full object-cover"
+              />
               <figcaption className="p-6 text-white sm:p-8">
                 <p className="text-xs font-bold uppercase tracking-widest text-green-300">
                   NO SEU RITMO, COM ORIENTAÇÃO
@@ -339,7 +350,7 @@ export function LandingPage({ data, error }) {
           </div>
         </section>
         <InstructorSection
-          instructors={data.instructors.map(i => (commercialInfo.approvedInstructorProfiles||[]).includes(instructorEvidence(i)) ? {...i,photo:safePublicUrl(i.photo)?i.photo:null} : {...i,photo:null,bio:''})}
+          instructors={data.instructors}
           city={data.city}
           contact={(message, instructor) =>
             contact(
@@ -348,9 +359,8 @@ export function LandingPage({ data, error }) {
             )
           }
         />
-        {photos.length>1 && <section className="container section-space" aria-label="Fotos reais autorizadas"><h2>Veículos e aulas</h2><div className="mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">{photos.slice(1).map(p=><figure key={p.id}><img src={p.url} alt={p.caption} width="640" height="480" loading="lazy" className="aspect-[4/3] w-full rounded-xl object-cover"/><figcaption className="mt-2 text-sm">{p.caption}</figcaption></figure>)}</div></section>}
-        <Testimonials testimonials={testimonials} />
-        {!testimonials.length && (
+        <Testimonials testimonials={data.testimonials} />
+        {!data.testimonials.some((t) => t.active && t.authorized) && (
           <section id="prova-social" className="container pb-16">
             <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-6">
               <p className="eyebrow">EXPERIÊNCIAS REAIS</p>
@@ -411,9 +421,9 @@ export function LandingPage({ data, error }) {
               aulas para recuperar a confiança. Um instrutor poderá orientar
               você sobre o pacote mais adequado.
             </p>
-            <button className="btn btn-green mt-7" onClick={() => contact(undefined, "final_whatsapp_click")}>{primaryLabel}</button>
-            <a className="mt-4 block underline" href="/cadastro" onClick={() => trackLanding("signup_start", { source: "final" })}>Criar conta gratuita</a>
-            <p className="mt-2 text-sm text-slate-300">O cadastro não gera cobrança nem libera créditos de aulas.</p>
+            <a className="btn btn-green mt-7" href="/cadastro" onClick={() => trackLanding("signup_start", { source: "final" })}>
+              Cadastre-se grátis <ArrowUpRight size={18} aria-hidden="true" />
+            </a>
           </div>
         </section>
       </main>
@@ -463,12 +473,12 @@ export function LandingPage({ data, error }) {
               Cancelamento e reagendamento
             </a>
             {[
-              [commercialInfo.privacyReviewedUrl === commercialInfo.privacyUrl ? commercialInfo.privacyUrl : null, "Política de privacidade"],
-              [commercialInfo.termsReviewedUrl === commercialInfo.termsUrl ? commercialInfo.termsUrl : null, "Termos de uso"],
+              [commercialInfo.privacyUrl, "Política de privacidade"],
+              [commercialInfo.termsUrl, "Termos de uso"],
               [commercialInfo.instagramUrl, "Instagram"],
               [commercialInfo.mapsUrl, "Localização"],
             ]
-              .filter(([url]) => safePublicUrl(url))
+              .filter(([url]) => /^https:\/\//.test(url || ""))
               .map(([url, label]) => (
                 <a
                   className="block py-3 underline"
@@ -480,24 +490,29 @@ export function LandingPage({ data, error }) {
                   {label}
                 </a>
               ))}
-            {(!commercialInfo.privacyUrl || !commercialInfo.termsUrl || commercialInfo.privacyReviewedUrl!==commercialInfo.privacyUrl || commercialInfo.termsReviewedUrl!==commercialInfo.termsUrl) && (
+            {(!commercialInfo.privacyUrl || !commercialInfo.termsUrl) && (
               <p className="mt-3 text-xs leading-5">
                 Política de privacidade e termos: publicação pendente de
                 validação pelo responsável.
               </p>
             )}
-            {commercialInfo.legalName && commercialInfo.identityReviewed===`${commercialInfo.legalName}|${commercialInfo.cnpj||''}` && (
+            {commercialInfo.legalName && (
               <p className="mt-3">{commercialInfo.legalName}</p>
             )}
-            {commercialInfo.cnpj && commercialInfo.identityReviewed===`${commercialInfo.legalName}|${commercialInfo.cnpj||''}` && <p>CNPJ: {commercialInfo.cnpj}</p>}
+            {commercialInfo.cnpj && <p>CNPJ: {commercialInfo.cnpj}</p>}
           </div>
         </div>
         <p className="container mt-8 text-xs text-slate-500">
           © {new Date().getFullYear()} HABILITA+.
         </p>
       </footer>
-      <div className="mobile-contact-bar sm:hidden" aria-label="Contato rápido">
-        <button className="btn btn-green w-full text-sm" onClick={() => contact(primaryMessage,'mobile_whatsapp_click')}>{primaryLabel}</button>
+      <div
+        className={`mobile-contact-bar sm:hidden ${showMobileContact ? "" : "hidden"}`}
+      >
+        <a className="btn btn-green w-full"
+          href="/cadastro" onClick={() => trackLanding("signup_start", { source: "mobile" })}>
+            Cadastre-se grátis <ArrowUpRight size={18} aria-hidden="true" />
+          </a>
       </div>
       {data.ai && (
         <SpecialistChat

@@ -25,10 +25,10 @@ export function InstructorSection({ instructors, city, contact }) {
           <h2 id="instructor-heading">
             {active.length > 1
               ? "Conheça os instrutores disponíveis."
-              : "Conheça seu instrutor."}
+              : "Aprenda com quem entende do caminho."}
           </h2>
           <p className="section-subtitle">
-            Conheça o atendimento e a forma de ensinar antes de combinar sua
+            Conheça a experiência e a forma de ensinar antes de combinar sua
             aula.
           </p>
         </div>
