@@ -2,11 +2,12 @@ import React, { useEffect, useRef, useState } from "react";
 import { money } from "../store-data";
 import { requestLabel } from "./RequestBoard";
 import { StudentJourney } from './StudentJourney';
+import { AdminStudentClasses } from './AdminStudentClasses';
 
 const date = value => value ? new Date(value).toLocaleString("pt-BR", {timeZone:"America/Sao_Paulo",dateStyle:"short",timeStyle:"short"}) : "Data não registrada";
 const labels = {scheduled:"Agendada",completed:"Realizada",missed:"Falta",cancelled:"Cancelada"};
 
-export function StudentRecord({student, data, onClose, onEdit, onStatus}) {
+export function StudentRecord({student, data, onClose, onEdit, onStatus, onAdded}) {
   const dialog=useRef(null);
   const [tab,setTab]=useState("Resumo");
   useEffect(()=>{
@@ -28,7 +29,8 @@ export function StudentRecord({student, data, onClose, onEdit, onStatus}) {
   return <dialog ref={dialog} aria-labelledby="student-record-title" onCancel={e=>{e.preventDefault();onClose();}} className="m-auto max-h-[90dvh] w-[calc(100%-2rem)] max-w-3xl overflow-y-auto rounded-2xl border-0 bg-white p-5 text-slate-900 shadow-xl backdrop:bg-slate-950/50">
     <div className="flex items-start justify-between gap-3"><div><h2 id="student-record-title" className="text-xl font-bold">Ficha do aluno</h2><p className="mt-1 break-words font-semibold">{student.name}</p></div><button onClick={onClose} className="rounded-lg border px-3 py-2">Fechar ficha</button></div>
     <p className="mt-2 text-sm text-slate-600">{student.phone || "Sem WhatsApp"} · Categoria {student.category} · {student.active?"Ativo":"Arquivado"}</p>
-    <nav aria-label="Seções da ficha" className="my-5 flex flex-wrap gap-2">{["Resumo","Pedidos","Aulas","Extrato"].map(t=><button key={t} onClick={()=>setTab(t)} aria-current={tab===t?"page":undefined} className={`rounded-lg px-4 py-2 text-sm font-semibold ${tab===t?"bg-slate-900 text-white":"bg-slate-100"}`}>{t}</button>)}</nav>
+    <nav aria-label="Seções da ficha" className="my-5 flex flex-wrap gap-2">{["Resumo","Adicionar aulas","Pedidos","Aulas","Extrato"].map(t=><button key={t} onClick={()=>setTab(t)} aria-current={tab===t?"page":undefined} className={`rounded-lg px-4 py-2 text-sm font-semibold ${tab===t?"bg-slate-900 text-white":"bg-slate-100"}`}>{t}</button>)}</nav>
+    {tab==='Adicionar aulas' && <AdminStudentClasses student={student} onSaved={onAdded}/>}
     {tab==="Resumo" && <>
       <StudentJourney student={student} lessons={lessons} compact/>
       <div className="grid gap-3 sm:grid-cols-2">{totals.map(t=><section key={t.category} aria-label={`Saldo ${t.category}`} className="rounded-xl border p-4"><h3 className="font-bold">{t.category==="A"?"Moto":"Carro"}</h3><p className="my-2 text-3xl font-bold">{t.balance} <span className="text-sm font-normal">disponíveis</span></p><p className="text-sm text-slate-600">Recebidos: {t.received} · Reservados: {t.reserved} · Utilizados: {t.used}</p></section>)}</div>

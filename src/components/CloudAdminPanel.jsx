@@ -495,7 +495,7 @@ export function CloudAdminPanel() {
                         }}
                       />
                     )}
-                    {historyStudent && <StudentRecord student={historyStudent} data={data} onClose={()=>setHistoryStudent(null)} onEdit={student=>{setHistoryStudent(null);setEditingStudent(student);}} onStatus={(student,active)=>{
+                    {historyStudent && <StudentRecord student={historyStudent} data={data} onAdded={async message=>{setHistoryStudent(null);await load();setMessage(message);}} onClose={()=>setHistoryStudent(null)} onEdit={student=>{setHistoryStudent(null);setEditingStudent(student);}} onStatus={(student,active)=>{
                       setHistoryStudent(null);setEditingStudent(undefined);
                       act(()=>supabase.from("students").update({active}).eq("id",student.id).select("id").single(), active ? "Cadastro restaurado." : "Cadastro enviado ao arquivo morto.");
                     }} />}

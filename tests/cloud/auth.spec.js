@@ -1,5 +1,45 @@
 import { test, expect } from "@playwright/test";
 
+test('admin cadastra aulas sem solicitação, pendentes ou confirmadas, e reutiliza tentativa',async({page})=>{
+ await mock(page,false,true);const sent=[];let fail=true;
+ await page.route('**/rest/v1/rpc/admin_add_student_classes',r=>{
+  sent.push(r.request().postDataJSON());
+  if(fail){fail=false;return r.fulfill({status:503,json:{message:'Temporary failure'}});}
+  return r.fulfill({json:sent.at(-1).p_operation});
+ });
+ await page.goto('/admin');
+ await page.getByLabel('E-mail administrativo').fill('admin@example.com');
+ await page.getByLabel('Senha',{exact:true}).fill('senha-teste-123');
+ await page.getByRole('button',{name:'Entrar no painel',exact:true}).click();
+ await page.getByRole('button',{name:'Alunos',exact:true}).click();
+ await page.getByRole('button',{name:'Ver ficha',exact:true}).click();
+ let dialog=page.getByRole('dialog');
+ await dialog.getByRole('button',{name:'Adicionar aulas',exact:true}).click();
+ await expect(dialog.getByLabel('Status do pagamento')).toHaveValue('pending');
+ await dialog.getByLabel('Quantidade de aulas de carro').fill('4');
+ await dialog.getByLabel('Quantidade de aulas de moto').fill('2');
+ await dialog.getByLabel('Valor total combinado (R$)').fill('600');
+ await dialog.getByLabel('Motivo / observação').fill('Cadastro presencial');
+ await dialog.getByRole('button',{name:'Salvar lançamento manual'}).click();
+ await expect(dialog.getByRole('alert')).toContainText('Tente novamente');
+ await dialog.getByRole('button',{name:'Salvar lançamento manual'}).click();
+ await expect(dialog).toHaveCount(0);
+ expect(sent[0]).toEqual(sent[1]);
+ expect(sent[1]).toMatchObject({p_student:'student1',p_package:null,p_lessons_b:4,p_lessons_a:2,p_paid:false,p_total:60000});
+ await page.getByRole('button',{name:'Ver ficha',exact:true}).click();
+ dialog=page.getByRole('dialog');
+ await dialog.getByRole('button',{name:'Adicionar aulas',exact:true}).click();
+ await dialog.getByLabel('O que adicionar').selectOption('package');
+ await dialog.getByRole('combobox',{name:'Pacote',exact:true}).selectOption('package1');
+ await dialog.getByLabel('Status do pagamento').selectOption('paid');
+ await dialog.getByLabel('Motivo / observação').fill('Pix conferido no atendimento');
+ await dialog.getByRole('checkbox',{name:/Conferi o recebimento/}).check();
+ await dialog.getByRole('button',{name:'Salvar lançamento manual'}).click();
+ await expect(dialog).toHaveCount(0);
+ expect(sent[2]).toMatchObject({p_package:'package1',p_lessons_b:2,p_lessons_a:0,p_paid:true,p_total:29900});
+ expect(sent[2].p_operation).not.toBe(sent[1].p_operation);
+});
+
 test('saldo liberado pelo admin aparece no aluno e habilita reserva por categoria',async({page})=>{
  await mock(page);let paid=false,booked=false;
  await page.route('**/rest/v1/students*',r=>r.fulfill({json:{id:'student1',name:'Aluno Teste',category:'A+B',active:true,licensed_driver:true}}));
