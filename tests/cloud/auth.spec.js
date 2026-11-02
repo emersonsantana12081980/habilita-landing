@@ -1,5 +1,55 @@
 import { test, expect } from "@playwright/test";
 
+test('falha no arquivo LADV não registra declaração nem libera portal',async({page})=>{
+ await mock(page);let submitted=0;
+ const keys=['initial_application','theory_course','registration','medical','theory_exam'];
+ await page.route('**/rest/v1/students*',r=>r.fulfill({json:{id:'student1',name:'Aluno',active:true,category:'B',licensed_driver:false,onboarding_steps:Object.fromEntries(keys.map(k=>[k,'2026-11-02'])),ladv_documents:{},ladv_confirmations:{}}}));
+ await page.route('**/storage/v1/object/student-ladv/**',r=>r.fulfill({status:403,json:{message:'Upload denied'}}));
+ await page.route('**/rest/v1/rpc/submit_student_ladv',r=>{submitted++;return r.fulfill({json:null});});
+ await page.goto('/aluno');
+ await page.getByLabel('E-mail',{exact:true}).fill('aluno@example.com');await page.getByLabel('Senha',{exact:true}).fill('senha-teste-123');await page.getByRole('button',{name:'Entrar',exact:true}).click();
+ const panel=page.getByRole('region',{name:'Documento LADV B',exact:true});
+ await panel.locator('input[type=file]').setInputFiles({name:'ladv.pdf',mimeType:'application/pdf',buffer:Buffer.from('%PDF-1.4 test')});
+ await panel.getByRole('checkbox').check();await panel.getByRole('button',{name:/Enviar LADV/}).click();
+ await expect(panel.getByRole('status')).toContainText('Não foi possível concluir o envio');
+ await expect(page.getByRole('navigation',{name:'Área do aluno'})).toHaveCount(0);
+ expect(submitted).toBe(0);
+});
+
+test('trilha sequencial mantém portal bloqueado até LADV de carro e moto enviada',async({page})=>{
+ await mock(page);const uploaded=[];const steps=['initial_application','theory_course','registration','medical','theory_exam'];
+ const student={id:'student1',name:'Aluno Teste',active:true,category:'A+B',licensed_driver:false,journey_steps:{},onboarding_steps:{},ladv_documents:{},ladv_confirmations:{}};
+ await page.route('**/rest/v1/students*',r=>r.fulfill({json:student}));
+ await page.route('**/rest/v1/rpc/complete_student_onboarding_step',r=>{
+  const p=r.request().postDataJSON();expect(p.p_truth).toBe(true);
+  expect(p.p_step).toBe(steps[Object.keys(student.onboarding_steps).length]);
+  student.onboarding_steps[p.p_step]='2026-11-02';if(p.p_step!=='initial_application')student.journey_steps[p.p_step]='completed';return r.fulfill({json:null});
+ });
+ await page.route('**/storage/v1/object/student-ladv/**',r=>{uploaded.push(decodeURIComponent(new URL(r.request().url()).pathname).split('/student-ladv/')[1]);return r.fulfill({json:{Key:'ok'}});});
+ await page.route('**/rest/v1/rpc/submit_student_ladv',r=>{
+  const p=r.request().postDataJSON();expect(uploaded).toContain(p.p_path);expect(p.p_path).toContain(`student1/${p.p_category}/`);expect(p.p_truth).toBe(true);
+  student.ladv_documents[p.p_category]={path:p.p_path};student.ladv_confirmations[p.p_category]='2026-11-02';return r.fulfill({json:null});
+ });
+ await page.goto('/aluno?pacote=carro');
+ await page.getByLabel('E-mail',{exact:true}).fill('aluno@example.com');await page.getByLabel('Senha',{exact:true}).fill('senha-teste-123');await page.getByRole('button',{name:'Entrar',exact:true}).click();
+ await expect(page.getByRole('heading',{name:'Sua trilha até a habilitação'})).toBeVisible();
+ await expect(page.getByRole('navigation',{name:'Área do aluno'})).toHaveCount(0);
+ await page.getByRole('button',{name:/3 Abra o processo/}).click();
+ await expect(page.locator('#trail-registration').getByRole('button',{name:'Declarar conclusão e continuar'})).toBeDisabled();
+ await page.getByRole('button',{name:/1 Preencha o requerimento/}).click();
+ for(const key of steps){const panel=page.locator(`#trail-${key}`);await expect(panel).toBeVisible();await panel.getByRole('checkbox').check();await panel.getByRole('button',{name:'Declarar conclusão e continuar'}).click();}
+ await expect(page.locator('#trail-ladv')).toBeVisible();
+ for(const cat of ['A','B']){
+  const panel=page.getByRole('region',{name:`Documento LADV ${cat}`,exact:true});
+  await panel.locator('input[type=file]').setInputFiles({name:'ladv.pdf',mimeType:'application/pdf',buffer:Buffer.from('%PDF-1.4 test')});
+  await panel.getByRole('checkbox').check();await panel.getByRole('button',{name:/Enviar LADV/}).click();
+  if(cat==='A'){await expect(panel.getByText(/Documento enviado pelo aluno/)).toBeVisible();await expect(page.getByRole('navigation',{name:'Área do aluno'})).toHaveCount(0);}
+ }
+ await expect(page.getByRole('navigation',{name:'Área do aluno'})).toBeVisible();
+ await page.reload();await expect(page.getByRole('navigation',{name:'Área do aluno'})).toBeVisible();
+ expect(uploaded).toHaveLength(2);
+});
+
 test('pedido manual inicia diretamente no menu Pedidos com seleção de aluno',async({page})=>{
  await mock(page,false,true);let sent;
  await page.route('**/rest/v1/rpc/admin_add_student_classes',r=>{sent=r.request().postDataJSON();return r.fulfill({json:sent.p_operation});});
@@ -664,7 +714,7 @@ async function mock(page, broken = false, admin = false) {
       else if (admin && path.endsWith('/instructors')) body = [{id:'instructor1',name:'Emerson',category:'A+B',active:true}];
       else if (admin && path.endsWith('/vehicles')) body = [{id:'vehicle1',name:'Fiat Mobi',category:'B',active:true}];
       else if (admin && path.endsWith('/package_requests')) body = [{id:'request1',student_id:'student1',package_name:'Pacote Carro',price_cents:29900,lessons_a:0,lessons_b:2,status:'pending'}];
-      else if (path.endsWith("/students")) body = { id: "student1", name: "Aluno Teste", phone: "11999999999", active: true, category: "B" };
+      else if (path.endsWith("/students")) body = { id: "student1", name: "Aluno Teste", phone: "11999999999", active: true, category: "B", licensed_driver: true };
       else if (path.endsWith("/site_settings")) body = { whatsapp: "5512996225250", ai_enabled: false };
       else if (path.endsWith("/packages")) body = [{ id: "package1", name: "Pacote Carro", category: "B", lessons_a: 0, lessons_b: 2, price_cents: 29900 }];
       else body = [];
@@ -1009,57 +1059,9 @@ test('finished requests can be removed from board without deleting history', asy
   expect(rows[2].status).toBe('pending');
 });
 
-test('journey saves prerequisites, counts practice per category and sends exam date', async ({page}) => {
+test('signup opens onboarding immediately when email confirmation is disabled', async ({page}) => {
   await mock(page);
-  let student={id:'student1',name:'Aluno Teste',active:true,category:'A+B',journey_steps:{},practical_exam_dates:{},licensed_driver:false,ladv_confirmations:{}};
-  const lessons=[{id:'l1',student_id:'student1',category:'B',status:'completed',starts_at:'2026-01-01T10:00:00Z',ends_at:'2026-01-01T11:00:00Z'},{id:'l2',student_id:'student1',category:'B',status:'completed',starts_at:'2026-01-02T10:00:00Z',ends_at:'2026-01-02T11:00:00Z'}];
-  await page.route('**/rest/v1/students*',r=>r.fulfill({json:student}));
-  await page.route('**/rest/v1/lessons*',r=>r.fulfill({json:lessons}));
-  await page.route('**/rest/v1/rpc/update_student_journey',r=>{
-    const body=r.request().postDataJSON(); expect(body.p_student).toBe('student1');
-    student={...student,journey_steps:body.p_steps,licensed_driver:body.p_licensed};
-    return r.fulfill({json:null});
-  });
-  await page.route('**/rest/v1/rpc/set_student_exam_date',r=>{
-    const body=r.request().postDataJSON();expect(body).toEqual({p_student:'student1',p_category:'B',p_date:'2030-12-20'});
-    student={...student,practical_exam_dates:{B:body.p_date}};
-    return r.fulfill({json:null});
-  });
-  await page.route('**/rest/v1/rpc/declare_student_ladv',r=>{
-    expect(r.request().postDataJSON()).toEqual({p_student:'student1',p_category:'B',p_has_ladv:true,p_truth:true});
-    student={...student,ladv_confirmations:{B:'2026-10-18T10:00:00Z'}}; return r.fulfill({json:null});
-  });
-  await page.goto('/aluno');
-  await page.getByLabel('E-mail',{exact:true}).fill('aluno@example.com');
-  await page.getByLabel('Senha',{exact:true}).fill('senha-teste-123');
-  await page.getByRole('button',{name:'Entrar',exact:true}).click();
-  await page.getByRole('button',{name:'Agendar aula',exact:true}).click();
-  await expect(page.getByRole('button',{name:'Atualizar minha jornada CNH'})).toBeVisible();
-  await page.getByRole('button',{name:'Atualizar minha jornada CNH'}).click();
-  const selects=page.locator('section[aria-label="Minha jornada CNH"] select');
-  for(let i=0;i<4;i++) { await selects.nth(i).selectOption('completed'); await expect(selects.nth(i)).toHaveValue('completed'); }
-  const declaration=page.getByRole('form',{name:'LADV B',exact:true});
-  await declaration.getByRole('button').click();
-  expect(student.ladv_confirmations).toEqual({});
-  await declaration.locator('input[name=ladv]').check();
-  await declaration.getByRole('button').click();
-  expect(student.ladv_confirmations).toEqual({});
-  await declaration.locator('input[name=truth]').check();
-  await declaration.getByRole('button').click();
-  await expect(declaration).toHaveCount(0);
-  await expect(page.getByRole('form',{name:'LADV A',exact:true})).toBeVisible();
-  await expect(page.getByLabel('Data do exame de moto')).toBeDisabled();
-  await page.getByLabel('Data do exame de carro').fill('2030-12-20');
-  await page.getByRole('button',{name:'Salvar data do exame',exact:true}).last().click();
-  await expect(page.getByText('Data informada: 20/12/2030',{exact:false})).toBeVisible();
-  await page.getByRole('button',{name:'Agendar aula',exact:true}).click();
-  await expect(page.getByRole('button',{name:'Atualizar minha jornada CNH'})).toHaveCount(0);
-  await page.getByRole('combobox',{name:'Categoria',exact:true}).selectOption('A');
-  await expect(page.getByRole('button',{name:'Atualizar minha jornada CNH'})).toBeVisible();
-});
-
-test('signup opens student portal immediately when email confirmation is disabled', async ({page}) => {
-  await mock(page);
+  await page.route('**/rest/v1/students*',r=>r.fulfill({json:{id:'student1',name:'Novo Aluno',active:true,category:'B',licensed_driver:false,onboarding_steps:{},journey_steps:{},ladv_documents:{}}}));
   await page.route('**/auth/v1/signup*', route => route.fulfill({json:{
     access_token:jwt(),refresh_token:'refresh-test',token_type:'bearer',expires_in:3600,user,
   }}));
@@ -1070,7 +1072,8 @@ test('signup opens student portal immediately when email confirmation is disable
   await page.getByLabel('Senha',{exact:true}).fill('senha-teste-123');
   await page.getByLabel('Confirme a senha').fill('senha-teste-123');
   await page.getByRole('button',{name:'Criar conta grátis'}).click();
-  await expect(page.getByRole('navigation',{name:'Área do aluno'})).toBeVisible();
+  await expect(page.getByRole('heading',{name:'Sua trilha até a habilitação'})).toBeVisible();
+  await expect(page.getByRole('navigation',{name:'Área do aluno'})).toHaveCount(0);
   await expect(page.getByText('Confira seu e-mail',{exact:false})).toHaveCount(0);
 });
 

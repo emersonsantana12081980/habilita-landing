@@ -1,4 +1,4 @@
-import { canBookJourney } from '../lib/student-journey';
+import { canBookJourney, journeyPortalLocked } from '../lib/student-journey';
 import { studentPages, StudentIdentity, StudentSupport, StudentDashboard, StudentJourney, StudentProgress, StudentPackageSummary, StudentUpdates, StudentPayments, StudentMonth } from "./StudentDesign";
 import { Bell, UserRound } from "lucide-react";
 import { PlanChoice } from "./PlanChoice";
@@ -287,6 +287,7 @@ export function CloudStudentPortal() {
     "Olá! Preciso de ajuda na área do aluno.",
   );
   const canUse = session && data.student?.active && !loading && !failed;
+  const journeyLocked = Boolean(data.student && journeyPortalLocked(data.student));
   const pendingRequests = data.requests.filter((r) => r.status === "pending");
   const hasCredit = available("A") > 0 || available("B") > 0;
   const hasLessons = data.lessons.some(l => l.status !== "cancelled");
@@ -454,7 +455,7 @@ export function CloudStudentPortal() {
           </section>
         ) : (
           <>
-            <PlanChoice />
+            {!journeyLocked && <PlanChoice />}
             <div className="student-page-heading">
             <h1 className="text-3xl font-extrabold">
               {data.student
@@ -490,7 +491,7 @@ export function CloudStudentPortal() {
                 Seu cadastro está inativo. Fale com a equipe.
               </p>
             ) : (
-              <>
+              journeyLocked ? <StudentJourney student={data.student} lessons={data.lessons} onSaved={() => refresh(session.user.id, true)}/> : <>
                 <nav
                   aria-label="Área do aluno"
                   className="portal-nav my-6 flex flex-wrap gap-2"
@@ -514,7 +515,7 @@ export function CloudStudentPortal() {
                 {tab === "Início" && <StudentDashboard data={data} available={available} onNavigate={setTab}/>}
                 {tab !== "Início" && <div className="student-section-heading"><p>SEU ESPAÇO HABILITA+</p><h1>{tab}</h1></div>}
                 {tab === "Meus pacotes" && <StudentPackageSummary requests={data.requests} remaining={Math.max(0, available("A") + available("B"))} onBuy={() => setTab("Comprar aulas")}/>}
-                {tab === "Minha jornada CNH" && <StudentJourney student={data.student} lessons={data.lessons} onSaved={() => refresh(session.user.id)}/>}
+                {tab === "Minha jornada CNH" && <StudentJourney student={data.student} lessons={data.lessons} onSaved={() => refresh(session.user.id, true)}/>}
                 {tab === "Meu progresso" && <StudentProgress lessons={data.lessons} onHistory={() => setTab("Histórico de aulas")}/>}
                 {tab === "Pagamentos" && <StudentPayments requests={data.requests}/>}
                 {tab === "Notificações" && <StudentUpdates requests={data.requests}/>}
@@ -681,7 +682,7 @@ export function CloudStudentPortal() {
           Falar pelo WhatsApp
         </a>
       </div>
-      {canUse && paymentRequestId && data.requests.find(r => r.id === paymentRequestId) && <ManualPayment
+      {canUse && !journeyLocked && paymentRequestId && data.requests.find(r => r.id === paymentRequestId) && <ManualPayment
         key={paymentRequestId} request={data.requests.find(r => r.id === paymentRequestId)} autoOpen onClose={() => setPaymentRequestId(null)}/>}
       {data.settings?.ai_enabled !== false && (
         <SpecialistChat
