@@ -1,5 +1,30 @@
 import { test, expect } from "@playwright/test";
 
+test('saldo liberado pelo admin aparece no aluno e habilita reserva por categoria',async({page})=>{
+ await mock(page);let paid=false,booked=false;
+ await page.route('**/rest/v1/students*',r=>r.fulfill({json:{id:'student1',name:'Aluno Teste',category:'A+B',active:true,licensed_driver:true}}));
+ await page.route('**/rest/v1/credit_grants*',r=>r.fulfill({json:paid?[{student_id:'student1',lessons_a:1,lessons_b:2}]:[]}));
+ await page.route('**/rest/v1/package_requests*',r=>r.fulfill({json:[{id:'payment1',student_id:'student1',package_name:'Pacote combinado',price_cents:30000,lessons_a:1,lessons_b:2,status:paid?'approved':'pending',payment_confirmed_at:paid?'2026-11-02T12:00:00Z':null}]}));
+ await page.route('**/rest/v1/rpc/available_slots',r=>r.fulfill({json:[{id:'slot-paid',starts_at:'2027-02-15T15:00:00Z',ends_at:'2027-02-15T15:50:00Z',instructor_name:'Instrutor Teste'}]}));
+ await page.route('**/rest/v1/rpc/book_lesson',r=>{booked=true;expect(r.request().postDataJSON()).toEqual({p_student:'student1',p_slot:'slot-paid'});return r.fulfill({json:null});});
+ await page.goto('/aluno');
+ await page.getByLabel('E-mail',{exact:true}).fill('aluno@example.com');
+ await page.getByLabel('Senha',{exact:true}).fill('senha-teste-123');
+ await page.getByRole('button',{name:'Entrar',exact:true}).click();
+ await page.getByRole('navigation',{name:'Área do aluno'}).getByRole('button',{name:'Agendar aula',exact:true}).click();
+ await page.getByLabel('Dia',{exact:true}).fill('2027-02-15');
+ const slot=page.getByRole('button',{name:/12:00/}).first();
+ await expect(slot).toBeDisabled();
+ paid=true;
+ await page.evaluate(()=>window.dispatchEvent(new Event('focus')));
+ await expect(page.getByText('Aulas disponíveis para agendar: 2 de carro · 1 de moto.',{exact:true})).toBeVisible();
+ await expect(slot).toBeEnabled();
+ await slot.click();
+ expect(booked).toBe(true);
+ await page.getByRole('navigation',{name:'Área do aluno'}).getByRole('button',{name:'Pagamentos',exact:true}).click();
+ await expect(page.getByText(/Pagamento confirmado pela equipe em/)).toBeVisible();
+});
+
 for (const [kind, menu] of [['students','Alunos'],['instructors','Instrutores'],['packages','Catálogo']]) {
   test(`exclusão de ${kind} confirma, preserva histórico e atualiza lista`, async ({page}) => {
     await mock(page,false,true);
@@ -467,6 +492,10 @@ test('kanban move pedido para análise e finaliza aprovado ou recusado', async (
   await mock(page, false, true);
   let rows = ['one','two'].map(id=>({id,student_id:'student1',package_name:`Pacote ${id}`,price_cents:29900,lessons_a:0,lessons_b:2,status:'pending'}));
   await page.route('**/rest/v1/package_requests*',r=>r.fulfill({json:rows}));
+  await page.route('**/rest/v1/rpc/confirm_manual_package_payment',r=>{
+    const p=r.request().postDataJSON();rows=rows.map(v=>v.id===p.p_request?{...v,status:'approved',reason:p.p_reason,payment_confirmed_at:new Date().toISOString()}:v);
+    return r.fulfill({json:null});
+  });
   await page.route('**/rest/v1/rpc/start_package_review',r=>{
     rows=rows.map(v=>v.id===r.request().postDataJSON().p_request?{...v,review_started_at:new Date().toISOString()}:v);
     return r.fulfill({json:null});
@@ -485,7 +514,8 @@ test('kanban move pedido para análise e finaliza aprovado ou recusado', async (
     const review=page.getByRole('region',{name:'Em análise',exact:true});
     await expect(review.getByRole('article')).toHaveCount(1);
     await review.getByLabel('Motivo da decisão').fill('Conferido pela equipe');
-    await review.getByRole('button',{name:approved?'Aprovar e liberar créditos':'Recusar',exact:true}).click();
+    if(approved) await review.getByRole('checkbox',{name:/Conferi o recebimento/}).check();
+    await review.getByRole('button',{name:approved?'Confirmar pagamento e liberar aulas':'Recusar',exact:true}).click();
     await expect(page.getByRole('region',{name:'Pedido finalizado'}).getByText(approved?'Finalizado · Aprovado':'Finalizado · Recusado',{exact:true})).toBeVisible();
   }
 });
@@ -786,9 +816,11 @@ test('administrador consulta alunos, decide pedidos e publica horário pelo serv
   await page.getByRole('button',{name:'Pedidos (1)',exact:true}).click();
   await page.getByText('Decidir pedido',{exact:true}).click();
   await page.getByLabel('Motivo da decisão').fill('Liberação manual autorizada');
-  await page.getByRole('button',{name:'Aprovar e liberar créditos'}).click();
-  await expect(page.getByRole('status').filter({hasText:'Pacote aprovado'})).toBeVisible();
-  expect(calls.find(c=>c.path.endsWith('/resolve_package')).body).toEqual({p_request:'request1',p_approve:true,p_reason:'Liberação manual autorizada'});
+  await expect(page.getByRole('button',{name:'Confirmar pagamento e liberar aulas'})).toBeDisabled();
+  await page.getByRole('checkbox',{name:/Conferi o recebimento/}).check();
+  await page.getByRole('button',{name:'Confirmar pagamento e liberar aulas'}).click();
+  await expect(page.getByRole('status').filter({hasText:'Pagamento confirmado'})).toBeVisible();
+  expect(calls.find(c=>c.path.endsWith('/confirm_manual_package_payment')).body).toEqual({p_request:'request1',p_reason:'Liberação manual autorizada'});
   await page.getByRole('button',{name:'Horários avulsos',exact:true}).click();
   await page.getByLabel('Data (horário de Brasília)').fill('2027-02-15');
   await page.getByRole('combobox',{name:'Instrutor',exact:true}).selectOption('instructor1');

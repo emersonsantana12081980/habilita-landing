@@ -8,6 +8,7 @@ export const requestLabel = (r) => r.status === "approved" ? "Finalizado · Apro
 
 export function RequestBoard({ requests, students, reasons, setReasons, act, filters, setFilters }) {
   const [limit, setLimit] = useState(12);
+  const [checked, setChecked] = useState({});
   const normalize = v => String(v || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
   const change = (key,value) => {setFilters(f=>({...f,[key]:value}));setLimit(12);};
   const invalidDates = filters.from && filters.to && filters.from > filters.to;
@@ -46,6 +47,7 @@ export function RequestBoard({ requests, students, reasons, setReasons, act, fil
           {r.payment_method === 'card' && r.status === 'pending' && normalizePhone(students.find(s=>s.id===r.student_id)?.phone || '') && <a className="btn btn-outline mt-3" target="_blank" rel="noreferrer" href={whatsappUrl(students.find(s=>s.id===r.student_id).phone,`Olá! Sobre o pacote ${r.package_name}: pagamento em ${r.installment_count || 1} parcelas, total de ${money(r.price_cents/100)}. Vou encaminhar o link de pagamento por aqui.`)}>Abrir WhatsApp do aluno</a>}
           {r.original_price_cents && <p className="mt-2 text-xs text-slate-600">Original: {money(r.original_price_cents/100)} · Desconto: {money(r.discount_cents/100)}{r.coupon_code && ` · Cupom: ${r.coupon_code}`} · {r.payment_method === "card" ? `${r.installment_count}x no cartão` : "À vista"}{r.pricing_demo && " · Valores fictícios"}</p>}
           <ManualPayment request={r} admin/>
+          {r.payment_confirmed_at && <p className="mt-3 text-sm font-bold text-green-800">Pagamento confirmado · {r.lessons_a} aulas de moto e {r.lessons_b} aulas de carro liberadas.</p>}
           {stage === 'finished' && <button type="button" className="mt-3 rounded-lg border border-red-200 px-3 py-2 text-sm font-semibold text-red-800" onClick={() => {
             if (window.confirm('Excluir este pedido do quadro? O histórico, os pagamentos e os créditos serão mantidos.'))
               act(() => supabase.rpc('admin_archive_finished_request', {p_request:r.id}), 'Pedido retirado do quadro. Histórico e créditos preservados.');
@@ -53,10 +55,12 @@ export function RequestBoard({ requests, students, reasons, setReasons, act, fil
           {stage === "requested" && <button className="mt-3 w-full rounded-lg bg-blue-50 px-3 py-2 font-semibold text-blue-800" onClick={()=>act(()=>supabase.rpc("start_package_review",{p_request:r.id}),"Pedido em análise.")}>Iniciar análise</button>}
           {r.status === "pending" ? <details className="mt-3" open={stage === "review" || undefined}>
             <summary className="cursor-pointer text-sm font-semibold">Decidir pedido</summary>
-            <form className="mt-3 space-y-3" onSubmit={e=>{e.preventDefault();act(()=>supabase.rpc("resolve_package",{p_request:r.id,p_approve:true,p_reason:reasons[r.id]}),"Pacote aprovado e créditos liberados.");}}>
+            <form className="mt-3 space-y-3" onSubmit={e=>{e.preventDefault();if(!checked[r.id])return;act(()=>supabase.rpc("confirm_manual_package_payment",{p_request:r.id,p_reason:reasons[r.id]}),"Pagamento confirmado e aulas liberadas para o aluno.");}}>
               <label className="text-sm">Motivo da decisão<input required value={reasons[r.id] || ""} onChange={e=>setReasons(v=>({...v,[r.id]:e.target.value}))}/></label>
-              <p className="text-xs text-slate-500">Aprovação manual libera créditos, sem realizar cobrança.</p>
-              <button disabled={!reasons[r.id]?.trim()} className="btn btn-green w-full">Aprovar e liberar créditos</button>
+              <p className="text-sm">Serão liberadas {r.lessons_a} aulas de moto e {r.lessons_b} aulas de carro, conforme este pedido.</p>
+              <label className="flex items-start gap-2 text-sm"><input type="checkbox" checked={!!checked[r.id]} onChange={e=>setChecked(v=>({...v,[r.id]:e.target.checked}))}/>Conferi o recebimento de {money(r.price_cents/100)} no Pix ou a aprovação no cartão.</label>
+              <p className="text-xs text-slate-500">Confirme após conferir o pagamento. O comprovante sozinho não libera aulas. Os requisitos da jornada CNH continuam valendo.</p>
+              <button disabled={!reasons[r.id]?.trim() || !checked[r.id]} className="btn btn-green w-full">Confirmar pagamento e liberar aulas</button>
               <button type="button" disabled={!reasons[r.id]?.trim()} className="w-full rounded-lg border px-3 py-2 text-red-700" onClick={()=>act(()=>supabase.rpc("resolve_package",{p_request:r.id,p_approve:false,p_reason:reasons[r.id]}),"Pedido recusado.")}>Recusar</button>
             </form>
           </details> : r.reason && <p className="mt-3 break-words text-sm text-slate-600">{r.reason}</p>}

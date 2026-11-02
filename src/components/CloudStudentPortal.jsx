@@ -86,6 +86,7 @@ export function CloudStudentPortal() {
   const identity = useRef(null);
   const slotsVersion = useRef(0);
   const lock = useRef(false);
+  const refreshCount = useRef(0);
 
   useEffect(() => {
     if (!supabase) {
@@ -111,10 +112,11 @@ export function CloudStudentPortal() {
     return () => listener.subscription.unsubscribe();
   }, []);
 
-  async function refresh(userId) {
+  async function refresh(userId, silent = false) {
+    if (silent && refreshCount.current > 0) return;
+    refreshCount.current++;
     const current = ++version.current;
-    setLoading(true);
-    setFailed(false);
+    if (!silent) { setLoading(true); setFailed(false); }
     try {
       const responses = await Promise.all([
         supabase
@@ -149,18 +151,27 @@ export function CloudStudentPortal() {
         settings: responses[5].data,
       });
     } catch (error) {
-      if (current === version.current) {
+      if (current === version.current && !silent) {
         setFailed(true);
         setData(empty);
         setMessage(errorText(error));
       }
     } finally {
-      if (current === version.current) setLoading(false);
+      refreshCount.current--;
+      if (current === version.current && !silent) setLoading(false);
     }
   }
   useEffect(() => {
     if (session?.user.id) refresh(session.user.id);
   }, [session?.user.id]);
+  useEffect(() => {
+    if (!session?.user.id || loading || failed) return;
+    const sync = () => { if (document.visibilityState === 'visible' && !lock.current) refresh(session.user.id, true); };
+    const timer = setInterval(sync, 15000);
+    window.addEventListener('focus', sync);
+    document.addEventListener('visibilitychange', sync);
+    return () => { clearInterval(timer); window.removeEventListener('focus', sync); document.removeEventListener('visibilitychange', sync); };
+  }, [session?.user.id, loading, failed]);
   useEffect(() => {
     const current = ++slotsVersion.current;
     setSlots(null);
@@ -578,6 +589,7 @@ export function CloudStudentPortal() {
                   <div className="admin-card">
                     {!canBookJourney(data.student, category) && <div className="mb-4 rounded-xl bg-amber-50 p-4 text-sm"><p>Antes de agendar, conclua as etapas anteriores e confirme sua LADV e a declaração de veracidade. Se já é habilitado, informe isso na jornada para agendar aulas de reforço.</p><button className="mt-2 font-bold underline" onClick={() => setTab('Minha jornada CNH')}>Atualizar minha jornada CNH</button></div>}
                     <BookingRules readOnly />
+                    <p className="my-4 rounded-xl bg-green-50 p-4 font-semibold text-green-800">Aulas disponíveis para agendar: {Math.max(0, available('B'))} de carro · {Math.max(0, available('A'))} de moto.</p>
                     <h2 className="text-xl font-bold">
                       Escolha um horário livre
                     </h2>

@@ -220,7 +220,9 @@ export function CloudAdminPanel() {
       setMessage(success);
     } catch (error) {
       setMessage(
-        error.code === "P0001"
+        error.code === "PGRST202"
+          ? "Aplique o SQL confirmar-pagamento-manual.sql no Supabase para ativar a confirmação de pagamento."
+          : error.code === "P0001"
           ? error.message
           : "Não foi possível salvar. Atualize o painel e confira os dados.",
       );
