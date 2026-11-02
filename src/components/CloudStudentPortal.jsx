@@ -76,7 +76,9 @@ export function CloudStudentPortal() {
   const [data, setData] = useState(empty);
   const [loading, setLoading] = useState(false);
   const [failed, setFailed] = useState(false);
-  const [tab, setTab] = useState(requestedPackage || new URLSearchParams(location.search).get("checkout") === "teste" ? "Comprar aulas" : "Início");
+  const [selectedTab, setTab] = useState(requestedPackage || new URLSearchParams(location.search).get("checkout") === "teste" ? "Comprar aulas" : "Início");
+  const journeyLocked = Boolean(data.student && journeyPortalLocked(data.student));
+  const tab = journeyLocked ? "Minha jornada CNH" : selectedTab;
   const [day, setDay] = useState("");
   const [category, setCategory] = useState("B");
   const [paymentRequestId, setPaymentRequestId] = useState(null);
@@ -287,7 +289,6 @@ export function CloudStudentPortal() {
     "Olá! Preciso de ajuda na área do aluno.",
   );
   const canUse = session && data.student?.active && !loading && !failed;
-  const journeyLocked = Boolean(data.student && journeyPortalLocked(data.student));
   const pendingRequests = data.requests.filter((r) => r.status === "pending");
   const hasCredit = available("A") > 0 || available("B") > 0;
   const hasLessons = data.lessons.some(l => l.status !== "cancelled");
@@ -491,7 +492,7 @@ export function CloudStudentPortal() {
                 Seu cadastro está inativo. Fale com a equipe.
               </p>
             ) : (
-              journeyLocked ? <StudentJourney student={data.student} lessons={data.lessons} onSaved={() => refresh(session.user.id, true)}/> : <>
+              <>
                 <nav
                   aria-label="Área do aluno"
                   className="portal-nav my-6 flex flex-wrap gap-2"
@@ -500,6 +501,8 @@ export function CloudStudentPortal() {
                   {studentPages.map((name) => (
                     <button
                       key={name}
+                      disabled={journeyLocked && name !== "Minha jornada CNH"}
+                      title={journeyLocked && name !== "Minha jornada CNH" ? "Conclua Minha jornada CNH até o envio da LADV para liberar esta área." : undefined}
                       onClick={() => {
                         setTab(name);
                         setMessage("");

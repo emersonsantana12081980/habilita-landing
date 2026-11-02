@@ -15,7 +15,7 @@ export function StudentJourney({student={},lessons=[],compact=false,onDetails,on
  const editable=!compact&&Boolean(onSaved), configured=Object.hasOwn(student,'onboarding_steps');
  async function save(operation){if(lock.current)return;lock.current=true;setBusy(true);setMessage('');try{const {error}=await operation();if(error)throw error;await onSaved?.();}catch(error){setMessage(error.code==='P0001'?error.message:'Não foi possível salvar. Peça à equipe para conferir a ativação da trilha no Supabase.');}finally{lock.current=false;setBusy(false);}}
  return <section className="student-panel" aria-label="Minha jornada CNH">
-  <div className="student-panel-title"><h2>{compact?'Minha jornada CNH':'Sua trilha até a habilitação'}</h2>{onDetails&&<button onClick={onDetails}>Ver detalhes</button>}</div>
+  <div className="student-panel-title"><h2>Minha jornada CNH</h2>{onDetails&&<button onClick={onDetails}>Continuar minha jornada</button>}</div>
   <p className="student-muted">Abra cada etapa pela seta. Declare a conclusão para avançar. As declarações são suas e não substituem os registros oficiais do Detran.</p>
   {!compact&&<p className="mt-3 rounded-xl bg-amber-50 p-3 text-sm">Na primeira habilitação, a área fica nesta trilha até as declarações iniciais e o envio da LADV das categorias escolhidas. Saldo e horários disponíveis continuam necessários para agendar.</p>}
   {editable&&!configured&&<p role="alert" className="mt-3">A trilha ainda precisa ser ativada pela equipe. Fale conosco pelo WhatsApp.</p>}

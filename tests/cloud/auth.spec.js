@@ -12,7 +12,7 @@ test('falha no arquivo LADV não registra declaração nem libera portal',async(
  await panel.locator('input[type=file]').setInputFiles({name:'ladv.pdf',mimeType:'application/pdf',buffer:Buffer.from('%PDF-1.4 test')});
  await panel.getByRole('checkbox').check();await panel.getByRole('button',{name:/Enviar LADV/}).click();
  await expect(panel.getByRole('status')).toContainText('Não foi possível concluir o envio');
- await expect(page.getByRole('navigation',{name:'Área do aluno'})).toHaveCount(0);
+ await expect(page.getByRole('navigation',{name:'Área do aluno'}).getByRole('button',{name:'Agendar aula',exact:true})).toBeDisabled();
  expect(submitted).toBe(0);
 });
 
@@ -32,8 +32,8 @@ test('trilha sequencial mantém portal bloqueado até LADV de carro e moto envia
  });
  await page.goto('/aluno?pacote=carro');
  await page.getByLabel('E-mail',{exact:true}).fill('aluno@example.com');await page.getByLabel('Senha',{exact:true}).fill('senha-teste-123');await page.getByRole('button',{name:'Entrar',exact:true}).click();
- await expect(page.getByRole('heading',{name:'Sua trilha até a habilitação'})).toBeVisible();
- await expect(page.getByRole('navigation',{name:'Área do aluno'})).toHaveCount(0);
+ await expect(page.getByRole('heading',{name:'Minha jornada CNH',level:2})).toBeVisible();
+ await expect(page.getByRole('navigation',{name:'Área do aluno'}).getByRole('button',{name:'Agendar aula',exact:true})).toBeDisabled();
  await page.getByRole('button',{name:/3 Abra o processo/}).click();
  await expect(page.locator('#trail-registration').getByRole('button',{name:'Declarar conclusão e continuar'})).toBeDisabled();
  await page.getByRole('button',{name:/1 Preencha o requerimento/}).click();
@@ -43,10 +43,10 @@ test('trilha sequencial mantém portal bloqueado até LADV de carro e moto envia
   const panel=page.getByRole('region',{name:`Documento LADV ${cat}`,exact:true});
   await panel.locator('input[type=file]').setInputFiles({name:'ladv.pdf',mimeType:'application/pdf',buffer:Buffer.from('%PDF-1.4 test')});
   await panel.getByRole('checkbox').check();await panel.getByRole('button',{name:/Enviar LADV/}).click();
-  if(cat==='A'){await expect(panel.getByText(/Documento enviado pelo aluno/)).toBeVisible();await expect(page.getByRole('navigation',{name:'Área do aluno'})).toHaveCount(0);}
+  if(cat==='A'){await expect(panel.getByText(/Documento enviado pelo aluno/)).toBeVisible();await expect(page.getByRole('navigation',{name:'Área do aluno'}).getByRole('button',{name:'Agendar aula',exact:true})).toBeDisabled();}
  }
  await expect(page.getByRole('navigation',{name:'Área do aluno'})).toBeVisible();
- await page.reload();await expect(page.getByRole('navigation',{name:'Área do aluno'})).toBeVisible();
+ await page.reload();await expect(page.getByRole('navigation',{name:'Área do aluno'}).getByRole('button',{name:'Agendar aula',exact:true})).toBeEnabled();
  expect(uploaded).toHaveLength(2);
 });
 
@@ -1072,8 +1072,8 @@ test('signup opens onboarding immediately when email confirmation is disabled', 
   await page.getByLabel('Senha',{exact:true}).fill('senha-teste-123');
   await page.getByLabel('Confirme a senha').fill('senha-teste-123');
   await page.getByRole('button',{name:'Criar conta grátis'}).click();
-  await expect(page.getByRole('heading',{name:'Sua trilha até a habilitação'})).toBeVisible();
-  await expect(page.getByRole('navigation',{name:'Área do aluno'})).toHaveCount(0);
+  await expect(page.getByRole('heading',{name:'Minha jornada CNH',level:2})).toBeVisible();
+  await expect(page.getByRole('navigation',{name:'Área do aluno'}).getByRole('button',{name:'Agendar aula',exact:true})).toBeDisabled();
   await expect(page.getByText('Confira seu e-mail',{exact:false})).toHaveCount(0);
 });
 

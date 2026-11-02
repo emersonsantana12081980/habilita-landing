@@ -12,7 +12,7 @@ Depois, entre como aluno de primeira habilitação e atualize a página. Sem ess
 
 - Nove etapas expansíveis: requerimento, teoria, abertura do processo, exames médico e psicológico juntos, prova teórica, envio da LADV, prática, prova prática e toxicológico.
 - As orientações podem ser consultadas livremente; a declaração de conclusão exige as etapas anteriores e ciência de veracidade.
-- A primeira habilitação permanece na trilha, sem menu do portal, até concluir as cinco declarações iniciais e enviar a LADV de todas as categorias escolhidas. A+B exige os dois documentos.
+- A primeira habilitação abre a seção existente Minha jornada CNH, com as demais opções do menu desabilitadas até concluir as cinco declarações iniciais e enviar a LADV de todas as categorias escolhidas. A+B exige os dois documentos. No início do portal, o cartão da jornada abre essa mesma seção.
 - Aulas de reforço para quem declara já ser habilitado preservam a dispensa de trilha solicitada anteriormente.
 - Alunos existentes de primeira habilitação também devem preencher as novas declarações e enviar o documento. Créditos, pagamentos e aulas existentes são preservados.
 - Cada upload aceita PDF/JPG/PNG de até 5 MB. O bucket é privado; aluno proprietário e administração podem consultar por link temporário. Substituições preservam arquivos anteriores.
