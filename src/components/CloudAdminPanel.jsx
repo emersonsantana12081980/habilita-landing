@@ -2,6 +2,7 @@ import { PortalNavIcon } from "./PortalNavIcon";
 import { SiteSettings } from "./SiteSettings";
 import { AdminOverview } from "./AdminOverview";
 import { StudentRecord } from "./StudentRecord";
+import { AdminManualOrder } from './AdminManualOrder';
 import { RequestBoard } from "./RequestBoard";
 import React, { useEffect, useRef, useState } from "react";
 import { Brand } from "./Brand";
@@ -557,7 +558,10 @@ export function CloudAdminPanel() {
                   />
                 )}
                 {tab === "Pedidos" && (
+                  <>
+                  <AdminManualOrder students={data.students} onSaved={async message=>{await load();setMessage(message);}}/>
                   <RequestBoard requests={data.requests} students={data.students} reasons={reasons} setReasons={setReasons} act={act} filters={requestFilters} setFilters={setRequestFilters} />
+                  </>
                 )}
                 {tab === "Configurar agenda" && (
                   <ScheduleSettings

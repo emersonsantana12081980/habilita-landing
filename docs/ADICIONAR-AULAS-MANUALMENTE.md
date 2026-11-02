@@ -2,7 +2,7 @@
 
 Ative executando `docs/supabase-dashboard/adicionar-aulas-manualmente.sql` no SQL Editor do Supabase, após o SQL de confirmação de pagamento manual. A migration não foi executada remotamente nesta entrega.
 
-No admin: **Alunos → Ver ficha → Adicionar aulas**.
+No admin: **Pedidos → Lançar pedido manual → selecionar aluno**. Também disponível em **Alunos → Ver ficha → Adicionar aulas**.
 
 - Escolha um pacote cadastrado ou informe uma quantidade manual de aulas de carro e moto.
 - Informe o valor total combinado, forma de pagamento, parcelas se cartão e observação.

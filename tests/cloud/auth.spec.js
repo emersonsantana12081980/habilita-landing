@@ -1,5 +1,23 @@
 import { test, expect } from "@playwright/test";
 
+test('pedido manual inicia diretamente no menu Pedidos com seleção de aluno',async({page})=>{
+ await mock(page,false,true);let sent;
+ await page.route('**/rest/v1/rpc/admin_add_student_classes',r=>{sent=r.request().postDataJSON();return r.fulfill({json:sent.p_operation});});
+ await page.goto('/admin');
+ await page.getByLabel('E-mail administrativo').fill('admin@example.com');
+ await page.getByLabel('Senha',{exact:true}).fill('senha-teste-123');
+ await page.getByRole('button',{name:'Entrar no painel',exact:true}).click();
+ await page.getByRole('button',{name:'Pedidos (1)',exact:true}).click();
+ await page.getByRole('button',{name:'Lançar pedido manual',exact:true}).click();
+ await page.getByRole('combobox',{name:'Aluno do pedido'}).selectOption('student1');
+ await page.getByLabel('Quantidade de aulas de carro').fill('3');
+ await page.getByLabel('Valor total combinado (R$)').fill('300');
+ await page.getByLabel('Motivo / observação').fill('Atendimento presencial');
+ await page.getByRole('button',{name:'Salvar lançamento manual'}).click();
+ await expect(page.getByRole('button',{name:'Lançar pedido manual',exact:true})).toBeVisible();
+ expect(sent).toMatchObject({p_student:'student1',p_package:null,p_lessons_b:3,p_paid:false,p_total:30000});
+});
+
 test('admin cadastra aulas sem solicitação, pendentes ou confirmadas, e reutiliza tentativa',async({page})=>{
  await mock(page,false,true);const sent=[];let fail=true;
  await page.route('**/rest/v1/rpc/admin_add_student_classes',r=>{
