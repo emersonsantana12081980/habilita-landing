@@ -1,5 +1,26 @@
 import { test, expect } from "@playwright/test";
 
+test('boas-vindas abre ao entrar e recarregar, mas não ao navegar ou atualizar dados',async({page})=>{
+ await mock(page,false,false,true);
+ const welcome=page.getByRole('dialog',{name:'Boas-vindas à Habilita+',exact:true});
+ await page.goto('/aluno');await expect(welcome).toHaveCount(0);
+ await page.getByLabel('E-mail',{exact:true}).fill('aluno@example.com');
+ await page.getByLabel('Senha',{exact:true}).fill('senha-teste-123');
+ await page.getByRole('button',{name:'Entrar',exact:true}).click();
+ await expect(welcome).toBeVisible();
+ await expect(welcome.getByRole('img')).toBeVisible();
+ await welcome.getByRole('button',{name:'Fechar e continuar',exact:true}).click();
+ await expect(welcome).toHaveCount(0);
+ await page.getByRole('navigation',{name:'Área do aluno'}).getByRole('button',{name:'Minha jornada CNH',exact:true}).click();
+ await page.getByRole('button',{name:'Atualizar informações',exact:true}).click();
+ await expect(page.getByRole('heading',{name:'Minha jornada CNH',level:2})).toBeVisible();
+ await expect(welcome).toHaveCount(0);
+ await page.reload();await expect(welcome).toBeVisible();
+ await page.keyboard.press('Escape');await expect(welcome).toHaveCount(0);
+ await page.reload();await expect(welcome).toBeVisible();
+ await welcome.getByRole('button',{name:'Fechar boas-vindas',exact:true}).click();await expect(welcome).toHaveCount(0);
+});
+
 test('falha no arquivo LADV não registra declaração nem libera portal',async({page})=>{
  await mock(page);let submitted=0;
  const keys=['initial_application','theory_course','registration','medical','theory_exam'];
@@ -680,7 +701,8 @@ test('edição individual trata conflito e salva sem criar outra aula', async ({
   await expect(page.getByRole('button',{name:'Cancelar aula',exact:true})).toHaveCount(1);
   expect(attempts).toBe(2);
 });
-async function mock(page, broken = false, admin = false) {
+async function mock(page, broken = false, admin = false, keepWelcome = false) {
+  if (!keepWelcome) await page.addLocatorHandler(page.getByRole('dialog',{name:'Boas-vindas à Habilita+',exact:true}),async dialog=>{await dialog.getByRole('button',{name:'Fechar e continuar',exact:true}).click();});
   const calls = [];
   let rules = [], exceptions = [];
   let studentName='Aluno Teste';
