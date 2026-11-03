@@ -10,29 +10,34 @@ export const cnhTrail=[
   links:[['Solicitar validação do curso teórico','https://www.detran.sp.gov.br/detransp?id=sc_cat_item_detransp_svc&sys_id=9ffe1f1c874b121422bdc9530cbb3570&svc_id=d6dc808d47b53a9006482a54f26d4337']],
   declaration:'Declaro que concluí o curso teórico e emiti meu certificado.'},
  {key:'registration',title:'Abra o processo no Detran-SP',text:[
-  'Após concluir o curso teórico, abra o processo de primeira habilitação pelo portal do Detran-SP.',
-  'Em Iniciar serviço, gere o Renach e agende a biometria, a avaliação psicológica e o exame médico.'],
+  'Presencial: agende o serviço de primeira habilitação no Poupatempo e compareça à unidade no dia e horário marcados. No atendimento, abra o processo, cadastre a biometria e agende os exames médico e psicológico.',
+  'Online: acesse o link abaixo, clique em Iniciar serviço, entre com sua conta Gov.br e siga as instruções para abrir o processo e agendar a biometria e os exames.'],
   links:[['Abrir serviço oficial de primeira habilitação',cnhSource]],declaration:'Declaro que abri meu processo no Detran-SP e realizei a coleta biométrica.'},
- {key:'medical',title:'Realize os exames médico e psicológico',text:[
-  'Compareça às clínicas credenciadas nos dias e horários agendados. O pagamento é feito diretamente ao médico e ao psicólogo.',
-  'Confirme esta etapa depois de realizar e obter a aptidão nos dois exames. Não envie laudos ou resultados médicos ao site.'],
+ {key:'medical',title:'Exames médico, psicotécnico e toxicológico — primeira habilitação',text:[
+  'Exame médico: R$ 90,00. Compareça à clínica credenciada conforme o agendamento e pague diretamente ao médico.',
+  'Exame psicotécnico (avaliação psicológica): R$ 90,00. Compareça conforme o agendamento e pague diretamente ao psicólogo.',
+  'Exame toxicológico: consulte o valor diretamente nos laboratórios credenciados pela Senatran. Para processos iniciados a partir de 17/06/2026, ele é exigido para emitir a PPD; recomenda-se realizá-lo após o curso prático, observando a validade de 90 dias na emissão.',
+  'Para avançar nesta etapa, confirme a aptidão nos exames médico e psicológico. A conferência do toxicológico está no último passo. Não envie laudos ou resultados médicos ao site.'],
   declaration:'Declaro que realizei os exames médico e psicológico e estou apto para seguir o processo.'},
  {key:'theory_exam',title:'Agende e realize a prova teórica',text:[
-  'Pague a taxa e agende o exame pelo portal do Detran-SP. Compareça à unidade do Detran ou Poupatempo na data marcada.',
+  'Taxa do exame teórico: R$ 52,83. Efetue o pagamento e acesse o link abaixo para agendar sua prova na unidade do Detran-SP ou Poupatempo disponível.',
+  'Escolha a data, o horário e o local e compareça conforme o agendamento.',
   'Avance depois da aprovação. Em seguida, obtenha a LADV correspondente à categoria.'],
   links:[['Agendar prova teórica','https://www.detran.sp.gov.br/detransp/pb/servico/habilitacao/agendar_exame_teorico_de_habilitacao?id=carta_de_servico_agendar_exame_teorico_de_habilitacao']],
   declaration:'Declaro que fui aprovado na prova teórica.'},
- {key:'ladv',title:'Envie sua LADV para iniciar as aulas',text:[
-  'Anexe sua Licença para Aprendizagem de Direção Veicular (LADV), em PDF, JPG ou PNG, até 5 MB. Para carro e moto, envie o documento correspondente em cada categoria.',
-  'Após o envio das categorias escolhidas, a área do aluno será liberada. Para reservar uma aula, ainda é necessário ter saldo e horário disponível. O envio não confirma autenticidade ou validade no Detran.']},
+ {key:'ladv',title:'Emita e envie sua LADV para iniciar as aulas',text:[
+  'Após a aprovação teórica, emita sua Licença para Aprendizagem de Direção Veicular (LADV) no canal oficial e salve o documento. Depois, faça o upload abaixo em PDF, JPG ou PNG, até 5 MB. Para carro e moto, envie o documento correspondente em cada categoria.',
+  'Após enviar a LADV das categorias escolhidas, você poderá acessar as demais áreas do portal. O agendamento das aulas práticas depende da confirmação do pagamento pela equipe, da liberação do saldo de aulas e dos horários disponíveis. O envio não confirma autenticidade ou validade no Detran.']},
  {key:'practice',title:'Realize o curso prático de direção',text:[
   'Na primeira habilitação, são exigidas 2 horas de prática para A ou B; para A e B, 2 horas em cada categoria (4 horas ao todo). ACC não exige curso prático e não é oferecida neste agendamento.',
-  'Faça as aulas com instrutor autônomo credenciado ou autoescola credenciada. A informação de conclusão deve constar no Detran-SP; se não atualizar, solicite a validação pelo serviço oficial.',
+  'Na Habilita+, siga as aulas com seu instrutor autônomo credenciado. Depois do envio da LADV e da confirmação do pagamento pela equipe, agende usando seu saldo de aulas e os horários disponíveis.',
+  'A informação de conclusão deve constar no Detran-SP; se não atualizar, solicite a validação pelo serviço oficial.',
   'Horas e quantidade de aulas são diferentes: confira a duração de cada aula contratada.'],
-  links:[['Consultar instrutores credenciados','https://www.gov.br/transportes/pt-br/conteudos-cnh-do-brasil/por-dentro-da-nova-cnh-do-brasil'],['Consultar autoescolas','https://operacoes.sp.gov.br/DetranWeb/faces/pages/pesquisaCFC/pesquisaView.xhtml'],['Validar curso prático','https://www.detran.sp.gov.br/detransp/pb/servico/habilitacao/validar_curso_pratico_da_cnh_do_brasil_no_detran_sp?id=carta_de_servico_validar_curso_pratico_da_cnh_do_brasil_no_detran_sp']],
+  links:[['Consultar instrutores credenciados','https://www.gov.br/transportes/pt-br/conteudos-cnh-do-brasil/por-dentro-da-nova-cnh-do-brasil'],['Validar curso prático','https://www.detran.sp.gov.br/detransp/pb/servico/habilitacao/validar_curso_pratico_da_cnh_do_brasil_no_detran_sp?id=carta_de_servico_validar_curso_pratico_da_cnh_do_brasil_no_detran_sp']],
   declaration:'Declaro que concluí a carga prática exigida nas categorias do meu processo.'},
  {key:'practical_exam',title:'Agende e realize a prova prática',text:[
-  'Use o serviço oficial para agendar e pagar a taxa. Se fez as aulas em autoescola, ela poderá realizar o agendamento.',
+  'Taxa do exame prático: R$ 52,83 por categoria. Para carro e moto, pague a taxa correspondente a cada categoria. Você pode pagar em casa lotérica, informando seu CPF e solicitando a taxa do exame prático de direção. Guarde o comprovante e confira o valor no canal oficial antes de pagar.',
+  'Como seu acompanhamento é com instrutor autônomo, você mesmo faz o agendamento: acesse o link abaixo, entre com sua conta Gov.br e siga as instruções para escolher a categoria, o local e a data disponíveis.',
   'Informe abaixo a data do exame para a equipe. Compareça ao local no dia e horário marcados.'],
   links:[['Agendar exame prático','https://www.detran.sp.gov.br/detransp/pb/servico/habilitacao/agendar_exame_pratico_de_direcao_veicular?id=carta_de_servico_agendar_exame_pratico_de_direcao_veicular']],
   declaration:'Declaro que realizei a prova prática e fui aprovado nas categorias do meu processo.'},

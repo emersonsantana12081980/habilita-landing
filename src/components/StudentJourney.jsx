@@ -17,7 +17,7 @@ export function StudentJourney({student={},lessons=[],compact=false,onDetails,on
  return <section className="student-panel" aria-label="Minha jornada CNH">
   <div className="student-panel-title"><h2>Minha jornada CNH</h2>{onDetails&&<button onClick={onDetails}>Continuar minha jornada</button>}</div>
   <p className="student-muted">Abra cada etapa pela seta. Declare a conclusão para avançar. As declarações são suas e não substituem os registros oficiais do Detran.</p>
-  {!compact&&<p className="mt-3 rounded-xl bg-amber-50 p-3 text-sm">Na primeira habilitação, a área fica nesta trilha até as declarações iniciais e o envio da LADV das categorias escolhidas. Saldo e horários disponíveis continuam necessários para agendar.</p>}
+  {!compact&&<p className="mt-3 rounded-xl bg-amber-50 p-3 text-sm">Na primeira habilitação, siga a jornada até emitir e enviar a LADV das categorias escolhidas. Para agendar aulas práticas, a equipe precisa confirmar o pagamento e liberar seu saldo; escolha então um horário disponível.</p>}
   {editable&&!configured&&<p role="alert" className="mt-3">A trilha ainda precisa ser ativada pela equipe. Fale conosco pelo WhatsApp.</p>}
   {editable&&<label className="my-4 flex items-start gap-2 text-sm"><input type="checkbox" disabled={busy} checked={!!student.licensed_driver} onChange={e=>save(()=>supabase.rpc('update_student_journey',{p_student:student.id,p_steps:student.journey_steps||{},p_licensed:e.target.checked}))}/>Já sou habilitado e quero aulas de reforço.</label>}
   {student.licensed_driver?<p className="my-4 text-green-800">Aulas de reforço: a trilha da primeira habilitação é dispensada. O agendamento depende do saldo e dos horários disponíveis.</p>:<>
@@ -48,6 +48,6 @@ export function StudentJourney({student={},lessons=[],compact=false,onDetails,on
   </>}
   {compact&&categories.some(category=>hasLadvDocument(student,category))&&categories.map(category=>student.ladv_documents?.[category]?.path&&<LadvUpload key={category} student={student} category={category} editable={false}/>)}
   {message&&<p role="status" className="mt-4">{message}</p>}
-  <a href={cnhSource} target="_blank" rel="noopener noreferrer" className="mt-5 block text-xs text-green-800 underline">Fonte: Detran-SP / Poupatempo · orientações conferidas em 02/11/2026</a>
+  <a href={cnhSource} target="_blank" rel="noopener noreferrer" className="mt-5 block text-xs text-green-800 underline">Fonte: Detran-SP / Poupatempo · valores e orientações conferidos em 03/11/2026. Confira as taxas no canal oficial antes de pagar.</a>
  </section>;
 }
