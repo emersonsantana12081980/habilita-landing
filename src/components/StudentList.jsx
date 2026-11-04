@@ -11,7 +11,7 @@ export function StudentList({ students, balance, onEdit, onHistory, onStatus, on
   const visible = students.filter((s) => {
     const query = normalize(search.trim());
     const digits = search.replace(/\D/g, "");
-    return !s.deleted_at && (status === "all" || (status === "active" ? s.active : !s.active)) &&
+    return (status === "deleted" ? !!s.deleted_at : !s.deleted_at && (status === "all" || (status === "active" ? s.active : !s.active))) &&
       (!category || s.category === category) &&
       (!query || normalize(s.name).includes(query) || normalize(s.phone).includes(query) ||
         (digits.length > 0 && /^[\d\s()+.-]+$/.test(search) && String(s.phone || "").replace(/\D/g, "").includes(digits)));
@@ -24,7 +24,7 @@ export function StudentList({ students, balance, onEdit, onHistory, onStatus, on
       </label>
       <label className="text-sm font-semibold">Situação do cadastro
         <select value={status} onChange={(e) => setStatus(e.target.value)}>
-          <option value="active">Ativos</option><option value="archived">Arquivo morto (inativos)</option><option value="all">Todos</option>
+          <option value="active">Ativos</option><option value="archived">Arquivo morto (inativos)</option><option value="all">Todos</option><option value="deleted">Excluídos anteriormente — liberar e-mail</option>
         </select>
       </label>
       <label className="text-sm font-semibold">Categoria do aluno
@@ -45,10 +45,10 @@ export function StudentList({ students, balance, onEdit, onHistory, onStatus, on
           <p className="mt-1 text-xs text-slate-500">Créditos livres: moto {balance(student.id, "A")} · carro {balance(student.id, "B")}</p>
         </div>
         <div className="flex flex-wrap gap-2 text-sm">
-          <button className="rounded-lg border px-3 py-2 font-semibold" onClick={() => onEdit(student)}>Editar aluno</button>
+          <button disabled={!!student.deletion_pending || !!student.deleted_at} className="rounded-lg border px-3 py-2 font-semibold" onClick={() => onEdit(student)}>Editar aluno</button>
           <button className="rounded-lg border px-3 py-2" onClick={() => onHistory(student)}>Ver ficha</button>
           <DeleteRegistration kind="students" record={student} onDeleted={onDeleted} />
-          <button className={`rounded-lg px-3 py-2 font-semibold ${student.active ? "bg-red-50 text-red-800" : "bg-green-50 text-green-800"}`} onClick={() => {
+          <button disabled={!!student.deletion_pending || !!student.deleted_at} className={`rounded-lg px-3 py-2 font-semibold ${student.active ? "bg-red-50 text-red-800" : "bg-green-50 text-green-800"}`} onClick={() => {
             if (window.confirm(student.active
               ? `Enviar ${student.name} para o arquivo morto? O cadastro ficará inativo, sem novos agendamentos. Créditos, histórico e aulas já agendadas serão mantidos.`
               : `Restaurar ${student.name} como aluno ativo?`)) onStatus(student, !student.active);

@@ -154,7 +154,23 @@ test('saldo liberado pelo admin aparece no aluno e habilita reserva por categori
  await expect(page.getByText(/Pagamento confirmado pela equipe em/)).toBeVisible();
 });
 
-for (const [kind, menu] of [['students','Alunos'],['instructors','Instrutores'],['packages','Catálogo']]) {
+test('exclusão definitiva de aluno antigo remove arquivos e libera cadastro',async({page})=>{
+ await mock(page,false,true);let rows=[{id:'remove-me',name:'Aluno antigo',active:false,deleted_at:'2026-11-01',category:'B'}],prepared=0,removed=false;
+ await page.route('**/rest/v1/students*',r=>r.fulfill({json:rows}));
+ await page.route('**/rest/v1/rpc/admin_prepare_student_deletion',r=>{prepared++;expect(r.request().postDataJSON()).toEqual({p_student:'remove-me'});return r.fulfill({json:[{bucket:'student-ladv',path:'remove-me/B/file.pdf'}]});});
+ await page.route('**/storage/v1/object/student-ladv',r=>{expect(r.request().method()).toBe('DELETE');removed=true;return r.fulfill({json:[]});});
+ await page.route('**/rest/v1/rpc/admin_finish_student_deletion',r=>{expect(removed).toBe(true);rows=[];return r.fulfill({json:null});});
+ await page.goto('/admin');await page.getByLabel('E-mail administrativo').fill('admin@example.com');await page.getByLabel('Senha',{exact:true}).fill('senha-teste-123');await page.getByRole('button',{name:'Entrar no painel',exact:true}).click();
+ await page.getByRole('button',{name:'Alunos',exact:true}).click();
+ await page.getByLabel('Situação do cadastro').selectOption('deleted');
+ await expect(page.getByRole('heading',{name:'Aluno antigo'})).toBeVisible();
+ page.once('dialog',d=>d.dismiss());await page.getByRole('button',{name:'Excluir cadastro',exact:true}).click();expect(prepared).toBe(0);
+ page.once('dialog',d=>{expect(d.message()).toContain('conta de login');expect(d.message()).toContain('não pode ser desfeita');return d.accept();});
+ await page.getByRole('button',{name:'Excluir cadastro',exact:true}).click();
+ await expect(page.getByRole('heading',{name:'Aluno antigo'})).toHaveCount(0);expect(prepared).toBe(1);
+});
+
+for (const [kind, menu] of [['instructors','Instrutores'],['packages','Catálogo']]) {
   test(`exclusão de ${kind} confirma, preserva histórico e atualiza lista`, async ({page}) => {
     await mock(page,false,true);
     let rows=[{id:'remove-me',name:'Cadastro para excluir',phone:'12999999999',category:'B',active:true,lessons_b:2,lessons_a:0,price_cents:10000}], calls=0, blocked=true;
