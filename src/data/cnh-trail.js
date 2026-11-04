@@ -1,4 +1,6 @@
 export const cnhSource='https://poupatempo.sp.gov.br/carta/391270A7-15C2-4FC2-BE72-38C4D14B4A1C';
+const laboratoriesSearch = 'https://www.google.com/search?q=laboratorios+credenciados+ao+detran+para+exame+toxicologico+ca%C3%A7apava&udm=local';
+const laboratoriesButton = {label:'Ver laboratórios em Caçapava',url:laboratoriesSearch};
 export const cnhTrail=[
  {key:'initial_application',title:'Preencha o requerimento inicial',text:[
   'Baixe o aplicativo CNH do Brasil para Android ou iOS e entre com sua conta Gov.br.',
@@ -18,6 +20,7 @@ export const cnhTrail=[
   'Exame psicotécnico (avaliação psicológica): R$ 90,00. Compareça conforme o agendamento e pague diretamente ao psicólogo.',
   'Exame toxicológico: consulte o valor diretamente nos laboratórios credenciados pela Senatran. Para processos iniciados a partir de 17/06/2026, ele é exigido para emitir a PPD; recomenda-se realizá-lo após o curso prático, observando a validade de 90 dias na emissão.',
   'Para avançar nesta etapa, confirme a aptidão nos exames médico e psicológico. A conferência do toxicológico está no último passo. Não envie laudos ou resultados médicos ao site.'],
+  action: laboratoriesButton,
   declaration:'Declaro que realizei os exames médico e psicológico e estou apto para seguir o processo.'},
  {key:'theory_exam',title:'Agende e realize a prova teórica',text:[
   'Taxa do exame teórico: R$ 52,83. Efetue o pagamento e acesse o link abaixo para agendar sua prova na unidade do Detran-SP ou Poupatempo disponível.',
@@ -45,5 +48,6 @@ export const cnhTrail=[
   'Para processos iniciados a partir de 17/06/2026, o exame toxicológico é obrigatório para emitir a PPD. Recomenda-se realizá-lo após o curso prático; ele pode ser providenciado antes da prova prática.',
   'Na emissão da PPD, o exame precisa estar dentro de 90 dias da coleta. A emissão depende da aprovação prática e da confirmação do resultado negativo, quando exigido.',
   'Confira a situação no serviço oficial. Não anexe resultados de exames aqui.'],
+  action: laboratoriesButton,
   links:[['Conferir orientações oficiais',cnhSource]],declaration:'Declaro que conferi e cumpri a exigência do toxicológico aplicável ao meu processo, ou confirmei no Detran que ela não se aplica.'},
 ];

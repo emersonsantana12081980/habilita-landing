@@ -33,6 +33,7 @@ export function StudentJourney({student={},lessons=[],compact=false,onDetails,on
     </button></h3>
     <div id={`trail-${step.key}`} hidden={!isOpen} className="space-y-3 border-t p-4 text-sm leading-6">
      {step.text.map(text=><p key={text}>{text}</p>)}
+     {step.action&&<a className="btn btn-green" href={step.action.url} target="_blank" rel="noopener noreferrer">{step.action.label} ↗</a>}
      {step.links?.map(([label,url])=><a className="block font-semibold text-green-800 underline" key={url} href={url} target="_blank" rel="noopener noreferrer">{label} ↗</a>)}
      {step.key==='ladv'&&categories.map(category=><LadvUpload key={category} student={student} category={category} editable={editable&&configured&&available&&onboardingReady(student)} onSaved={onSaved}/>)}
      {step.key==='practice'&&categories.map(category=><p key={category}>{category==='A'?'Moto':'Carro'}: {completedPractice(lessons,category)} aulas realizadas na Habilita+. Confira a carga horária com seu instrutor.</p>)}
