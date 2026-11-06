@@ -8,7 +8,7 @@ import { StudentStart } from "./StudentStart";
 import { ManualPayment } from "./ManualPayment";
 import { StudentEnrollmentEntry } from "./EnrollmentEntry";
 import { StudentRequests } from "./RequestBoard";
-import { StudentPackageOffer } from "./StudentPackageOffer";
+import { StudentPackageCatalog } from "./StudentPackageCatalog";
 import { StudentLessons } from "./StudentLessons";
 import { trackLanding } from "../lib/landing-events";
 import React, { useEffect, useRef, useState } from "react";
@@ -77,9 +77,9 @@ export function CloudStudentPortal() {
   const [data, setData] = useState(empty);
   const [loading, setLoading] = useState(false);
   const [failed, setFailed] = useState(false);
-  const [selectedTab, setTab] = useState(requestedPackage || new URLSearchParams(location.search).get("checkout") === "teste" ? "Comprar aulas" : "Início");
+  const [selectedTab, setTab] = useState(requestedPackage || new URLSearchParams(location.search).get('catalogo') === '1' || new URLSearchParams(location.search).get("checkout") === "teste" ? "Comprar aulas" : "Início");
   const journeyLocked = Boolean(data.student && journeyPortalLocked(data.student));
-  const tab = journeyLocked ? "Minha jornada CNH" : selectedTab;
+  const tab = journeyLocked && selectedTab !== 'Comprar aulas' ? "Minha jornada CNH" : selectedTab;
   const [day, setDay] = useState("");
   const [category, setCategory] = useState("B");
   const [paymentRequestId, setPaymentRequestId] = useState(null);
@@ -129,7 +129,7 @@ export function CloudStudentPortal() {
           .maybeSingle(),
         supabase
           .from("packages")
-          .select("id,slug,name,category,lessons_a,lessons_b,price_cents,card_total_cents,card_installments,pricing_demo")
+          .select("id,slug,name,category,experience_level,lessons_a,lessons_b,price_cents,card_total_cents,card_installments,pricing_demo")
           .eq("active", true),
         supabase.from("credit_grants").select("student_id,lessons_a,lessons_b"),
         supabase
@@ -502,8 +502,8 @@ export function CloudStudentPortal() {
                   {studentPages.map((name) => (
                     <button
                       key={name}
-                      disabled={journeyLocked && name !== "Minha jornada CNH"}
-                      title={journeyLocked && name !== "Minha jornada CNH" ? "Conclua Minha jornada CNH até o envio da LADV para liberar esta área." : undefined}
+                      disabled={journeyLocked && !['Minha jornada CNH','Comprar aulas'].includes(name)}
+                      title={journeyLocked && !['Minha jornada CNH','Comprar aulas'].includes(name) ? "Conclua Minha jornada CNH até o envio da LADV para liberar esta área." : undefined}
                       onClick={() => {
                         setTab(name);
                         setMessage("");
@@ -527,20 +527,15 @@ export function CloudStudentPortal() {
                 {tab === "Comprar aulas" && (
                   <>
                     <StudentRequests requests={data.requests} />
-                    {starting ? startView : <>
+                    <>
                     <p className="mb-5 text-sm text-slate-600">
                       Solicitar não gera cobrança. A equipe confirma as
                       condições e libera os créditos após análise.
                     </p>
-                    <div className="space-y-3">
-                      {data.packages.map((p) => (
-                        <StudentPackageOffer
-                          key={p.id}
-                          pack={p}
-                          pending={data.requests.some(
-                            (r) =>
-                              r.package_id === p.id && r.status === "pending",
-                          )}
+                        <StudentPackageCatalog
+                          packages={data.packages}
+                          requests={data.requests}
+                          initialCategory={initialCategory}
                           onRequested={async (id) => {
                             setPaymentRequestId(id);
                             await refresh(session.user.id);
@@ -549,9 +544,7 @@ export function CloudStudentPortal() {
                             );
                           }}
                         />
-                      ))}
-                    </div>
-                    </>}
+                    </>
                   </>
                 )}
                 {tab === "Minha agenda" && <StudentMonth lessons={data.lessons} onAgenda={() => setTab("Agendar aula")}/>}
@@ -687,7 +680,7 @@ export function CloudStudentPortal() {
         </a>
       </div>
       {session?.user.id && !recovery && <StudentEnrollmentEntry key={session.user.id} student={data.student}/>}
-      {canUse && !journeyLocked && paymentRequestId && data.requests.find(r => r.id === paymentRequestId) && <ManualPayment
+      {canUse && paymentRequestId && data.requests.find(r => r.id === paymentRequestId) && <ManualPayment
         key={paymentRequestId} request={data.requests.find(r => r.id === paymentRequestId)} autoOpen onClose={() => setPaymentRequestId(null)}/>}
       {data.settings?.ai_enabled !== false && (
         <SpecialistChat

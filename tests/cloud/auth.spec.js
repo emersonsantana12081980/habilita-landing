@@ -1,5 +1,26 @@
 import { test, expect } from "@playwright/test";
 
+test('catálogo por experiência abre após login e não libera agenda sem LADV',async({page})=>{
+ await mock(page);
+ await page.route('**/rest/v1/students*',r=>r.fulfill({json:{id:'student1',name:'Aluno',active:true,category:'B',licensed_driver:false,onboarding_steps:{}}}));
+ await page.route('**/rest/v1/packages*',r=>r.fulfill({json:[
+  {id:'b1',name:'Básico Carro',category:'B',experience_level:'experiencia',price_cents:29900,lessons_b:2,lessons_a:0},
+  {id:'b2',name:'Carro do zero',category:'B',experience_level:'zero',price_cents:80000,lessons_b:8,lessons_a:0},
+  {id:'a1',name:'Moto base',category:'A',experience_level:'base',price_cents:40000,lessons_a:4,lessons_b:0},
+ ]}));
+ await page.goto('/aluno?catalogo=1');
+ await expect(page.locator('a[href="/cadastro?catalogo=1"]')).toBeVisible();
+ await page.getByLabel('E-mail',{exact:true}).fill('aluno@example.com');await page.getByLabel('Senha',{exact:true}).fill('senha-teste-123');await page.getByRole('button',{name:'Entrar',exact:true}).click();
+ const catalog=page.getByRole('region',{name:'Escolher pacotes por experiência'});
+ await expect(catalog).toBeVisible();await expect(catalog.locator('article')).toHaveCount(3);
+ await catalog.getByRole('button',{name:'Carro — Categoria B',exact:true}).click();
+ await catalog.getByRole('button',{name:'Vou começar do zero',exact:true}).click();
+ await expect(catalog.locator('article')).toHaveCount(1);await expect(catalog.locator('article')).toContainText('800,00');
+ await catalog.getByRole('button',{name:'Moto — Categoria A',exact:true}).click();await expect(catalog.locator('article')).toHaveCount(0);
+ await catalog.getByRole('button',{name:'Limpar filtros',exact:true}).click();await expect(catalog.locator('article')).toHaveCount(3);
+ await expect(page.getByRole('navigation',{name:'Área do aluno'}).getByRole('button',{name:'Agendar aula',exact:true})).toBeDisabled();
+});
+
 test('entrada só aparece ativada, pode fechar e retorna no recarregamento',async({page})=>{
  await mock(page);
  let entry=null;
@@ -124,6 +145,7 @@ test('trilha sequencial mantém portal bloqueado até LADV de carro e moto envia
  });
  await page.goto('/aluno?pacote=carro');
  await page.getByLabel('E-mail',{exact:true}).fill('aluno@example.com');await page.getByLabel('Senha',{exact:true}).fill('senha-teste-123');await page.getByRole('button',{name:'Entrar',exact:true}).click();
+ await page.getByRole('navigation',{name:'Área do aluno'}).getByRole('button',{name:'Minha jornada CNH',exact:true}).click();
  await expect(page.getByRole('heading',{name:'Minha jornada CNH',level:2})).toBeVisible();
  await expect(page.getByRole('navigation',{name:'Área do aluno'}).getByRole('button',{name:'Agendar aula',exact:true})).toBeDisabled();
  await page.getByRole('button',{name:/3 Abra o processo/}).click();
@@ -380,7 +402,7 @@ test('novo portal do aluno navega nas doze páginas sem inventar progresso', asy
   }
   await expect(page.getByRole('link',{name:'Abrir WhatsApp',exact:false}).last()).toHaveAttribute('href',/^https:\/\/wa.me/);
   await nav.getByRole('button',{name:'Comprar aulas',exact:true}).click();
-  await page.getByRole('button',{name:'Quero aulas de carro',exact:true}).click();
+  await page.getByRole('button',{name:'Carro — Categoria B',exact:true}).click();
   await page.getByRole('button',{name:'Escolher este pacote',exact:true}).click();
   await expect(page.getByLabel('Forma de pagamento')).toBeVisible();
   await expect(page.getByLabel('Cupom de desconto (opcional)')).toBeVisible();
@@ -476,9 +498,9 @@ test('primeiro acesso orienta escolha e acompanha interesse sem duplicar', async
   await page.getByLabel('Senha',{exact:true}).fill('senha-teste-123');
   await page.getByRole('button',{name:'Entrar',exact:true}).click();
   await page.getByRole('button',{name:'Escolher meu pacote',exact:true}).click();
-  await page.getByRole('button',{name:'Quero aulas de moto',exact:true}).click();
+  await page.getByRole('button',{name:'Moto — Categoria A',exact:true}).click();
   await expect(page.getByText('Não há um pacote disponível nesta opção',{exact:false})).toBeVisible();
-  await page.getByRole('button',{name:'Quero aulas de carro',exact:true}).click();
+  await page.getByRole('button',{name:'Carro — Categoria B',exact:true}).click();
   await page.getByRole('button',{name:'Escolher este pacote'}).click();
   await page.getByLabel('Quantidade de parcelas').selectOption('3');
   await page.getByRole('button',{name:'Conferir valor',exact:true}).click();
@@ -492,7 +514,7 @@ test('primeiro acesso orienta escolha e acompanha interesse sem duplicar', async
   await expect(page.getByRole('button',{name:'Continuar para pagamento'})).toHaveCount(0);
   expect(submissions).toBe(1);
   await page.getByRole('button',{name:'Quero conhecer outros pacotes'}).click();
-  await page.getByRole('button',{name:'Quero aulas de carro',exact:true}).click();
+  await page.getByRole('button',{name:'Carro — Categoria B',exact:true}).click();
   await expect(page.getByText('Você já tem uma solicitação pendente deste pacote.')).toBeVisible();
   expect(await page.evaluate(()=>document.documentElement.scrollWidth <= innerWidth)).toBeTruthy();
 });
@@ -851,7 +873,7 @@ test('cupom inválido, troca de forma e revalidação antes de solicitar',async(
   await page.getByLabel('Senha',{exact:true}).fill('senha-teste-123');
   await page.getByRole('button',{name:'Entrar',exact:true}).click();
   await page.getByRole('navigation',{name:'Área do aluno'}).getByRole('button',{name:'Comprar aulas',exact:true}).click();
-  await page.getByRole('button',{name:'Quero aulas de carro',exact:true}).click();
+  await page.getByRole('button',{name:'Carro — Categoria B',exact:true}).click();
   await page.getByRole('button',{name:'Escolher este pacote',exact:true}).click();
   await expect(page.getByText('Valores fictícios para visualização')).toHaveCount(0);
   await expect(page.getByRole('button',{name:'Continuar para pagamento',exact:true})).toBeDisabled();
@@ -1200,7 +1222,7 @@ test('new Pix request opens payment popup with saved receiver and remains in rev
   await page.getByLabel('Senha',{exact:true}).fill('senha-teste-123');
   await page.getByRole('button',{name:'Entrar',exact:true}).click();
   await page.getByRole('navigation',{name:'Área do aluno'}).getByRole('button',{name:'Comprar aulas',exact:true}).click();
-  await page.getByRole('button',{name:'Quero aulas de carro',exact:true}).click();
+  await page.getByRole('button',{name:'Carro — Categoria B',exact:true}).click();
   await page.getByRole('button',{name:'Escolher este pacote'}).click();
   await page.getByLabel('Forma de pagamento').selectOption('cash');
   await page.getByRole('button',{name:'Conferir valor'}).click();

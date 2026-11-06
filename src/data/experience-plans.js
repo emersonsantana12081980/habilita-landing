@@ -14,6 +14,13 @@ export function readPlanChoice(search = '') {
   const experience = experienceLevels.find(e => e.id === query.get('experiencia'));
   return category && experience ? { category, experience } : null;
 }
+// Um pacote básico por categoria; os demais continuam disponíveis no portal.
+export function basicPackages(packages) {
+  return planCategories.map(category => packages
+    .filter(p => p.active && p.category === category.id && p.experience_level === 'experiencia' && packageOffer(p))
+    .sort((a,b) => packageOffer(a).cash-packageOffer(b).cash || String(a.id).localeCompare(String(b.id)))[0]
+  ).filter(Boolean);
+}
 export function resolveExperienceOffer(packages, category, level) {
   const matches = packages.filter(p => p.active && p.category === category && p.experience_level === level);
   return matches.length === 1 ? packageOffer(matches[0]) : null;

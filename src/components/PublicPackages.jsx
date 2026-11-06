@@ -1,5 +1,5 @@
-import React, { useEffect, useRef, useState } from "react";
-import { experienceLevels, planCategories } from "../data/experience-plans";
+import React, { useEffect, useRef } from "react";
+import { basicPackages } from "../data/experience-plans";
 import { Bike, CarFront, Check, Plus } from "lucide-react";
 import { lessonLabel } from "../data/packages";
 import { commercialInfo as defaults } from "../data/landing";
@@ -157,9 +157,7 @@ function PublicPackage({ pack, contact, commercialInfo }) {
 }
 
 export function PublicPackages({ packages, contact, commercialInfo = defaults }) {
-  const [category, setCategory] = useState('all');
-  const [experience, setExperience] = useState('experiencia');
-  const active = packages.filter(p => p.active && (category === 'all' || p.category === category) && (experience === 'all' || p.experience_level === experience));
+  const active = basicPackages(packages);
   return (
     <section
       id="pacotes"
@@ -171,23 +169,15 @@ export function PublicPackages({ packages, contact, commercialInfo = defaults })
         <div className="mb-9 max-w-2xl">
           <p className="eyebrow">CARRO, MOTO OU OS DOIS</p>
           <h2 id="packages-title">
-            Compare os pacotes. Escolha seu próximo passo.
+            Três opções básicas para começar.
           </h2>
           <p className="section-subtitle">
-            Aulas práticas com condições claras. Converse com o instrutor para
-            saber qual opção faz sentido para você.
+            Compare carro, moto e carro + moto. Estes são os pacotes básicos para quem já tem experiência.
           </p>
         </div>
-        <div className="mb-7 space-y-4">
-          <p className="rounded-xl border border-green-100 bg-green-50 p-4 text-sm text-slate-700">
-            Comece pelos pacotes para quem já tem experiência. Para ver mais opções, selecione nos botões abaixo a categoria e o tipo de experiência que combinam com você.
-          </p>
-          <fieldset><legend className="mb-2 text-sm font-semibold">Categoria</legend>
-            <div className="flex flex-wrap gap-2">{[{id:'all',label:'Todas'}, ...planCategories].map(c => <button type="button" key={c.id} aria-pressed={category === c.id} onClick={() => setCategory(c.id)} className={`min-h-11 rounded-full border px-4 py-2 text-sm font-bold ${category === c.id ? 'bg-slate-900 text-white' : 'bg-white text-slate-700'}`}>{c.label}</button>)}</div>
-          </fieldset>
-          <fieldset><legend className="mb-2 text-sm font-semibold">Tipo de experiência</legend>
-            <div className="flex flex-wrap gap-2">{[{id:'all',title:'Todos os tipos'}, ...experienceLevels].map(e => <button type="button" key={e.id} aria-pressed={experience === e.id} onClick={() => setExperience(e.id)} className={`min-h-11 rounded-full border px-4 py-2 text-sm font-bold ${experience === e.id ? 'bg-slate-900 text-white' : 'bg-white text-slate-700'}`}>{e.title}</button>)}</div>
-          </fieldset>
+        <div className="mb-7 flex flex-col gap-4 rounded-xl border border-green-100 bg-green-50 p-5 sm:flex-row sm:items-center sm:justify-between">
+          <div><h3 className="font-bold">Tem alguma base ou vai começar do zero?</h3><p className="mt-1 text-sm text-slate-700">Na área do aluno, escolha a categoria e veja os pacotes de acordo com sua experiência.</p></div>
+          <a className="btn btn-green shrink-0" href="/aluno?catalogo=1">Ver pacotes por experiência</a>
         </div>
         {active.length ? (
           <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
@@ -198,12 +188,12 @@ export function PublicPackages({ packages, contact, commercialInfo = defaults })
         ) : (
           <div className="rounded-2xl border border-slate-200 bg-white p-7">
             <h3 className="text-xl font-bold">
-              Nenhum pacote disponível para este filtro.
+              Pacotes básicos em atualização.
             </h3>
             <p className="my-4 text-slate-600">
-              Escolha outro tipo ou veja todos os pacotes.
+              Confira as opções cadastradas na área do aluno ou fale com a equipe.
             </p>
-            <button className="btn btn-green" onClick={() => { setCategory('all'); setExperience('all'); }}>Ver todos os pacotes</button>
+            <a className="btn btn-green" href="/aluno?catalogo=1">Ver opções na área do aluno</a>
           </div>
         )}
         <div className="mt-6 flex flex-wrap items-center justify-between gap-4 rounded-xl border border-slate-200 bg-white p-5">
