@@ -147,6 +147,14 @@ test('trilha sequencial mantém portal bloqueado até LADV de carro e moto envia
  await page.getByLabel('E-mail',{exact:true}).fill('aluno@example.com');await page.getByLabel('Senha',{exact:true}).fill('senha-teste-123');await page.getByRole('button',{name:'Entrar',exact:true}).click();
  await page.getByRole('navigation',{name:'Área do aluno'}).getByRole('button',{name:'Minha jornada CNH',exact:true}).click();
  await expect(page.getByRole('heading',{name:'Minha jornada CNH',level:2})).toBeVisible();
+ const trail=page.getByRole('region',{name:'Minha jornada CNH',exact:true});
+ await expect(trail.locator('ol > li').nth(3)).toContainText('Exames médico e psicotécnico');
+ await expect(trail.locator('ol > li').nth(4)).toContainText('Exame toxicológico');
+ await trail.getByRole('button',{name:/Emissão e envio da CNH/}).click();
+ const issuance=page.locator('#trail-issuance');
+ await expect(issuance).toContainText('CNH Digital: gratuita');await expect(issuance).toContainText('R$ 137,79');
+ await expect(issuance).toContainText('Via Pix');await expect(issuance).toContainText('Bancos conveniados');
+ await expect(issuance.getByRole('checkbox')).toHaveCount(0);
  await expect(page.getByRole('navigation',{name:'Área do aluno'}).getByRole('button',{name:'Agendar aula',exact:true})).toBeDisabled();
  await page.getByRole('button',{name:/3 Abra o processo/}).click();
  await expect(page.locator('#trail-registration').getByRole('button',{name:'Declarar conclusão e continuar'})).toBeDisabled();

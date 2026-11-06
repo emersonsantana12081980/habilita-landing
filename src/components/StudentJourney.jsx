@@ -1,14 +1,15 @@
 import React,{useEffect,useRef,useState} from 'react';
 import {ChevronDown,CheckCircle2,LockKeyhole} from 'lucide-react';
 import {supabase} from '../lib/supabase';
-import {cnhTrail,cnhSource} from '../data/cnh-trail';
+import {cnhTrail,cnhSource,cnhPrerequisites} from '../data/cnh-trail';
 import {journeyCategories,onboardingReady,hasLadvDocument,completedPractice} from '../lib/student-journey';
 import {LadvUpload} from './LadvUpload';
 
 export function StudentJourney({student={},lessons=[],compact=false,onDetails,onSaved}) {
  const categories=journeyCategories(student);
  const done=key=>key==='ladv'?categories.every(cat=>hasLadvDocument(student,cat)):Boolean(student.onboarding_steps?.[key]);
- const next=cnhTrail.find(step=>!done(step.key))?.key||'toxicology';
+ const availableStep=step=>step.informational||(cnhPrerequisites[step.key]||[]).every(done);
+ const next=cnhTrail.find(step=>!step.informational&&!done(step.key)&&availableStep(step))?.key||'issuance';
  const [expanded,setExpanded]=useState(next),[busy,setBusy]=useState(false),[message,setMessage]=useState('');
  const lock=useRef(false);
  useEffect(()=>setExpanded(next),[next]);
@@ -21,18 +22,20 @@ export function StudentJourney({student={},lessons=[],compact=false,onDetails,on
   {editable&&!configured&&<p role="alert" className="mt-3">A trilha ainda precisa ser ativada pela equipe. Fale conosco pelo WhatsApp.</p>}
   {editable&&<label className="my-4 flex items-start gap-2 text-sm"><input type="checkbox" disabled={busy} checked={!!student.licensed_driver} onChange={e=>save(()=>supabase.rpc('update_student_journey',{p_student:student.id,p_steps:student.journey_steps||{},p_licensed:e.target.checked}))}/>Já sou habilitado e quero aulas de reforço.</label>}
   {student.licensed_driver?<p className="my-4 text-green-800">Aulas de reforço: a trilha da primeira habilitação é dispensada. O agendamento depende do saldo e dos horários disponíveis.</p>:<>
-  <p className="my-4 text-sm font-semibold">{cnhTrail.filter(step=>done(step.key)).length} de {cnhTrail.length} etapas informadas</p>
+  <p className="my-4 text-sm font-semibold">{cnhTrail.filter(step=>!step.informational&&done(step.key)).length} de {cnhTrail.filter(step=>!step.informational).length} etapas informadas</p>
   <ol className="space-y-3">{cnhTrail.map((step,index)=>{
-   const complete=done(step.key), available=cnhTrail.slice(0,index).every(previous=>done(previous.key));
+   const complete=done(step.key), available=availableStep(step);
    const isOpen=!compact&&expanded===step.key;
    return <li key={step.key} className="overflow-hidden rounded-xl border border-slate-200">
     <h3><button type="button" className="flex w-full items-center gap-3 p-4 text-left" aria-expanded={isOpen} aria-controls={`trail-${step.key}`} onClick={()=>compact?onDetails?.():setExpanded(isOpen?'':step.key)}>
      <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${complete?'bg-green-100 text-green-800':'bg-slate-100'}`}>{complete?<CheckCircle2 size={19}/>:index+1}</span>
-     <span className="flex-1 font-bold">{step.title}<small className="mt-1 block font-normal text-slate-500">{complete?'Declarado pelo aluno':available?'Seu próximo passo':'Conclua a etapa anterior para avançar'}</small></span>
+     <span className="flex-1 font-bold">{step.title}<small className="mt-1 block font-normal text-slate-500">{step.informational?'Informações sobre emissão e pagamento':complete?'Declarado pelo aluno':available?'Seu próximo passo':step.key==='toxicology'?'Planeje agora; declare após a aprovação prática':'Conclua a etapa anterior para avançar'}</small></span>
      {!available&&!complete&&<LockKeyhole size={16}/>}<ChevronDown size={20} className={isOpen?'rotate-180':''}/>
     </button></h3>
     <div id={`trail-${step.key}`} hidden={!isOpen} className="space-y-3 border-t p-4 text-sm leading-6">
      {step.text.map(text=><p key={text}>{text}</p>)}
+     {step.items&&<ul className="list-disc space-y-2 pl-5">{step.items.map(text=><li key={text}>{text}</li>)}</ul>}
+     {step.payment&&<><h4 className="font-bold">Você pode pagar</h4><ul className="list-disc space-y-2 pl-5">{step.payment.map(text=><li key={text}>{text}</li>)}</ul></>}
      {step.action&&<a className="btn btn-green" href={step.action.url} target="_blank" rel="noopener noreferrer">{step.action.label} ↗</a>}
      {step.links?.map(([label,url])=><a className="block font-semibold text-green-800 underline" key={url} href={url} target="_blank" rel="noopener noreferrer">{label} ↗</a>)}
      {step.key==='ladv'&&categories.map(category=><LadvUpload key={category} student={student} category={category} editable={editable&&configured&&available&&onboardingReady(student)} onSaved={onSaved}/>)}
@@ -49,6 +52,6 @@ export function StudentJourney({student={},lessons=[],compact=false,onDetails,on
   </>}
   {compact&&categories.some(category=>hasLadvDocument(student,category))&&categories.map(category=>student.ladv_documents?.[category]?.path&&<LadvUpload key={category} student={student} category={category} editable={false}/>)}
   {message&&<p role="status" className="mt-4">{message}</p>}
-  <a href={cnhSource} target="_blank" rel="noopener noreferrer" className="mt-5 block text-xs text-green-800 underline">Fonte: Detran-SP / Poupatempo · valores e orientações conferidos em 03/11/2026. Confira as taxas no canal oficial antes de pagar.</a>
+  <a href={cnhSource} target="_blank" rel="noopener noreferrer" className="mt-5 block text-xs text-green-800 underline">Fonte: Detran-SP / Poupatempo · valores e orientações conferidos em 06/11/2026. Confira as taxas no canal oficial antes de pagar.</a>
  </section>;
 }

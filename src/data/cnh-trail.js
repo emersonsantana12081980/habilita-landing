@@ -1,7 +1,7 @@
 export const cnhSource='https://poupatempo.sp.gov.br/carta/391270A7-15C2-4FC2-BE72-38C4D14B4A1C';
 const laboratoriesSearch = 'https://www.google.com/search?q=laboratorios+credenciados+ao+detran+para+exame+toxicologico+ca%C3%A7apava&udm=local';
 const laboratoriesButton = {label:'Ver laboratórios em Caçapava',url:laboratoriesSearch};
-export const cnhTrail=[
+const steps=[
  {key:'initial_application',title:'Preencha o requerimento inicial',text:[
   'Baixe o aplicativo CNH do Brasil para Android ou iOS e entre com sua conta Gov.br.',
   'Em Primeira habilitação → Requerimento, confira seus dados, escolha a categoria e informe São Paulo (SP).'],
@@ -15,12 +15,10 @@ export const cnhTrail=[
   'Presencial: agende o serviço de primeira habilitação no Poupatempo e compareça à unidade no dia e horário marcados. No atendimento, abra o processo, cadastre a biometria e agende os exames médico e psicológico.',
   'Online: acesse o link abaixo, clique em Iniciar serviço, entre com sua conta Gov.br e siga as instruções para abrir o processo e agendar a biometria e os exames.'],
   links:[['Abrir serviço oficial de primeira habilitação',cnhSource]],declaration:'Declaro que abri meu processo no Detran-SP e realizei a coleta biométrica.'},
- {key:'medical',title:'Exames médico, psicotécnico e toxicológico — primeira habilitação',text:[
+ {key:'medical',title:'Exames médico e psicotécnico — primeira habilitação',text:[
   'Exame médico: R$ 90,00. Compareça à clínica credenciada conforme o agendamento e pague diretamente ao médico.',
   'Exame psicotécnico (avaliação psicológica): R$ 90,00. Compareça conforme o agendamento e pague diretamente ao psicólogo.',
-  'Exame toxicológico: consulte o valor diretamente nos laboratórios credenciados pela Senatran. Para processos iniciados a partir de 17/06/2026, ele é exigido para emitir a PPD; recomenda-se realizá-lo após o curso prático, observando a validade de 90 dias na emissão.',
-  'Para avançar nesta etapa, confirme a aptidão nos exames médico e psicológico. A conferência do toxicológico está no último passo. Não envie laudos ou resultados médicos ao site.'],
-  action: laboratoriesButton,
+  'Para avançar nesta etapa, confirme a aptidão nos exames médico e psicológico. Veja as orientações do toxicológico no item seguinte. Não envie laudos ou resultados médicos ao site.'],
   declaration:'Declaro que realizei os exames médico e psicológico e estou apto para seguir o processo.'},
  {key:'theory_exam',title:'Agende e realize a prova teórica',text:[
   'Taxa do exame teórico: R$ 52,83. Efetue o pagamento e acesse o link abaixo para agendar sua prova na unidade do Detran-SP ou Poupatempo disponível.',
@@ -44,10 +42,22 @@ export const cnhTrail=[
   'Informe abaixo a data do exame para a equipe. Compareça ao local no dia e horário marcados.'],
   links:[['Agendar exame prático','https://www.detran.sp.gov.br/detransp/pb/servico/habilitacao/agendar_exame_pratico_de_direcao_veicular?id=carta_de_servico_agendar_exame_pratico_de_direcao_veicular']],
   declaration:'Declaro que realizei a prova prática e fui aprovado nas categorias do meu processo.'},
- {key:'toxicology',title:'Confira o exame toxicológico e a emissão da PPD',text:[
+ {key:'toxicology',title:'Exame toxicológico — planeje com os demais exames',text:[
+  'Valor: consulte diretamente os laboratórios credenciados. Este item fica junto dos exames para facilitar seu planejamento; não é necessário antecipar a coleta para avançar à prova teórica ou às aulas.',
   'Para processos iniciados a partir de 17/06/2026, o exame toxicológico é obrigatório para emitir a PPD. Recomenda-se realizá-lo após o curso prático; ele pode ser providenciado antes da prova prática.',
   'Na emissão da PPD, o exame precisa estar dentro de 90 dias da coleta. A emissão depende da aprovação prática e da confirmação do resultado negativo, quando exigido.',
-  'Confira a situação no serviço oficial. Não anexe resultados de exames aqui.'],
+  'Confira a situação no serviço oficial. A declaração deste item fica disponível após informar a aprovação na prova prática. Não anexe resultados de exames aqui.'],
   action: laboratoriesButton,
   links:[['Conferir orientações oficiais',cnhSource]],declaration:'Declaro que conferi e cumpri a exigência do toxicológico aplicável ao meu processo, ou confirmei no Detran que ela não se aplica.'},
 ];
+
+// Ordem de conclusão preservada no servidor; posição visual do toxicológico é de planejamento.
+export const cnhPrerequisites=Object.fromEntries(steps.map((step,index)=>[step.key,steps.slice(0,index).map(previous=>previous.key)]));
+const toxicology=steps.find(step=>step.key==='toxicology');
+export const cnhTrail=steps.filter(step=>step.key!=='toxicology').flatMap(step=>step.key==='medical'?[step,toxicology]:[step]).concat({
+ key:'issuance',title:'Emissão e envio da CNH',informational:true,
+ text:['Após a aprovação e o cumprimento dos requisitos do processo, acompanhe a emissão da sua CNH/Permissão para Dirigir (PPD) no canal oficial.'],
+ items:['CNH Digital: gratuita, disponível no aplicativo CNH do Brasil.','CNH física (impressa): opcional.','Taxa de emissão: R$ 126,79.','Taxa dos Correios: R$ 11,00.','Valor total da versão impressa com entrega: R$ 137,79.'],
+ payment:['Via Pix: no serviço oficial, clique em Iniciar serviço e preencha as informações solicitadas. Na etapa CNH física, se escolher a versão impressa, o portal exibirá o QR Code e o código Pix para pagamento.','Bancos conveniados: pague pelos canais disponíveis, como aplicativo, internet banking ou caixa eletrônico.','As taxas são pagas nos canais oficiais, não no Pix da Habilita+. Confira os valores e o endereço de entrega antes de concluir.'],
+ links:[['Iniciar serviço e conferir emissão da CNH',cnhSource]],
+});
