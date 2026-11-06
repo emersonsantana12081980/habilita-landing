@@ -1,5 +1,76 @@
 import { test, expect } from "@playwright/test";
 
+test('entrada só aparece ativada, pode fechar e retorna no recarregamento',async({page})=>{
+ await mock(page);
+ let entry=null;
+ await page.route('**/rest/v1/enrollment_entries*',r=>r.fulfill({json:entry}));
+ await page.goto('/aluno');
+ await page.getByLabel('E-mail',{exact:true}).fill('aluno@example.com');
+ await page.getByLabel('Senha',{exact:true}).fill('senha-teste-123');
+ await page.getByRole('button',{name:'Entrar',exact:true}).click();
+ await expect(page.getByRole('navigation',{name:'Área do aluno'})).toBeVisible();
+ const popup=page.getByRole('dialog',{name:'Valide sua matrícula na Habilita+'});
+ await expect(popup).toHaveCount(0);
+ entry={id:'entry1',student_id:'student1',status:'pending',amount_cents:2990,pix_payment:{code:'PIX-TESTE',receiver:'Teste'}};
+ await page.reload();await expect(popup).toBeVisible();
+ await popup.getByRole('button',{name:'Continuar depois',exact:true}).click();
+ await expect(popup).toHaveCount(0);
+ await page.getByRole('navigation',{name:'Área do aluno'}).getByRole('button',{name:'Minha jornada CNH',exact:true}).click();
+ await expect(popup).toHaveCount(0);
+ await page.reload();await expect(popup).toBeVisible();
+ await page.keyboard.press('Escape');await expect(popup).toHaveCount(0);
+ entry={...entry,status:'confirmed'};await page.reload();
+ await expect(popup).toHaveCount(0);
+ await expect(page.getByText(/Entrada confirmada: você tem/)).toBeVisible();
+});
+
+test('entrada abre Pix e comprovante sem liberar a jornada',async({page})=>{
+ await mock(page);
+ await page.route('**/rest/v1/students*',r=>r.fulfill({json:{id:'student1',name:'Aluno',active:true,category:'B',licensed_driver:false,onboarding_steps:{}}}));
+ await page.route('**/rest/v1/enrollment_entries*',r=>r.fulfill({json:{id:'entry1',status:'pending',amount_cents:2990,pix_payment:{code:'PIX-TESTE',receiver:'Teste'}}}));
+ let uploads=0;
+ await page.route('**/storage/v1/object/enrollment-receipts/**',r=>{uploads++;return r.fulfill({json:{Key:'ok'}});});
+ await page.goto('/aluno');
+ await page.getByLabel('E-mail',{exact:true}).fill('aluno@example.com');await page.getByLabel('Senha',{exact:true}).fill('senha-teste-123');
+ await page.getByRole('button',{name:'Entrar',exact:true}).click();
+ await page.getByRole('button',{name:'Pagar entrada de R$ 29,90',exact:true}).click();
+ const pix=page.getByRole('dialog',{name:'Pagamento Pix',exact:true});
+ await expect(pix.getByLabel('Código ou chave Pix')).toHaveValue('PIX-TESTE');
+ await pix.locator('input[type=file]').setInputFiles({name:'comprovante.pdf',mimeType:'application/pdf',buffer:Buffer.from('%PDF-1.4 test')});
+ await pix.getByRole('button',{name:'Enviar comprovante para análise',exact:true}).click();
+ await expect(pix.getByRole('status')).toContainText('Comprovante enviado');expect(uploads).toBe(1);
+ await pix.getByRole('button',{name:'Fechar',exact:true}).click();
+ await expect(page.getByRole('navigation',{name:'Área do aluno'}).getByRole('button',{name:'Agendar aula',exact:true})).toBeDisabled();
+});
+
+test('admin ativa entrada, confirma e aplica em pedido pendente',async({page})=>{
+ await mock(page,false,true);let entry=null;const calls=[];
+ await page.route('**/rest/v1/enrollment_entries*',r=>r.fulfill({json:entry}));
+ await page.route('**/rest/v1/rpc/admin_*enrollment_entry',r=>{
+  const name=new URL(r.request().url()).pathname.split('/').pop();const args=r.request().postDataJSON();calls.push({name,args});
+  if(name==='admin_set_enrollment_entry')entry={id:'entry1',status:args.p_enabled?'pending':'cancelled',amount_cents:2990};
+  if(name==='admin_confirm_enrollment_entry')entry={...entry,status:'confirmed'};
+  if(name==='admin_apply_enrollment_entry')entry={...entry,applied_request_id:args.p_request};
+  return r.fulfill({json:null});
+ });
+ await page.goto('/admin');
+ await page.getByLabel('E-mail administrativo',{exact:true}).fill('admin@example.com');await page.getByLabel('Senha',{exact:true}).fill('senha-teste-123');
+ await page.getByRole('button',{name:'Entrar no painel',exact:true}).click();
+ await page.getByRole('button',{name:'Alunos',exact:true}).click();
+ await page.getByRole('button',{name:'Ver ficha',exact:true}).click();
+ await page.getByRole('button',{name:'Entrada da matrícula',exact:true}).click();
+ const panel=page.getByRole('region',{name:'Gerenciar entrada da matrícula'});
+ await panel.getByRole('button',{name:'Ativar cobrança de R$ 29,90',exact:true}).click();
+ await expect(panel.getByRole('button',{name:'Confirmar pagamento da entrada',exact:true})).toBeDisabled();
+ await panel.getByLabel('Conferência do pagamento',{exact:true}).fill('Recebimento Pix conferido');
+ await panel.getByRole('checkbox').check();await panel.getByRole('button',{name:'Confirmar pagamento da entrada',exact:true}).click();
+ await expect(panel.getByText('Pagamento confirmado',{exact:true})).toBeVisible();
+ page.once('dialog',d=>d.accept());await panel.getByRole('button',{name:'Abater entrada: Pacote Carro',exact:true}).click();
+ await expect(page.getByRole('dialog',{name:'Ficha do aluno',exact:true})).toHaveCount(0);
+ expect(calls.map(c=>c.name)).toEqual(['admin_set_enrollment_entry','admin_confirm_enrollment_entry','admin_apply_enrollment_entry']);
+ expect(calls[2].args).toEqual({p_request:'request1'});
+});
+
 test('boas-vindas abre ao entrar e recarregar, mas não ao navegar ou atualizar dados',async({page})=>{
  await mock(page,false,false,true);
  const welcome=page.getByRole('dialog',{name:'Boas-vindas à Habilita+',exact:true});

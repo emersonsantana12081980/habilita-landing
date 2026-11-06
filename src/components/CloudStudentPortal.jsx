@@ -6,7 +6,7 @@ import { readPlanChoice } from "../data/experience-plans";
 import { PortalNavIcon } from "./PortalNavIcon";
 import { StudentStart } from "./StudentStart";
 import { ManualPayment } from "./ManualPayment";
-import { StudentWelcome } from "./StudentWelcome";
+import { StudentEnrollmentEntry } from "./EnrollmentEntry";
 import { StudentRequests } from "./RequestBoard";
 import { StudentPackageOffer } from "./StudentPackageOffer";
 import { StudentLessons } from "./StudentLessons";
@@ -686,7 +686,7 @@ export function CloudStudentPortal() {
           Falar pelo WhatsApp
         </a>
       </div>
-      {session?.user.id && !recovery && <StudentWelcome key={session.user.id}/>}
+      {session?.user.id && !recovery && <StudentEnrollmentEntry key={session.user.id} student={data.student}/>}
       {canUse && !journeyLocked && paymentRequestId && data.requests.find(r => r.id === paymentRequestId) && <ManualPayment
         key={paymentRequestId} request={data.requests.find(r => r.id === paymentRequestId)} autoOpen onClose={() => setPaymentRequestId(null)}/>}
       {data.settings?.ai_enabled !== false && (

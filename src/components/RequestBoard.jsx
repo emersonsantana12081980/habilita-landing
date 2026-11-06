@@ -42,6 +42,7 @@ export function RequestBoard({ requests, students, reasons, setReasons, act, fil
           <p className="mt-1 text-sm text-slate-600">{r.package_name}</p>
           <p className={`mt-2 text-xs font-bold ${r.status === "rejected" ? "text-red-700" : "text-green-800"}`}>{requestLabel(r)}</p>
           <p className="mt-3 font-bold">{money(r.price_cents/100)}</p>
+          {r.entry_discount_cents > 0 && <p className="text-sm font-semibold text-green-800">Entrada abatida: {money(r.entry_discount_cents/100)}. Valor acima: saldo do pacote.</p>}
           <p className="text-xs text-slate-500">{r.lessons_a} aulas de moto · {r.lessons_b} aulas de carro</p>
           <p className="mt-2 text-sm font-semibold">{r.payment_method === 'card' ? `Cartão de crédito · ${r.installment_count || 1}x · enviar link pelo WhatsApp` : 'Pix à vista · conferir comprovante'}</p>
           {r.payment_method === 'card' && r.status === 'pending' && normalizePhone(students.find(s=>s.id===r.student_id)?.phone || '') && <a className="btn btn-outline mt-3" target="_blank" rel="noreferrer" href={whatsappUrl(students.find(s=>s.id===r.student_id).phone,`Olá! Sobre o pacote ${r.package_name}: pagamento em ${r.installment_count || 1} parcelas, total de ${money(r.price_cents/100)}. Vou encaminhar o link de pagamento por aqui.`)}>Abrir WhatsApp do aluno</a>}
@@ -78,6 +79,7 @@ export function StudentRequests({ requests }) {
       <ul className="max-h-72 divide-y overflow-y-auto border-t">{[...requests].sort((a,b)=>(b.created_at || "").localeCompare(a.created_at || "")).map(r=><li key={r.id} className="p-3 text-sm">
         <div className="flex justify-between gap-3"><strong>{r.package_name}</strong><span className="shrink-0">{money(r.price_cents/100)}</span></div>
         <p className="mt-1 text-xs font-semibold text-slate-600">{requestLabel(r)}</p>
+        {r.entry_discount_cents > 0 && <p className="text-xs text-green-800">Entrada abatida: {money(r.entry_discount_cents/100)}. Valor acima: saldo a pagar.</p>}
         {r.payment_method === "card" && <p className="text-xs">{r.installment_count}x no cartão</p>}
         {r.coupon_code && <p className="text-xs">Cupom {r.coupon_code} · desconto de {money(r.discount_cents/100)}</p>}
         <ManualPayment request={r}/>

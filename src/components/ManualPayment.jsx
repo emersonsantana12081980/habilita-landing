@@ -2,8 +2,8 @@ import React, { useEffect, useRef, useState } from "react";
 import { supabase } from "../lib/supabase";
 import { money } from "../store-data";
 
-const bucket = "package-receipts";
-export function ManualPayment({ request, admin = false, autoOpen = false, onClose }) {
+export function ManualPayment({ request, admin = false, autoOpen = false, onClose, entry = false }) {
+  const bucket = entry ? "enrollment-receipts" : "package-receipts";
   const [files, setFiles] = useState(null);
   const [message, setMessage] = useState("");
   const [busy, setBusy] = useState(false);
@@ -42,7 +42,9 @@ export function ManualPayment({ request, admin = false, autoOpen = false, onClos
   }
   const content = <div className="mt-4 space-y-3 text-sm">
       {!admin && <>
-        <p className="font-bold">Total do pedido: {money(request.price_cents / 100)}</p>
+        <p className="font-bold">{entry ? 'Entrada da matrícula' : 'Total do pedido'}: {money(request.price_cents / 100)}</p>
+        {entry && <p>Após a confirmação, a equipe abaterá R$ 29,90 de um pacote, uma única vez, antes de cobrar o saldo. Esta entrada não libera aulas ou agendamento.</p>}
+        {request.entry_discount_cents > 0 && <p>Entrada já abatida: {money(request.entry_discount_cents / 100)}. O total acima é o saldo a pagar.</p>}
         <p className="font-semibold">{request.status === 'pending' ? 'Em análise — aguardando confirmação da equipe.' : request.status === 'approved' ? 'Pedido aprovado pela equipe.' : 'Pedido recusado pela equipe.'}</p>
         {request.payment_method === "card" ? <>
           <p>Cartão de crédito · {request.installment_count || 1} parcelas.</p>
