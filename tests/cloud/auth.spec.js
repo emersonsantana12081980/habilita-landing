@@ -1,5 +1,38 @@
 import { test, expect } from "@playwright/test";
 
+test('vídeo da jornada abre popup e fecha removendo reprodução',async({page})=>{
+ await mock(page);
+ await page.route('**/rest/v1/students*',r=>r.fulfill({json:{id:'student1',name:'Aluno',active:true,category:'B',licensed_driver:false,onboarding_steps:{}}}));
+ await page.route('**/rest/v1/site_settings*',r=>r.fulfill({json:{whatsapp:'5512996225250',commercial_info:{journeyVideos:{initial_application:'https://youtu.be/abcdefghijk',medical:'https://evil.com/video'}}}}));
+ let embeds=0;await page.route('https://www.youtube-nocookie.com/**',r=>{embeds++;return r.fulfill({contentType:'text/html',body:'Video mock'});});
+ await page.goto('/aluno');await page.getByLabel('E-mail',{exact:true}).fill('aluno@example.com');await page.getByLabel('Senha',{exact:true}).fill('senha-teste-123');await page.getByRole('button',{name:'Entrar',exact:true}).click();
+ const panel=page.locator('#trail-initial_application');
+ await expect(panel.getByRole('button',{name:'Assista ao vídeo',exact:true})).toBeVisible();expect(embeds).toBe(0);
+ await panel.getByRole('button',{name:'Assista ao vídeo',exact:true}).click();
+ const video=page.getByRole('dialog',{name:/Vídeo: Preencha/});await expect(video).toBeVisible();
+ await expect(video.locator('iframe')).toHaveAttribute('src','https://www.youtube-nocookie.com/embed/abcdefghijk?autoplay=1&rel=0');
+ await page.keyboard.press('Escape');await expect(page.locator('iframe')).toHaveCount(0);
+ await panel.getByRole('button',{name:'Assista ao vídeo',exact:true}).click();await video.getByRole('button',{name:'Fechar vídeo',exact:true}).click();await expect(page.locator('iframe')).toHaveCount(0);
+ await page.getByRole('button',{name:/Exames médico e psicotécnico/}).click();await expect(page.locator('#trail-medical').getByRole('button',{name:'Assista ao vídeo'})).toHaveCount(0);
+});
+
+test('admin salva links de vídeo sem perder Pix e permite remover',async({page})=>{
+ await mock(page,false,true);
+ let settings={id:true,city:'Caçapava',whatsapp:'5512996225250',ai_enabled:false,commercial_info:{pixCode:'PIX-EXISTENTE',pixReceiver:'Teste',journeyVideos:{initial_application:'https://youtu.be/abcdefghijk'}}};
+ const writes=[];
+ await page.route('**/rest/v1/site_settings*',r=>{
+  if(r.request().method()==='PATCH'){const value=r.request().postDataJSON();writes.push(value);settings={...settings,...value};return r.fulfill({json:{id:true}});}
+  return r.fulfill({json:settings});
+ });
+ await page.goto('/admin');await page.getByLabel('E-mail administrativo',{exact:true}).fill('admin@example.com');await page.getByLabel('Senha',{exact:true}).fill('senha-teste-123');await page.getByRole('button',{name:'Entrar no painel',exact:true}).click();
+ await page.getByRole('button',{name:'Configurações do site',exact:true}).click();
+ const field=page.getByLabel('1. Preencha o requerimento inicial — link do vídeo',{exact:true});
+ await field.fill('https://evil.com/video');await page.getByRole('button',{name:'Salvar configurações do site',exact:true}).click();await expect(page.getByText(/Vídeo inválido em/)).toBeVisible();expect(writes).toHaveLength(0);
+ await field.fill('https://youtu.be/12345678901');await page.getByRole('button',{name:'Salvar configurações do site',exact:true}).click();await expect(page.getByText(/Configurações salvas/)).toBeVisible();
+ expect(writes[0].commercial_info.pixCode).toBe('PIX-EXISTENTE');expect(writes[0].commercial_info.journeyVideos.initial_application).toBe('https://www.youtube.com/watch?v=12345678901');
+ await field.fill('');await page.getByRole('button',{name:'Salvar configurações do site',exact:true}).click();await expect.poll(()=>writes.length).toBe(2);expect(writes[1].commercial_info.journeyVideos).toEqual({});
+});
+
 test('catálogo por experiência abre após login e não libera agenda sem LADV',async({page})=>{
  await mock(page);
  await page.route('**/rest/v1/students*',r=>r.fulfill({json:{id:'student1',name:'Aluno',active:true,category:'B',licensed_driver:false,onboarding_steps:{}}}));

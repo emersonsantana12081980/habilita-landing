@@ -4,8 +4,18 @@ import {supabase} from '../lib/supabase';
 import {cnhTrail,cnhSource,cnhPrerequisites} from '../data/cnh-trail';
 import {journeyCategories,onboardingReady,hasLadvDocument,completedPractice} from '../lib/student-journey';
 import {LadvUpload} from './LadvUpload';
+import {JourneyVideo} from './JourneyVideo';
 
 export function StudentJourney({student={},lessons=[],compact=false,onDetails,onSaved}) {
+ const [videos,setVideos]=useState({});
+ useEffect(()=>{
+  if(compact || !supabase)return;
+  let active=true;
+  supabase.from('site_settings').select('commercial_info').single().then(({data,error})=>{
+   if(active&&!error)setVideos(data?.commercial_info?.journeyVideos || {});
+  }).catch(()=>{});
+  return ()=>{active=false;};
+ },[compact]);
  const categories=journeyCategories(student);
  const done=key=>key==='ladv'?categories.every(cat=>hasLadvDocument(student,cat)):Boolean(student.onboarding_steps?.[key]);
  const availableStep=step=>step.informational||(cnhPrerequisites[step.key]||[]).every(done);
@@ -34,6 +44,7 @@ export function StudentJourney({student={},lessons=[],compact=false,onDetails,on
     </button></h3>
     <div id={`trail-${step.key}`} hidden={!isOpen} className="space-y-3 border-t p-4 text-sm leading-6">
      {step.text.map(text=><p key={text}>{text}</p>)}
+     <JourneyVideo url={videos[step.key]} title={step.title}/>
      {step.items&&<ul className="list-disc space-y-2 pl-5">{step.items.map(text=><li key={text}>{text}</li>)}</ul>}
      {step.payment&&<><h4 className="font-bold">Você pode pagar</h4><ul className="list-disc space-y-2 pl-5">{step.payment.map(text=><li key={text}>{text}</li>)}</ul></>}
      {step.action&&<a className="btn btn-green" href={step.action.url} target="_blank" rel="noopener noreferrer">{step.action.label} ↗</a>}

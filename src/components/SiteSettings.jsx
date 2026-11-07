@@ -1,6 +1,9 @@
 import React, { useEffect, useState } from "react";
 import { supabase } from "../lib/supabase";
 import { normalizePhone } from "../store-data";
+import {cnhTrail} from '../data/cnh-trail';
+import {youtubeId} from '../lib/youtube';
+import {JourneyVideo} from './JourneyVideo';
 
 const fields = [
   ["lessonLocation","Local e ponto de encontro"], ["serviceRegion","Região atendida"],
@@ -27,12 +30,20 @@ export function SiteSettings() {
     try {
       const phone=normalizePhone(form.whatsapp);
       if(form.whatsapp.trim() && !phone)throw new Error("Informe um WhatsApp válido com DDD.");
-      const info={};
+      const info={...form.commercial_info};
       for(const [key] of fields){const value=String(form.commercial_info[key] || "").trim();
         if(key.endsWith('Url') && value){let url;try{url=new URL(value);}catch{throw new Error("Use links completos iniciados por https://.");}if(url.protocol!=="https:" || url.username || url.password)throw new Error("Use links HTTPS sem credenciais.");}
         info[key]=value || null;
       }
       const minutes=form.commercial_info.lessonMinutes;
+      info.journeyVideos={};
+      for(const step of cnhTrail){
+        const value=String(form.commercial_info.journeyVideos?.[step.key] || '').trim();
+        if(!value)continue;
+        const id=youtubeId(value);
+        if(!id)throw new Error(`Vídeo inválido em "${step.title}". Cole um link HTTPS de vídeo do YouTube.`);
+        info.journeyVideos[step.key]=`https://www.youtube.com/watch?v=${id}`;
+      }
       info.lessonMinutes=minutes==null || minutes==="" ? null : Number(minutes);
       if(info.lessonMinutes!==null && (!Number.isInteger(info.lessonMinutes) || info.lessonMinutes<15 || info.lessonMinutes>180))throw new Error("Informe duração entre 15 e 180 minutos.");
       if(!form.city.trim())throw new Error("Informe a cidade.");
@@ -49,6 +60,14 @@ export function SiteSettings() {
     <label className="flex items-center gap-2"><input type="checkbox" checked={form.ai_enabled} onChange={e=>setForm(f=>({...f,ai_enabled:e.target.checked}))}/>Exibir agente de atendimento</label>
     <p className="sm:col-span-2 text-sm">Pagamento manual: cadastre o Pix e o recebedor para disponibilizar essa opção aos alunos. No cartão, a equipe envia o link pelo WhatsApp após conferir o pedido e as parcelas.</p>
     {fields.map(([key,label])=><label key={key}>{label}{['pixCode','cancellationPolicy','retestTerms','lessonLocation','serviceRegion'].includes(key)?<textarea maxLength={2000} rows={3} value={form.commercial_info[key] || ""} onChange={e=>change(key,e.target.value)}/>:<input type={key.endsWith('Url')?'url':'text'} maxLength={500} value={form.commercial_info[key] || ""} onChange={e=>change(key,e.target.value)}/>}</label>)}
+    <fieldset className="sm:col-span-2 space-y-4 rounded-xl border border-slate-200 p-4">
+      <legend className="px-2 text-lg font-bold">Vídeos da jornada CNH</legend>
+      <p className="text-sm text-slate-600">Cole o link do YouTube para cada etapa. Deixe vazio para ocultar o botão. Use vídeos que permitam reprodução incorporada. Salve as configurações e atualize a área do aluno para conferir.</p>
+      {cnhTrail.map((step,index)=><div key={step.key} className="space-y-2">
+        <label className="block">{index+1}. {step.title} — link do vídeo<input type="url" maxLength={500} placeholder="https://www.youtube.com/watch?v=..." value={form.commercial_info.journeyVideos?.[step.key] || ''} onChange={e=>change('journeyVideos',{...form.commercial_info.journeyVideos,[step.key]:e.target.value})}/></label>
+        <JourneyVideo url={form.commercial_info.journeyVideos?.[step.key]} title={step.title} label="Pré-visualizar vídeo"/>
+      </div>)}
+    </fieldset>
     {message && <p role="status" className="sm:col-span-2">{message}</p>}
     <button disabled={busy} className="btn btn-green sm:col-span-2">{busy?"Salvando…":"Salvar configurações do site"}</button>
   </form>;
