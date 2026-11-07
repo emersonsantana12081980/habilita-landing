@@ -1,3 +1,4 @@
+import { StudentLicenseChoice } from './StudentLicenseChoice';
 import { canBookJourney, journeyPortalLocked } from '../lib/student-journey';
 import { studentPages, StudentIdentity, StudentSupport, StudentDashboard, StudentJourney, StudentProgress, StudentPackageSummary, StudentUpdates, StudentPayments, StudentMonth } from "./StudentDesign";
 import { Bell, UserRound } from "lucide-react";
@@ -79,7 +80,7 @@ export function CloudStudentPortal() {
   const [failed, setFailed] = useState(false);
   const [selectedTab, setTab] = useState(requestedPackage || new URLSearchParams(location.search).get('catalogo') === '1' || new URLSearchParams(location.search).get("checkout") === "teste" ? "Comprar aulas" : "Início");
   const journeyLocked = Boolean(data.student && journeyPortalLocked(data.student));
-  const tab = journeyLocked && selectedTab !== 'Comprar aulas' ? "Minha jornada CNH" : selectedTab;
+  const tab = journeyLocked && !['Comprar aulas','Meu perfil'].includes(selectedTab) ? "Minha jornada CNH" : selectedTab;
   const [day, setDay] = useState("");
   const [category, setCategory] = useState("B");
   const [paymentRequestId, setPaymentRequestId] = useState(null);
@@ -502,8 +503,8 @@ export function CloudStudentPortal() {
                   {studentPages.map((name) => (
                     <button
                       key={name}
-                      disabled={journeyLocked && !['Minha jornada CNH','Comprar aulas'].includes(name)}
-                      title={journeyLocked && !['Minha jornada CNH','Comprar aulas'].includes(name) ? "Conclua Minha jornada CNH até o envio da LADV para liberar esta área." : undefined}
+                      disabled={journeyLocked && !['Minha jornada CNH','Comprar aulas','Meu perfil'].includes(name)}
+                      title={journeyLocked && !['Minha jornada CNH','Comprar aulas','Meu perfil'].includes(name) ? "Conclua Minha jornada CNH até o envio da LADV para liberar esta área." : undefined}
                       onClick={() => {
                         setTab(name);
                         setMessage("");
@@ -577,15 +578,18 @@ export function CloudStudentPortal() {
                   />
                 )}
                 {tab === "Meu perfil" && (
+                  <div className="space-y-4">
+                  <StudentLicenseChoice student={data.student} onSaved={() => refresh(session.user.id)} />
                   <CloudProfileEditor
                     student={data.student}
                     email={session.user.email}
                     onSaved={() => refresh(session.user.id)}
                   />
+                  </div>
                 )}
                 {tab === "Agendar aula" && (
                   <div className="admin-card">
-                    {!canBookJourney(data.student, category) && <div className="mb-4 rounded-xl bg-amber-50 p-4 text-sm"><p>Antes de agendar, conclua as etapas anteriores e confirme sua LADV e a declaração de veracidade. Se já é habilitado, informe isso na jornada para agendar aulas de reforço.</p><button className="mt-2 font-bold underline" onClick={() => setTab('Minha jornada CNH')}>Atualizar minha jornada CNH</button></div>}
+                    {!canBookJourney(data.student, category) && <div className="mb-4 rounded-xl bg-amber-50 p-4 text-sm"><p>Antes de agendar, conclua as etapas anteriores e confirme sua LADV e a declaração de veracidade. Se já é habilitado, informe isso em Meu perfil para agendar aulas de reforço.</p><button className="mt-2 font-bold underline" onClick={() => setTab('Minha jornada CNH')}>Atualizar minha jornada CNH</button></div>}
                     <BookingRules readOnly />
                     <p className="my-4 rounded-xl bg-green-50 p-4 font-semibold text-green-800">Aulas disponíveis para agendar: {Math.max(0, available('B'))} de carro · {Math.max(0, available('A'))} de moto.</p>
                     <h2 className="text-xl font-bold">

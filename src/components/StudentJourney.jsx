@@ -30,7 +30,6 @@ export function StudentJourney({student={},lessons=[],compact=false,onDetails,on
   <p className="student-muted">Abra cada etapa pela seta. Declare a conclusão para avançar. As declarações são suas e não substituem os registros oficiais do Detran.</p>
   {!compact&&<p className="mt-3 rounded-xl bg-amber-50 p-3 text-sm">Na primeira habilitação, siga a jornada até emitir e enviar a LADV das categorias escolhidas. Para agendar aulas práticas, a equipe precisa confirmar o pagamento e liberar seu saldo; escolha então um horário disponível.</p>}
   {editable&&!configured&&<p role="alert" className="mt-3">A trilha ainda precisa ser ativada pela equipe. Fale conosco pelo WhatsApp.</p>}
-  {editable&&<label className="my-4 flex items-start gap-2 text-sm"><input type="checkbox" disabled={busy} checked={!!student.licensed_driver} onChange={e=>save(()=>supabase.rpc('update_student_journey',{p_student:student.id,p_steps:student.journey_steps||{},p_licensed:e.target.checked}))}/>Já sou habilitado e quero aulas de reforço.</label>}
   {student.licensed_driver?<p className="my-4 text-green-800">Aulas de reforço: a trilha da primeira habilitação é dispensada. O agendamento depende do saldo e dos horários disponíveis.</p>:<>
   <p className="my-4 text-sm font-semibold">{cnhTrail.filter(step=>!step.informational&&done(step.key)).length} de {cnhTrail.filter(step=>!step.informational).length} etapas informadas</p>
   <ol className="space-y-3">{cnhTrail.map((step,index)=>{
