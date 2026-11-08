@@ -17,7 +17,12 @@ export function readPlanChoice(search = '') {
 // Um pacote básico por categoria; os demais continuam disponíveis no portal.
 export function basicPackages(packages) {
   return planCategories.map(category => packages
-    .filter(p => p.active && p.category === category.id && p.experience_level === 'experiencia' && packageOffer(p))
+    .filter(p => {
+      if (!p.active || p.category !== category.id || p.experience_level !== 'experiencia') return false;
+      const offer = packageOffer(p);
+      const expected = category.id === 'A+B' ? ['A','B'] : [category.id];
+      return offer && expected.every(id => offer.hours.some(h => h.id === id && h.lessons === 2));
+    })
     .sort((a,b) => packageOffer(a).cash-packageOffer(b).cash || String(a.id).localeCompare(String(b.id)))[0]
   ).filter(Boolean);
 }
