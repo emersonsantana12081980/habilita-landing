@@ -412,6 +412,21 @@ export function LandingPage({ data, error }) {
             </div>
           </div>
         </section>
+        <section id="atendimento-presencial" className="container pb-16" aria-labelledby="presencial-title">
+          <div className="rounded-3xl border border-slate-200 bg-white p-7 sm:p-10">
+            <p className="eyebrow">HABILITA+ EM CAÇAPAVA</p>
+            <h2 id="presencial-title">Atendimento presencial</h2>
+            <address className="mt-4 not-italic leading-7 text-slate-600">
+              Avenida Francisca Salles Damasco, 931<br />
+              Jardim São José · Caçapava — SP<br />
+              CEP 12280-113
+            </address>
+            <div className="mt-6 flex flex-wrap gap-3">
+              <a className="btn btn-outline" href="https://www.google.com/maps/search/?api=1&query=Avenida%20Francisca%20Salles%20Damasco%2C%20931%2C%20Jardim%20S%C3%A3o%20Jos%C3%A9%2C%20Ca%C3%A7apava%20SP%2C%2012280-113" target="_blank" rel="noopener noreferrer">Ver no mapa</a>
+              <button className="btn btn-green" onClick={() => contact('Olá! Gostaria de informações sobre o atendimento presencial na Avenida Francisca Salles Damasco, 931.', 'presencial_whatsapp_click')}>Consultar atendimento pelo WhatsApp</button>
+            </div>
+          </div>
+        </section>
         <section className="container pb-16">
           <div className="rounded-3xl bg-[#0e213b] p-7 text-white sm:p-12">
             <p className="eyebrow text-green-300!">VAMOS CONVERSAR?</p>
@@ -441,6 +456,7 @@ export function LandingPage({ data, error }) {
             <h2 className="mb-2 text-base! tracking-normal!">
               Atendimento e acesso
             </h2>
+            <a className="py-3" href="#atendimento-presencial">Atendimento presencial · endereço e mapa</a>
             <button
               className="min-h-11 font-semibold text-green-800"
               onClick={() => contact(undefined, "footer_whatsapp_click")}
