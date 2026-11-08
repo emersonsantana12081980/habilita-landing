@@ -1,5 +1,6 @@
 import React from "react";
 import { DeleteRegistration } from "./DeleteRegistration";
+import { StudentRegistrationDate } from './StudentRegistrationDate';
 
 const normalize = (value) => String(value || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
 
@@ -41,6 +42,7 @@ export function StudentList({ students, balance, onEdit, onHistory, onStatus, on
             <span className={`rounded-full px-2 py-1 text-xs font-semibold ${student.active ? "bg-green-50 text-green-800" : "bg-slate-100 text-slate-600"}`}>{student.active ? "Ativo" : "Arquivado"}</span>
           </div>
           <p className="mt-1 text-sm text-slate-600">{student.phone || "Sem WhatsApp"} · Categoria {student.category}</p>
+          <StudentRegistrationDate value={student.created_at}/>
           {Object.entries(student.practical_exam_dates || {}).map(([category,day]) => <p key={category} className="mt-1 text-sm font-semibold text-green-800">Exame prático {category}: {day.split('-').reverse().join('/')}</p>)}
           <p className="mt-1 text-xs text-slate-500">Créditos livres: moto {balance(student.id, "A")} · carro {balance(student.id, "B")}</p>
         </div>
