@@ -3,6 +3,7 @@ import { useStore } from "./store";
 import { cloudEnabled } from "./lib/supabase";
 import { LandingPage } from "./components/LandingPage";
 const InstructorPortal = lazy(() => import("./components/InstructorPortal"));
+const TermsPage = lazy(() => import("./components/TermsPage"));
 const CloudAdminPanel = lazy(() =>
   import("./components/CloudAdminPanel").then((m) => ({
     default: m.CloudAdminPanel,
@@ -25,7 +26,8 @@ export function App() {
   const [data, update, error] = useStore();
   const path = window.location.pathname.replace(/\/$/, "");
   let page;
-  if (path === "/admin")
+  if (path === "/termos") page = <TermsPage />;
+  else if (path === "/admin")
     page = cloudEnabled ? (
       <CloudAdminPanel />
     ) : (

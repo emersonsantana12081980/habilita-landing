@@ -490,7 +490,6 @@ export function LandingPage({ data, error }) {
             </a>
             {[
               [commercialInfo.privacyUrl, "Política de privacidade"],
-              [commercialInfo.termsUrl, "Termos de uso"],
               [commercialInfo.instagramUrl, "Instagram"],
               [commercialInfo.mapsUrl, "Localização"],
             ]
@@ -506,9 +505,10 @@ export function LandingPage({ data, error }) {
                   {label}
                 </a>
               ))}
-            {(!commercialInfo.privacyUrl || !commercialInfo.termsUrl) && (
+            <a href="/termos" className="block py-3 underline">Termos e Condições</a>
+            {!commercialInfo.privacyUrl && (
               <p className="mt-3 text-xs leading-5">
-                Política de privacidade e termos: publicação pendente de
+                Política de privacidade: publicação pendente de
                 validação pelo responsável.
               </p>
             )}
