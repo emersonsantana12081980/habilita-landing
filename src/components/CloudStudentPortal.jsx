@@ -17,7 +17,6 @@ import React, { useEffect, useRef, useState } from "react";
 import { Brand } from "./Brand";
 import { CloudProfileEditor } from "./CloudProfileEditor";
 import { BookingRules } from "./BookingRules";
-import { SpecialistChat } from "./SpecialistChat";
 import { supabase } from "../lib/supabase";
 import { money, whatsappUrl } from "../store-data";
 
@@ -692,11 +691,6 @@ export function CloudStudentPortal() {
       {session?.user.id && !recovery && <StudentEnrollmentEntry key={session.user.id} student={data.student}/>}
       {canUse && paymentRequestId && data.requests.find(r => r.id === paymentRequestId) && <ManualPayment
         key={paymentRequestId} request={data.requests.find(r => r.id === paymentRequestId)} autoOpen onClose={() => setPaymentRequestId(null)}/>}
-      {data.settings?.ai_enabled !== false && (
-        <SpecialistChat
-          contact={() => window.open(contact, "_blank", "noopener,noreferrer")}
-        />
-      )}
     </main>
   );
 }

@@ -15,7 +15,6 @@ import { Brand } from "./Brand";
 import { PublicPackages } from "./PublicPackages";
 import { InstructorSection } from "./InstructorSection";
 import { Testimonials } from "./Testimonials";
-import { SpecialistChat } from "./SpecialistChat";
 import { whatsappUrl } from "../store-data";
 import { commercialInfo as defaults, faqItems } from "../data/landing";
 import { trackLanding, useLandingEvents } from "../lib/landing-events";
@@ -530,11 +529,6 @@ export function LandingPage({ data, error }) {
             Cadastre-se grátis <ArrowUpRight size={18} aria-hidden="true" />
           </a>
       </div>
-      {data.ai && (
-        <SpecialistChat
-          contact={() => contact(undefined, "specialist_whatsapp_click")}
-        />
-      )}
       {notice && (
         <div
           role="status"

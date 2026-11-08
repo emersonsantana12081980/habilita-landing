@@ -13,7 +13,6 @@ import {
   UserRound,
 } from "lucide-react";
 import { Brand } from "./Brand";
-import { SpecialistChat } from "./SpecialistChat";
 import { PackageDetails } from "./PackageDetails";
 import { StudentLogin, DEMO_PASSWORD } from "./StudentLogin";
 import { money, whatsappUrl, normalizePhone } from "../store-data";
@@ -875,7 +874,6 @@ export function StudentPortal({ data, update, error }) {
           </>
         )}
       </main>
-      {data.ai && <SpecialistChat contact={contact} />}
     </div>
   );
 }
