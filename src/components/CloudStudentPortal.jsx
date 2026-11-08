@@ -1,4 +1,5 @@
 import { StudentLicenseChoice } from './StudentLicenseChoice';
+import {TermsGate,TERMS_VERSION} from './TermsGate';
 import { canBookJourney, journeyPortalLocked } from '../lib/student-journey';
 import { studentPages, StudentIdentity, StudentSupport, StudentDashboard, StudentJourney, StudentProgress, StudentPackageSummary, StudentUpdates, StudentPayments, StudentMonth } from "./StudentDesign";
 import { Bell, UserRound } from "lucide-react";
@@ -61,6 +62,7 @@ export function CloudStudentPortal() {
     new URLSearchParams(location.search).get("pacote") || "";
   const signup = location.pathname.replace(/\/$/, "") === "/cadastro";
   const [session, setSession] = useState(null);
+  const [acceptedUser,setAcceptedUser]=useState(null);
   const [ready, setReady] = useState(false);
   const [recovery, setRecovery] = useState(
     new URLSearchParams(location.search).get("recuperar") === "1",
@@ -72,6 +74,7 @@ export function CloudStudentPortal() {
     category: readPlanChoice(location.search)?.category.id || "B",
     password: "",
     confirm: "",
+    terms: false,
   });
   const [message, setMessage] = useState("");
   const [busy, setBusy] = useState(false);
@@ -233,6 +236,7 @@ export function CloudStudentPortal() {
         history.replaceState(null, "", "/aluno");
         setMessage("Senha atualizada.");
       } else if (signup) {
+        if(!form.terms){setMessage('Leia e aceite os Termos e Condições para criar sua conta.');return;}
         const phone = form.phone.replace(/\D/g, "");
         if (!form.name.trim() || !/^\d{10,13}$/.test(phone)) {
           setMessage("Informe nome e WhatsApp com DDD.");
@@ -243,7 +247,7 @@ export function CloudStudentPortal() {
           password: form.password,
           options: {
             emailRedirectTo: `${location.origin}/aluno${location.search}`,
-            data: { name: form.name.trim(), phone, category: form.category },
+            data: { name: form.name.trim(), phone, category: form.category, terms_version: TERMS_VERSION, terms_accepted: true },
           },
         });
         if (error) throw error;
@@ -300,6 +304,7 @@ export function CloudStudentPortal() {
     initialCategory={initialCategory} contact={whatsappUrl(data.settings?.whatsapp || "5512996225250", "Olá! Quero ajuda para escolher e combinar meu pacote de aulas.")}
     onRequested={async (id) => { setPaymentRequestId(id); await refresh(session.user.id); setTab("Início"); setMessage("Recebemos seu interesse. Acompanhe os próximos passos abaixo."); }} />;
 
+  if(session && !recovery && data.student?.active && acceptedUser!==session.user.id)return <TermsGate key={session.user.id} onAccepted={()=>setAcceptedUser(session.user.id)}/>;
   return (
     <main className="portal-shell student-shell student-redesign min-h-screen bg-slate-50 pb-28 text-slate-900">
       <header className="border-b bg-white">
@@ -410,6 +415,7 @@ export function CloudStudentPortal() {
                     minLength: 8,
                     autoComplete: "new-password",
                   })}
+                {signup&&!recovery&&<label className="flex items-start gap-2 text-sm"><input type="checkbox" required checked={form.terms} onChange={e=>setForm(f=>({...f,terms:e.target.checked}))}/><span>Li e aceito os <a href="/termos" target="_blank" rel="noopener noreferrer" className="font-bold text-green-800 underline">Termos e Condições</a>.</span></label>}
                 <button disabled={busy} className="btn btn-green w-full">
                   {busy
                     ? "Aguarde…"
