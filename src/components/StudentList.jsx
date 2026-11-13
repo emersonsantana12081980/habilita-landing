@@ -1,11 +1,14 @@
 import React from "react";
 import { DeleteRegistration } from "./DeleteRegistration";
 import { StudentRegistrationDate } from './StudentRegistrationDate';
+import { registrationPeriod } from '../lib/registration-period';
 
 const normalize = (value) => String(value || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
 
 export function StudentList({ students, balance, onEdit, onHistory, onStatus, onDeleted, filters, setFilters }) {
   const { search, status, category } = filters;
+  const {period='all',dateFrom='',dateTo=''}=filters;
+  const dates=registrationPeriod(filters);
   const setSearch = (search) => setFilters(f => ({...f,search}));
   const setStatus = (status) => setFilters(f => ({...f,status}));
   const setCategory = (category) => setFilters(f => ({...f,category}));
@@ -14,6 +17,7 @@ export function StudentList({ students, balance, onEdit, onHistory, onStatus, on
     const digits = search.replace(/\D/g, "");
     return (status === "deleted" ? !!s.deleted_at : !s.deleted_at && (status === "all" || (status === "active" ? s.active : !s.active))) &&
       (!category || s.category === category) &&
+      dates.matches(s.created_at) &&
       (!query || normalize(s.name).includes(query) || normalize(s.phone).includes(query) ||
         (digits.length > 0 && /^[\d\s()+.-]+$/.test(search) && String(s.phone || "").replace(/\D/g, "").includes(digits)));
   }).sort((a, b) => a.name.localeCompare(b.name, "pt-BR"));
@@ -33,6 +37,19 @@ export function StudentList({ students, balance, onEdit, onHistory, onStatus, on
           <option value="">Todas</option><option value="A">A — Moto</option><option value="B">B — Carro</option><option value="A+B">A+B — Carro e moto</option>
         </select>
       </label>
+    </div>
+    <div className="grid gap-3 border-b border-slate-100 p-4 sm:grid-cols-3">
+      <label className="text-sm font-semibold">Data de cadastro
+        <select value={period} onChange={e=>setFilters(f=>({...f,period:e.target.value}))}>
+          <option value="all">Todo o período</option><option value="today">Hoje</option><option value="week">Últimos 7 dias</option><option value="month">Este mês</option><option value="custom">Personalizado</option>
+        </select>
+      </label>
+      {period==='custom'&&<>
+        <label className="text-sm font-semibold">Data inicial<input type="date" value={dateFrom} max={dateTo||undefined} onChange={e=>setFilters(f=>({...f,dateFrom:e.target.value}))}/></label>
+        <label className="text-sm font-semibold">Data final<input type="date" value={dateTo} min={dateFrom||undefined} onChange={e=>setFilters(f=>({...f,dateTo:e.target.value}))}/></label>
+      </>}
+      <p className="text-xs text-slate-500 sm:col-span-3">Horário de Brasília. Últimos 7 dias inclui hoje e os seis dias anteriores. No período personalizado, as datas inicial e final estão incluídas.</p>
+      {dates.invalid&&<p role="alert" className="text-sm text-red-700 sm:col-span-3">A data final deve ser igual ou posterior à data inicial.</p>}
     </div>
     <p className="px-4 py-3 text-sm text-slate-500" role="status">{visible.length} cadastro(s) encontrado(s). Arquivar mantém créditos e histórico.</p>
     <ul className="divide-y divide-slate-100">
