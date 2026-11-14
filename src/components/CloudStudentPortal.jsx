@@ -1,5 +1,6 @@
 import { StudentLicenseChoice } from './StudentLicenseChoice';
 import {TermsGate,TERMS_VERSION} from './TermsGate';
+import {LicensedDashboard,licensedPages} from './LicensedDashboard';
 import { canBookJourney, journeyPortalLocked } from '../lib/student-journey';
 import { studentPages, StudentIdentity, StudentSupport, StudentDashboard, StudentJourney, StudentProgress, StudentPackageSummary, StudentUpdates, StudentPayments, StudentMonth } from "./StudentDesign";
 import { Bell, UserRound } from "lucide-react";
@@ -59,7 +60,8 @@ function errorText(error) {
 export function CloudStudentPortal() {
   const requestedPackage =
     new URLSearchParams(location.search).get("pacote") || "";
-  const signup = location.pathname.replace(/\/$/, "") === "/cadastro";
+  const licensedSignup = location.pathname.replace(/\/$/, "") === '/habilitados';
+  const signup = licensedSignup || location.pathname.replace(/\/$/, "") === "/cadastro";
   const [session, setSession] = useState(null);
   const [acceptedUser,setAcceptedUser]=useState(null);
   const [ready, setReady] = useState(false);
@@ -74,6 +76,7 @@ export function CloudStudentPortal() {
     password: "",
     confirm: "",
     terms: false,
+    licensedConfirmed: false,
   });
   const [message, setMessage] = useState("");
   const [busy, setBusy] = useState(false);
@@ -82,7 +85,8 @@ export function CloudStudentPortal() {
   const [failed, setFailed] = useState(false);
   const [selectedTab, setTab] = useState(requestedPackage || new URLSearchParams(location.search).get('catalogo') === '1' || new URLSearchParams(location.search).get("checkout") === "teste" ? "Comprar aulas" : "Início");
   const journeyLocked = Boolean(data.student && journeyPortalLocked(data.student));
-  const tab = journeyLocked && !['Comprar aulas','Meu perfil'].includes(selectedTab) ? "Minha jornada CNH" : selectedTab;
+  const isLicensed=Boolean(data.student?.licensed_driver);
+  const tab = isLicensed&&!licensedPages.includes(selectedTab)?'Início':journeyLocked && !['Comprar aulas','Meu perfil'].includes(selectedTab) ? "Minha jornada CNH" : selectedTab;
   const [day, setDay] = useState("");
   const [category, setCategory] = useState("B");
   const [paymentRequestId, setPaymentRequestId] = useState(null);
@@ -132,7 +136,7 @@ export function CloudStudentPortal() {
           .maybeSingle(),
         supabase
           .from("packages")
-          .select("id,slug,name,category,experience_level,lessons_a,lessons_b,price_cents,card_total_cents,card_installments,pricing_demo")
+          .select("id,slug,name,category,audience,experience_level,lessons_a,lessons_b,price_cents,card_total_cents,card_installments,pricing_demo")
           .eq("active", true),
         supabase.from("credit_grants").select("student_id,lessons_a,lessons_b"),
         supabase
@@ -236,6 +240,7 @@ export function CloudStudentPortal() {
         setMessage("Senha atualizada.");
       } else if (signup) {
         if(!form.terms){setMessage('Leia e aceite os Termos e Condições para criar sua conta.');return;}
+        if(licensedSignup&&!form.licensedConfirmed){setMessage('Confirme que já possui habilitação para a categoria escolhida.');return;}
         const phone = form.phone.replace(/\D/g, "");
         if (!form.name.trim() || !/^\d{10,13}$/.test(phone)) {
           setMessage("Informe nome e WhatsApp com DDD.");
@@ -246,7 +251,7 @@ export function CloudStudentPortal() {
           password: form.password,
           options: {
             emailRedirectTo: `${location.origin}/aluno${location.search}`,
-            data: { name: form.name.trim(), phone, category: form.category, terms_version: TERMS_VERSION, terms_accepted: true },
+            data: { name: form.name.trim(), phone, category: form.category, terms_version: TERMS_VERSION, terms_accepted: true, licensed_driver: licensedSignup&&form.licensedConfirmed },
           },
         });
         if (error) throw error;
@@ -299,7 +304,8 @@ export function CloudStudentPortal() {
   const hasLessons = data.lessons.some(l => l.status !== "cancelled");
   const starting = !hasCredit && !hasLessons && !data.credits.length;
   const initialCategory = data.packages.find(p => p.id === requestedPackage || p.slug === requestedPackage)?.category || readPlanChoice(location.search)?.category.id || "";
-  const startView = <StudentStart packages={data.packages} requests={data.requests}
+  const audiencePackages=data.packages.filter(p=>(p.audience==='licensed')===isLicensed);
+  const startView = <StudentStart packages={audiencePackages} requests={data.requests}
     initialCategory={initialCategory} contact={whatsappUrl(data.settings?.whatsapp || "5512996225250", "Olá! Quero ajuda para escolher e combinar meu pacote de aulas.")}
     onRequested={async (id) => { setPaymentRequestId(id); await refresh(session.user.id); setTab("Início"); setMessage("Recebemos seu interesse. Acompanhe os próximos passos abaixo."); }} />;
 
@@ -309,7 +315,7 @@ export function CloudStudentPortal() {
       <header className="border-b bg-white">
         <div className="container flex flex-wrap items-center justify-between gap-4 py-5">
           <Brand /><span className="portal-area-title">Área do aluno</span>
-          {canUse && <div className="student-header-actions"><button aria-label="Abrir notificações" onClick={() => setTab("Notificações")}><Bell size={19}/></button><button onClick={() => setTab("Meu perfil")} aria-label="Abrir meu perfil"><UserRound size={19}/><span>{data.student.name.split(" ")[0]}</span></button></div>}
+          {canUse && <div className="student-header-actions">{!isLicensed&&<button aria-label="Abrir notificações" onClick={() => setTab("Notificações")}><Bell size={19}/></button>}<button onClick={() => setTab("Meu perfil")} aria-label="Abrir meu perfil"><UserRound size={19}/><span>{data.student.name.split(" ")[0]}</span></button></div>}
           <a href="/" className="text-sm font-semibold">
             Voltar ao site
           </a>
@@ -346,15 +352,16 @@ export function CloudStudentPortal() {
           <p role="status">Verificando acesso…</p>
         ) : !session || recovery ? (
           <section className="admin-card mx-auto max-w-md">
-            <p className="eyebrow">ÁREA DO ALUNO</p>
+            <p className="eyebrow">{licensedSignup?'AULAS PARA QUEM JÁ TEM CNH':'ÁREA DO ALUNO'}</p>
             <h1 className="mt-3 text-3xl font-extrabold">
               {recovery
                 ? "Crie sua nova senha"
                 : signup
-                  ? "Seu primeiro passo começa aqui"
+                  ? licensedSignup ? "Volte a dirigir com confiança" : "Seu primeiro passo começa aqui"
                   : "Bom ter você de volta"}
             </h1>
-            {!recovery && <PlanChoice />}
+            {!recovery && !licensedSignup && <PlanChoice />}
+            {licensedSignup&&!recovery&&<div className="mt-4 space-y-3 text-sm leading-6 text-slate-600"><p>Pratique carro ou moto com orientação individual, no seu ritmo, em Caçapava e região.</p><ul className="list-disc pl-5"><li>Ganhe prática em manobras, estacionamento e trânsito.</li><li>Escolha um pacote de reforço ou aula avulsa disponível.</li><li>Após a confirmação do pagamento, agende pelo seu painel.</li></ul><p className="font-semibold text-green-800">Preencha o cadastro abaixo. É gratuito e não gera cobrança.</p></div>}
             {signup && !recovery && (
               <p className="mt-3 text-sm text-slate-600">
                 Cadastro gratuito. Contrate aulas quando estiver pronto.
@@ -415,6 +422,7 @@ export function CloudStudentPortal() {
                     autoComplete: "new-password",
                   })}
                 {signup&&!recovery&&<label className="flex items-start gap-2 text-sm"><input type="checkbox" required checked={form.terms} onChange={e=>setForm(f=>({...f,terms:e.target.checked}))}/><span>Li e aceito os <a href="/termos" target="_blank" rel="noopener noreferrer" className="font-bold text-green-800 underline">Termos e Condições</a>.</span></label>}
+                {licensedSignup&&!recovery&&<label className="flex items-start gap-2 text-sm"><input type="checkbox" required checked={form.licensedConfirmed} onChange={e=>setForm(f=>({...f,licensedConfirmed:e.target.checked}))}/>Declaro que já possuo CNH válida para a categoria escolhida e quero aulas de reforço.</label>}
                 <button disabled={busy} className="btn btn-green w-full">
                   {busy
                     ? "Aguarde…"
@@ -453,7 +461,7 @@ export function CloudStudentPortal() {
             <p className="mt-6 text-sm">
               <a
                 className="font-bold text-green-700"
-                href={signup ? `/aluno${location.search}` : `/cadastro${location.search}`}
+                href={signup ? licensedSignup?'/aluno?publico=habilitados':`/aluno${location.search}` : new URLSearchParams(location.search).get('publico')==='habilitados'?'/habilitados':`/cadastro${location.search}`}
               >
                 {signup
                   ? "Já tenho conta. Entrar"
@@ -463,7 +471,7 @@ export function CloudStudentPortal() {
           </section>
         ) : (
           <>
-            {!journeyLocked && <PlanChoice />}
+            {!journeyLocked && !isLicensed && <PlanChoice />}
             <div className="student-page-heading">
             <h1 className="text-3xl font-extrabold">
               {data.student
@@ -471,7 +479,7 @@ export function CloudStudentPortal() {
                 : "Área do aluno"}
             </h1>
             <p className="mt-2 text-slate-600">
-              Sua preparação, um passo de cada vez.
+              {isLicensed?'Seus pacotes, pagamentos e aulas em um só lugar.':'Sua preparação, um passo de cada vez.'}
             </p>
             <button
               className="mt-3 text-sm font-semibold text-green-700"
@@ -505,7 +513,7 @@ export function CloudStudentPortal() {
                   className="portal-nav my-6 flex flex-wrap gap-2"
                 >
                   <StudentIdentity student={data.student}/>
-                  {studentPages.map((name) => (
+                  {(isLicensed?licensedPages:studentPages).map((name) => (
                     <button
                       key={name}
                       disabled={journeyLocked && !['Minha jornada CNH','Comprar aulas','Meu perfil'].includes(name)}
@@ -522,7 +530,7 @@ export function CloudStudentPortal() {
                   ))}
                   <StudentSupport contact={contact} compact/>
                 </nav>
-                {tab === "Início" && <StudentDashboard data={data} available={available} onNavigate={setTab}/>}
+                {tab === "Início" && (isLicensed?<LicensedDashboard data={data} available={available} onNavigate={setTab}/>:<StudentDashboard data={data} available={available} onNavigate={setTab}/>)}
                 {tab !== "Início" && <div className="student-section-heading"><p>SEU ESPAÇO HABILITA+</p><h1>{tab}</h1></div>}
                 {tab === "Meus pacotes" && <StudentPackageSummary requests={data.requests} remaining={Math.max(0, available("A") + available("B"))} onBuy={() => setTab("Comprar aulas")}/>}
                 {tab === "Minha jornada CNH" && <StudentJourney student={data.student} lessons={data.lessons} onSaved={() => refresh(session.user.id, true)}/>}
@@ -539,7 +547,8 @@ export function CloudStudentPortal() {
                       condições e libera os créditos após análise.
                     </p>
                         <StudentPackageCatalog
-                          packages={data.packages}
+                          packages={audiencePackages}
+                          licensed={isLicensed}
                           requests={data.requests}
                           initialCategory={initialCategory}
                           onRequested={async (id) => {
@@ -688,7 +697,7 @@ export function CloudStudentPortal() {
           Falar pelo WhatsApp
         </a>
       </div>
-      {session?.user.id && !recovery && <StudentEnrollmentEntry key={session.user.id} student={data.student}/>}
+      {session?.user.id && !recovery && !isLicensed && <StudentEnrollmentEntry key={session.user.id} student={data.student}/>}
       {canUse && paymentRequestId && data.requests.find(r => r.id === paymentRequestId) && <ManualPayment
         key={paymentRequestId} request={data.requests.find(r => r.id === paymentRequestId)} autoOpen onClose={() => setPaymentRequestId(null)}/>}
     </main>

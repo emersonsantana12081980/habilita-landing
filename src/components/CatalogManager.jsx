@@ -49,6 +49,7 @@ export function CatalogManager({ initialKind = "packages", instructorsOnly = fal
           name: "",
           category: "B",
           experience_level: "",
+          audience: 'first_license',
           lessons_a: 0,
           lessons_b: 2,
           price_cents: 0,
@@ -347,6 +348,7 @@ export function CatalogManager({ initialKind = "packages", instructorsOnly = fal
               {r.category} · {r.active ? "Ativo" : "Inativo"}
             </p>
             {kind === 'packages' && <p className="mt-1 text-sm">{Number(r.lessons_a || 0)+Number(r.lessons_b || 0)===1?'Aula avulsa · 1 aula':'Pacote de aulas'}</p>}
+            {kind === 'packages' && <p className="mt-1 text-sm font-semibold text-green-800">{r.audience==='licensed'?'Público: já habilitados':'Público: primeira habilitação'}</p>}
             <button
               className="mt-3 text-green-700 underline"
               disabled={busy}

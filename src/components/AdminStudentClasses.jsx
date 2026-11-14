@@ -6,7 +6,7 @@ export function AdminStudentClasses({student,onSaved,onBusy}) {
  const [packages,setPackages]=useState([]),[message,setMessage]=useState(''),[busy,setBusy]=useState(false);
  const [form,setForm]=useState({type:'custom',packageId:'',name:'Aulas avulsas',a:0,b:1,total:'',method:'cash',installments:1,paid:'pending',reason:'',checked:false});
  const operation=useRef(crypto.randomUUID()),lock=useRef(false);
- useEffect(()=>{let active=true;supabase.from('packages').select('id,name,lessons_a,lessons_b,price_cents,card_total_cents,card_installments').eq('active',true).is('deleted_at',null).then(({data,error})=>{if(active){if(error)setMessage('Não foi possível carregar os pacotes. Você pode cadastrar aulas manualmente.');else setPackages(data||[]);}});return()=>{active=false;};},[]);
+ useEffect(()=>{let active=true;supabase.from('packages').select('id,name,audience,lessons_a,lessons_b,price_cents,card_total_cents,card_installments').eq('active',true).is('deleted_at',null).then(({data,error})=>{if(active){if(error)setMessage('Não foi possível carregar os pacotes. Você pode cadastrar aulas manualmente.');else setPackages((data||[]).filter(p=>(p.audience==='licensed')===Boolean(student.licensed_driver)));}});return()=>{active=false;};},[student.licensed_driver]);
  const change=(key,value)=>setForm(f=>({...f,[key]:value}));
  const pack=packages.find(p=>p.id===form.packageId);
  const a=form.type==='package'?pack?.lessons_a||0:Number(form.a), b=form.type==='package'?pack?.lessons_b||0:Number(form.b);

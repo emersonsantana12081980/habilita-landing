@@ -34,7 +34,7 @@ export function App() {
       <AdminPanel data={data} update={update} error={error} />
     );
   else if (path === "/instrutor") page = <InstructorPortal />;
-  else if (["/aluno", "/cadastro"].includes(path))
+  else if (["/aluno", "/cadastro", "/habilitados"].includes(path))
     page = cloudEnabled ? (
       <CloudStudentPortal />
     ) : (

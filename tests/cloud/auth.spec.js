@@ -1,5 +1,67 @@
 import { test, expect } from "@playwright/test";
 
+test('habilitados admin salva público do pacote',async({page})=>{
+ await mock(page,false,true);let saved;
+ await page.route('**/rest/v1/packages*',r=>{
+  if(r.request().method()==='POST'){saved=r.request().postDataJSON();return r.fulfill({json:null});}
+  return r.fulfill({json:saved?[{...saved,id:'licensed-pack'}]:[]});
+ });
+ await page.goto('/admin');
+ await page.getByLabel('E-mail administrativo').fill('admin@example.com');
+ await page.getByLabel('Senha',{exact:true}).fill('senha-teste-123');
+ await page.getByRole('button',{name:'Entrar no painel',exact:true}).click();
+ await page.getByRole('button',{name:'Catálogo',exact:true}).click();
+ await page.getByRole('button',{name:'Cadastrar aula avulsa'}).click();
+ await page.getByLabel('Público do pacote').selectOption('licensed');
+ await expect(page.getByLabel('Tipo de experiência')).toHaveCount(0);
+ await page.getByLabel('Nome',{exact:true}).fill('Reforço para habilitados');
+ await page.getByLabel('Preço à vista (R$)').fill('120');
+ await page.getByLabel('Valor total parcelado (R$)').fill('130');
+ await page.getByRole('button',{name:'Salvar no site'}).click();
+ await expect(page.getByRole('heading',{name:'Reforço para habilitados'})).toBeVisible();
+ expect(saved.audience).toBe('licensed');
+});
+
+test('habilitados cadastro envia declaração e público específico',async({page})=>{
+ await mock(page);
+ let submitted;
+ await page.route('**/auth/v1/signup*',r=>{submitted=r.request().postDataJSON();return r.fulfill({json:{user,session:null}});});
+ await page.goto('/habilitados');
+ await expect(page.getByRole('heading',{name:'Volte a dirigir com confiança'})).toBeVisible();
+ await page.getByLabel('Nome completo').fill('Aluno Reforço');
+ await page.getByLabel('WhatsApp com DDD').fill('12999999999');
+ await page.getByLabel('E-mail',{exact:true}).fill('reforco@example.com');
+ await page.getByLabel('Senha',{exact:true}).fill('senha-teste-123');
+ await page.getByLabel('Confirme a senha').fill('senha-teste-123');
+ await page.getByLabel(/Li e aceito/).check();
+ await page.getByRole('button',{name:'Criar conta grátis'}).click();
+ expect(submitted).toBeUndefined();
+ await page.getByLabel(/Declaro que já possuo CNH/).check();
+ await page.getByRole('button',{name:'Criar conta grátis'}).click();
+ await expect.poll(()=>submitted?.data?.licensed_driver).toBe(true);
+ expect(submitted.data.terms_accepted).toBe(true);
+});
+
+for(const licensed of [true,false])test(`habilitados painel e catálogo separados ${licensed}`,async({page})=>{
+ await mock(page);
+ await page.route('**/rest/v1/terms_acceptances*',r=>r.fulfill({json:[{version:'2026-11-07'}]}));
+ await page.route('**/rest/v1/students*',r=>r.fulfill({json:{id:'student1',name:'Aluno',active:true,category:'B',licensed_driver:licensed,onboarding_steps:{}}}));
+ await page.route('**/rest/v1/packages*',r=>r.fulfill({json:[
+  {id:'p1',name:'Pacote primeira CNH',category:'B',audience:'first_license',experience_level:'experiencia',lessons_b:2,lessons_a:0,price_cents:30000},
+  {id:'p2',name:'Pacote reforço habilitados',category:'B',audience:'licensed',lessons_b:2,lessons_a:0,price_cents:40000}
+ ]}));
+ await page.goto('/aluno');await page.getByLabel('E-mail',{exact:true}).fill('aluno@example.com');await page.getByLabel('Senha',{exact:true}).fill('senha-teste-123');await page.getByRole('button',{name:'Entrar',exact:true}).click();
+ const nav=page.getByRole('navigation',{name:'Área do aluno'});
+ if(licensed){
+  await expect(page.getByRole('heading',{name:'Mais prática para dirigir com confiança'})).toBeVisible();
+  await expect(nav.getByRole('button',{name:'Minha jornada CNH',exact:true})).toHaveCount(0);
+  await expect(nav.getByRole('button',{name:'Agendar aula',exact:true})).toBeEnabled();
+ }else await expect(nav.getByRole('button',{name:'Agendar aula',exact:true})).toBeDisabled();
+ await nav.getByRole('button',{name:'Comprar aulas',exact:true}).click();
+ await expect(page.getByRole('heading',{name:licensed?'Pacote reforço habilitados':'Pacote primeira CNH',exact:true})).toBeVisible();
+ await expect(page.getByRole('heading',{name:licensed?'Pacote primeira CNH':'Pacote reforço habilitados',exact:true})).toHaveCount(0);
+});
+
 test('vídeo da jornada abre popup e fecha removendo reprodução',async({page})=>{
  await mock(page);
  await page.route('**/rest/v1/students*',r=>r.fulfill({json:{id:'student1',name:'Aluno',active:true,category:'B',licensed_driver:false,onboarding_steps:{}}}));
