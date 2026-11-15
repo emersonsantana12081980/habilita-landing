@@ -1,6 +1,9 @@
 import { StudentLicenseChoice } from './StudentLicenseChoice';
 import {TermsGate,TERMS_VERSION} from './TermsGate';
 import {LicensedDashboard,licensedPages} from './LicensedDashboard';
+import {LicensedIntro} from './LicensedIntro';
+import {LicensedServices} from './LicensedServices';
+import '../licensed-landing.css';
 import { canBookJourney, journeyPortalLocked } from '../lib/student-journey';
 import { studentPages, StudentIdentity, StudentSupport, StudentDashboard, StudentJourney, StudentProgress, StudentPackageSummary, StudentUpdates, StudentPayments, StudentMonth } from "./StudentDesign";
 import { Bell, UserRound } from "lucide-react";
@@ -310,8 +313,9 @@ export function CloudStudentPortal() {
     onRequested={async (id) => { setPaymentRequestId(id); await refresh(session.user.id); setTab("Início"); setMessage("Recebemos seu interesse. Acompanhe os próximos passos abaixo."); }} />;
 
   if(session && !recovery && data.student?.active && acceptedUser!==session.user.id)return <TermsGate key={session.user.id} onAccepted={()=>setAcceptedUser(session.user.id)}/>;
+  const showLicensedLanding=licensedSignup&&!session&&!recovery;
   return (
-    <main className="portal-shell student-shell student-redesign min-h-screen bg-slate-50 pb-28 text-slate-900">
+    <main className={`portal-shell student-shell student-redesign min-h-screen bg-slate-50 pb-28 text-slate-900 ${showLicensedLanding?'licensed-landing':''}`}>
       <header className="border-b bg-white">
         <div className="container flex flex-wrap items-center justify-between gap-4 py-5">
           <Brand /><span className="portal-area-title">Área do aluno</span>
@@ -351,17 +355,17 @@ export function CloudStudentPortal() {
         ) : !ready ? (
           <p role="status">Verificando acesso…</p>
         ) : !session || recovery ? (
-          <section className="admin-card mx-auto max-w-md">
-            <p className="eyebrow">{licensedSignup?'AULAS PARA QUEM JÁ TEM CNH':'ÁREA DO ALUNO'}</p>
-            <h1 className="mt-3 text-3xl font-extrabold">
+          <div className={showLicensedLanding?'licensed-signup-layout':''}>
+          {showLicensedLanding&&<LicensedIntro/>}
+          <section id="cadastro-habilitado" className={`admin-card mx-auto max-w-md ${showLicensedLanding?'licensed-form':''}`}>
+            {showLicensedLanding?<><h2>Preencha o cadastro abaixo</h2><p className="licensed-form-note">É gratuito e não gera cobrança.</p></>:<><p className="eyebrow">ÁREA DO ALUNO</p><h1 className="mt-3 text-3xl font-extrabold">
               {recovery
                 ? "Crie sua nova senha"
                 : signup
                   ? licensedSignup ? "Volte a dirigir com confiança" : "Seu primeiro passo começa aqui"
                   : "Bom ter você de volta"}
-            </h1>
+            </h1></>}
             {!recovery && !licensedSignup && <PlanChoice />}
-            {licensedSignup&&!recovery&&<div className="mt-4 space-y-3 text-sm leading-6 text-slate-600"><p>Pratique carro ou moto com orientação individual, no seu ritmo, em Caçapava e região.</p><ul className="list-disc pl-5"><li>Ganhe prática em manobras, estacionamento e trânsito.</li><li>Escolha um pacote de reforço ou aula avulsa disponível.</li><li>Após a confirmação do pagamento, agende pelo seu painel.</li></ul><p className="font-semibold text-green-800">Preencha o cadastro abaixo. É gratuito e não gera cobrança.</p></div>}
             {signup && !recovery && (
               <p className="mt-3 text-sm text-slate-600">
                 Cadastro gratuito. Contrate aulas quando estiver pronto.
@@ -469,6 +473,8 @@ export function CloudStudentPortal() {
               </a>
             </p>
           </section>
+          {showLicensedLanding&&<LicensedServices/>}
+          </div>
         ) : (
           <>
             {!journeyLocked && !isLicensed && <PlanChoice />}
