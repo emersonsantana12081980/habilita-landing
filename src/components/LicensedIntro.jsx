@@ -1,4 +1,5 @@
 import React from 'react';
+import {InstructorCredential} from './InstructorCredential';
 import {CarFront,CalendarDays,Clock3,MapPin} from 'lucide-react';
 
 export function LicensedIntro(){
@@ -14,5 +15,6 @@ export function LicensedIntro(){
    <article><CalendarDays/><h2>Escolha suas aulas</h2><p>Pacotes de reforço ou aulas avulsas disponíveis para você.</p></article>
    <article><Clock3/><h2>Agende pelo painel</h2><p>Após confirmar o pagamento e liberar o saldo, escolha seu horário.</p></article>
   </div>
+  <InstructorCredential/>
  </section>;
 }

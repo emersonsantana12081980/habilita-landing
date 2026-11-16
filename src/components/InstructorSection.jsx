@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { MapPin, MessageCircle } from "lucide-react";
 import { InstructorAvatar } from "./InstructorAvatar";
+import { InstructorCredential } from "./InstructorCredential";
 import { teachesCategory } from "../store-data";
 
 export function InstructorSection({ instructors, city, contact }) {
@@ -115,6 +116,7 @@ export function InstructorSection({ instructors, city, contact }) {
           ))}
         </div>
       )}
+      <InstructorCredential />
       {active.length > 0 && !visible.length && (
         <p className="mt-6 text-sm text-slate-600">
           Nenhum perfil encontrado. Tente outra categoria ou região.
