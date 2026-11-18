@@ -1,3 +1,4 @@
+import {MeetingPoint} from './MeetingPoint';
 import React, { useEffect, useRef, useState } from "react";
 import { CalendarDays, Home, History, LogOut, RefreshCw, Clock, Users, CheckCircle2 } from "lucide-react";
 import { Brand } from "./Brand";
@@ -80,7 +81,7 @@ export default function InstructorPortal() {
       {data && <>{tab === "Início" && <div className="instructor-stats">{[[CalendarDays, upcoming.length, "Aulas agendadas"], [Users, new Set(upcoming.map(l => l.student_id)).size, "Alunos com aulas marcadas"], [CheckCircle2, lessons.filter(l => l.status === "completed").length, "Aulas realizadas"]].map(([Icon, value, label]) => <article key={label}><Icon/><div><strong>{value}</strong><span>{label}</span></div></article>)}</div>}
       {tab !== "Histórico" && <OverviewWeek lessons={lessons} students={students} onLesson={setSelected} onNavigate={(_tab, value) => { setTab("Agenda"); setSelectedDay(value); }}/>}
       <section className="instructor-card"><div className="instructor-heading"><h3>{tab === "Início" ? "Próximas aulas" : tab === "Histórico" ? "Aulas realizadas, faltas e cancelamentos" : "Aulas agendadas"}</h3>{tab === "Agenda" && <label>Filtrar por dia<input type="date" value={selectedDay} onChange={e => setSelectedDay(e.target.value)}/><button onClick={() => setSelectedDay("")}>Todos os dias</button></label>}</div>{list(tab === "Início" ? upcoming.slice(0, 5) : rows)}</section></>}
-      {selected && <section className="instructor-card" role="region" aria-label="Detalhes da aula"><div className="instructor-heading"><h3>Detalhes da aula</h3><button onClick={() => setSelected(null)}>Fechar detalhes</button></div><p><strong>{selected.student_name}</strong></p><p><Clock size={16}/> {date(selected.starts_at)} · {time(selected.starts_at)} às {time(selected.ends_at)}</p><p>{selected.vehicle_name} · Categoria {selected.category}</p><p>{labels[selected.status]}</p></section>}
+      {selected && <section className="instructor-card" role="region" aria-label="Detalhes da aula"><div className="instructor-heading"><h3>Detalhes da aula</h3><button onClick={() => setSelected(null)}>Fechar detalhes</button></div><p><strong>{selected.student_name}</strong></p><p><Clock size={16}/> {date(selected.starts_at)} · {time(selected.starts_at)} às {time(selected.ends_at)}</p><p>{selected.vehicle_name} · Categoria {selected.category}</p><p>{labels[selected.status]}</p><MeetingPoint point={selected.meeting_point}/></section>}
       </main></div>}
     </>}
   </div>;

@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { LessonEditor } from "./LessonEditor";
 import { supabase } from "../lib/supabase";
+import {MeetingPoint} from './MeetingPoint';
 
 export function LessonDialog({
   lesson,
@@ -82,6 +83,7 @@ export function LessonDialog({
           }[lesson.status]
         }
       </p>
+      <MeetingPoint point={lesson.meeting_point}/>
       {error && (
         <p
           role="alert"

@@ -1,5 +1,35 @@
 import { test, expect } from "@playwright/test";
 
+test('pontos de encontro exige escolha e salva local da aula',async({page})=>{
+ await mock(page);let booked=null;
+ const point={id:'point1',name:'Praça de encontro',address:'Rua de teste, 10',maps_url:'https://maps.app.goo.gl/example',instructions:'Entrada principal'};
+ const slot={id:'slot1',starts_at:'2027-01-20T12:00:00Z',ends_at:'2027-01-20T12:50:00Z'};
+ await page.route('**/rest/v1/terms_acceptances*',r=>r.fulfill({json:[{version:'2026-11-07'}]}));
+ await page.route('**/rest/v1/credit_grants*',r=>r.fulfill({json:[{student_id:'student1',lessons_b:2,lessons_a:0}]}));
+ await page.route('**/rest/v1/rpc/available_slots',r=>r.fulfill({json:[slot]}));
+ await page.route('**/rest/v1/rpc/meeting_point_options',r=>r.fulfill({json:[point,{...point,id:'point2',name:'Outro ponto'}]}));
+ await page.route('**/rest/v1/rpc/book_lesson',r=>{booked=r.request().postDataJSON();return r.fulfill({json:'lesson1'});});
+ await page.route('**/rest/v1/lessons*',r=>r.fulfill({json:booked?[{id:'lesson1',student_id:'student1',category:'B',status:'scheduled',...slot,meeting_point:point}]:[]}));
+ await page.goto('/aluno');await page.getByLabel('E-mail',{exact:true}).fill('aluno@example.com');await page.getByLabel('Senha',{exact:true}).fill('senha-teste-123');await page.getByRole('button',{name:'Entrar',exact:true}).click();
+ await page.getByRole('navigation',{name:'Área do aluno'}).getByRole('button',{name:'Agendar aula',exact:true}).click();
+ await page.getByLabel('Dia',{exact:true}).fill('2027-01-20');await page.getByRole('button',{name:/^Escolher /}).click();
+ await expect(page.getByRole('button',{name:'Confirmar agendamento',exact:true})).toBeDisabled();
+ expect(booked).toBeNull();await page.getByLabel('Ponto de encontro',{exact:true}).selectOption('point1');
+ await expect(page.getByRole('link',{name:/Ver no Google Maps/})).toHaveAttribute('href',point.maps_url);
+ await page.getByRole('button',{name:'Confirmar agendamento',exact:true}).click();
+ await expect.poll(()=>booked?.p_point).toBe('point1');
+ await expect(page.getByText('Ponto de encontro: Praça de encontro',{exact:true})).toBeVisible();
+});
+
+test('pontos de encontro admin cadastra período e categoria',async({page})=>{
+ await mock(page,false,true);let saved;
+ await page.route('**/rest/v1/meeting_points*',r=>{if(r.request().method()==='POST'){saved=r.request().postDataJSON();return r.fulfill({json:null});}return r.fulfill({json:saved?[{...saved,id:'point1'}]:[]});});
+ await page.goto('/admin');await page.getByLabel('E-mail administrativo').fill('admin@example.com');await page.getByLabel('Senha',{exact:true}).fill('senha-teste-123');await page.getByRole('button',{name:'Entrar no painel',exact:true}).click();
+ await page.getByRole('button',{name:'Pontos de encontro',exact:true}).click();
+ await page.getByLabel('Nome do ponto').fill('Praça');await page.getByLabel('Endereço e bairro').fill('Rua de teste, Centro');await page.getByLabel('Link do Google Maps').fill('https://maps.app.goo.gl/example');await page.getByLabel('Instrutor',{exact:true}).selectOption('instructor1');
+ await page.getByRole('button',{name:'Salvar ponto',exact:true}).click();await expect.poll(()=>saved?.name).toBe('Praça');expect(saved.category).toBe('B');expect(saved.weekdays).toEqual([1,2,3,4,5]);await expect(page.getByText('Ponto de encontro: Praça',{exact:true})).toBeVisible();
+});
+
 test('habilitados admin salva público do pacote',async({page})=>{
  await mock(page,false,true);let saved;
  await page.route('**/rest/v1/packages*',r=>{

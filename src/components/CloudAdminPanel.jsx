@@ -1,5 +1,7 @@
 import { PortalNavIcon } from "./PortalNavIcon";
 import { SiteSettings } from "./SiteSettings";
+import {MeetingPointManager} from './MeetingPointManager';
+import {MeetingPointPicker} from './MeetingPoint';
 import { AdminOverview } from "./AdminOverview";
 import { StudentRecord } from "./StudentRecord";
 import { AdminManualOrder } from './AdminManualOrder';
@@ -79,6 +81,7 @@ export function CloudAdminPanel() {
     interval: 10,
   });
   const [booking, setBooking] = useState({ student: "", slot: "" });
+  const [bookingPoint,setBookingPoint]=useState('');
   const generation = useRef(0);
   const locked = useRef(false);
   const currentUser = useRef(null);
@@ -384,6 +387,7 @@ export function CloudAdminPanel() {
                 "Alunos",
                 "Pedidos",
                 "Configurar agenda",
+                "Pontos de encontro",
                 "Horários avulsos",
                 "Catálogo",
                 "Instrutores",
@@ -523,6 +527,7 @@ export function CloudAdminPanel() {
                 {tab === "Catálogo" && <CatalogManager />}
                 {tab === "Instrutores" && <CatalogManager initialKind="instructors" instructorsOnly />}
                 {tab === "Configurações do site" && <SiteSettings />}
+                {tab === "Pontos de encontro" && <MeetingPointManager instructors={data.instructors}/>}
                 {tab === "Regras" && <BookingRules />}
                 {tab === "Agenda" && (
                   <div className="mb-5 flex flex-wrap items-end gap-4 rounded-2xl border bg-white p-4">
@@ -837,6 +842,7 @@ export function CloudAdminPanel() {
                             supabase.rpc("book_lesson", {
                               p_student: booking.student,
                               p_slot: booking.slot,
+                              p_point: bookingPoint,
                             }),
                           "Aula agendada com o crédito do aluno.",
                         );
@@ -886,7 +892,8 @@ export function CloudAdminPanel() {
                         A confirmação depende de crédito disponível da
                         categoria.
                       </p>
-                      <button className="btn btn-green">
+                      <MeetingPointPicker slot={booking.slot} value={bookingPoint} onChange={setBookingPoint}/>
+                      <button className="btn btn-green" disabled={!bookingPoint}>
                         Confirmar agendamento
                       </button>
                     </form>

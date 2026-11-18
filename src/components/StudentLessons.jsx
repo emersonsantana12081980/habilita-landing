@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import {MeetingPoint} from './MeetingPoint';
 import { Car, Bike, Clock3 } from "lucide-react";
 
 export function StudentLessons({ lessons, busy, onCancel, initialFilter = "Próximas", hideFilters = false }) {
@@ -87,6 +88,7 @@ export function StudentLessons({ lessons, busy, onCancel, initialFilter = "Próx
                   })}{" "}
                   · Categoria {l.category} · {d.getFullYear()}
                 </p>
+                <MeetingPoint point={l.meeting_point}/>
                 {upcoming(l) && (
                   <button
                     disabled={busy}

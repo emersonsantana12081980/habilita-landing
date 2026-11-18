@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { supabase } from "../lib/supabase";
+import {MeetingPointPicker} from './MeetingPoint';
 const localDay = (v) =>
   new Intl.DateTimeFormat("en-CA", { timeZone: "America/Sao_Paulo" }).format(
     new Date(v),
@@ -17,6 +18,7 @@ export function LessonEditor({
   onClose,
   onSaved,
 }) {
+  const [point,setPoint]=useState('');
   const [day, setDay] = useState(localDay(lesson.starts_at)),
     [slots, setSlots] = useState([]),
     [selected, setSelected] = useState(""),
@@ -70,6 +72,7 @@ export function LessonEditor({
           const { error } = await supabase.rpc("reschedule_lesson", {
             p_lesson: lesson.id,
             p_slot: selected,
+            p_point: point,
           });
           if (error) throw error;
           const next = slots.find((s) => s.id === selected);
@@ -122,6 +125,7 @@ export function LessonEditor({
           </select>
         </label>
       </fieldset>
+      <MeetingPointPicker slot={selected} value={point} onChange={setPoint}/>
       {loading && (
         <p role="status" className="mt-3">
           Buscando horários…
@@ -139,7 +143,7 @@ export function LessonEditor({
       )}
       <div className="mt-4 flex flex-wrap gap-3">
         <button
-          disabled={busy || loading || !selected}
+          disabled={busy || loading || !selected || !point}
           className="btn btn-green"
         >
           Salvar alteração

@@ -1,4 +1,5 @@
 import { StudentLicenseChoice } from './StudentLicenseChoice';
+import {MeetingPointPicker} from './MeetingPoint';
 import {TermsGate,TERMS_VERSION} from './TermsGate';
 import {LicensedDashboard,licensedPages} from './LicensedDashboard';
 import {LicensedIntro} from './LicensedIntro';
@@ -64,6 +65,7 @@ export function CloudStudentPortal() {
   const requestedPackage =
     new URLSearchParams(location.search).get("pacote") || "";
   const licensedSignup = location.pathname.replace(/\/$/, "") === '/habilitados';
+  const [meetingSlot,setMeetingSlot]=useState(null),[meetingPoint,setMeetingPoint]=useState('');
   const signup = licensedSignup || location.pathname.replace(/\/$/, "") === "/cadastro";
   const [session, setSession] = useState(null);
   const [acceptedUser,setAcceptedUser]=useState(null);
@@ -92,6 +94,7 @@ export function CloudStudentPortal() {
   const tab = isLicensed&&!licensedPages.includes(selectedTab)?'Início':journeyLocked && !['Comprar aulas','Meu perfil'].includes(selectedTab) ? "Minha jornada CNH" : selectedTab;
   const [day, setDay] = useState("");
   const [category, setCategory] = useState("B");
+  useEffect(()=>{setMeetingSlot(null);setMeetingPoint('');},[category,day]);
   const [paymentRequestId, setPaymentRequestId] = useState(null);
   const [slots, setSlots] = useState(null);
   const [slotLoading, setSlotLoading] = useState(false);
@@ -144,7 +147,7 @@ export function CloudStudentPortal() {
         supabase.from("credit_grants").select("student_id,lessons_a,lessons_b"),
         supabase
           .from("lessons")
-          .select("id,student_id,category,starts_at,ends_at,status")
+          .select("id,student_id,category,starts_at,ends_at,status,meeting_point")
           .order("starts_at"),
         supabase
           .from("package_requests")
@@ -667,25 +670,15 @@ export function CloudStudentPortal() {
                               available(category) <= 0 ||
                               !data.student.category.includes(category)
                             }
-                            onClick={() =>
-                              action(async () => {
-                                const { error } = await supabase.rpc(
-                                  "book_lesson",
-                                  { p_student: data.student.id, p_slot: s.id },
-                                );
-                                setSlots(null);
-                                if (error) throw error;
-                                await refresh(session.user.id);
-                                setTab("Minha agenda");
-                                setMessage(
-                                  "Aula agendada. A equipe recebeu o aviso no banco.",
-                                );
-                              })
-                            }
+                            onClick={() => {setMeetingPoint('');setMeetingSlot(s);}}
                           >
-                            Agendar {date(s.starts_at)}
+                            Escolher {date(s.starts_at)}
                           </button>
                         ))}
+                        {meetingSlot&&<div className="w-full rounded-xl border p-4"><h3 className="font-bold">Confirmar aula de {category==='A'?'moto':'carro'} · {date(meetingSlot.starts_at)}</h3><MeetingPointPicker key={meetingSlot.id} slot={meetingSlot.id} value={meetingPoint} onChange={setMeetingPoint}/><button className="btn btn-green" disabled={busy||!meetingPoint||!canUse||!canBookJourney(data.student,category)||available(category)<=0} onClick={()=>action(async()=>{
+                          const {error}=await supabase.rpc('book_lesson',{p_student:data.student.id,p_slot:meetingSlot.id,p_point:meetingPoint});
+                          if(error)throw error;setMeetingSlot(null);setMeetingPoint('');setSlots(null);await refresh(session.user.id);setTab('Minha agenda');setMessage('Aula agendada com o ponto de encontro escolhido.');
+                        })}>Confirmar agendamento</button></div>}
                       </div>
                     )}
                   </div>
