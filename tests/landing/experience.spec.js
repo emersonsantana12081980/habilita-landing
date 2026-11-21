@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-test('landing destaca somente um básico por categoria e leva filtros ao portal',async({page})=>{
+test('landing destaca somente um básico por categoria e leva filtros ao portal',async({page},testInfo)=>{
  const packages=[
   {id:'b',name:'Carro básico',category:'B',experience_level:'experiencia',price_cents:29900},
   {id:'a',name:'Moto básico',category:'A',experience_level:'experiencia',price_cents:25990},
@@ -11,6 +11,14 @@ test('landing destaca somente um básico por categoria e leva filtros ao portal'
  packages.push({id:'licensed',name:'Reforço habilitado',category:'B',audience:'licensed',experience_level:'experiencia',active:true,price_cents:10000,lessons_b:2,lessons_a:0});
  await page.route('https://test.supabase.co/**',r=>r.fulfill({json:new URL(r.request().url()).pathname.endsWith('/packages')?packages:[]}));
  await page.goto('/');const section=page.locator('#pacotes');
+ await expect(page.getByRole('heading',{level:1})).toContainText('Suas aulas começam no celular');
+ await expect(page.getByRole('link',{name:/Quero aulas para habilitados/})).toHaveAttribute('href','/habilitados');
+ for(const file of ['ENCONTRO','MULHER','EMERSON']){
+   const photo=page.locator(`img[src="/images/${file}%20.png"]`);
+   await photo.scrollIntoViewIfNeeded();
+   await expect.poll(()=>photo.evaluate(img=>img.complete&&img.naturalWidth>0)).toBe(true);
+ }
+ await expect(section.getByRole('button',{name:'Tenho interesse neste pacote'})).toHaveCount(3);
  await expect(section.locator('article')).toHaveCount(3);
  await expect(section.getByText(/Aula avulsa/)).toHaveCount(0);
  await expect(section.getByText('Reforço habilitado',{exact:true})).toHaveCount(0);
@@ -20,6 +28,8 @@ test('landing destaca somente um básico por categoria e leva filtros ao portal'
  await expect(section.getByText('Carro revisão maior',{exact:true})).toHaveCount(0);
  await expect(section.getByRole('link',{name:'Ver pacotes por experiência',exact:true})).toHaveAttribute('href','/aluno?catalogo=1');
  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBeTruthy();
+ await page.evaluate(()=>window.scrollTo(0,0));
+ await page.screenshot({path:testInfo.outputPath('landing.png'),fullPage:true});
  await section.getByRole('link',{name:'Ver pacotes por experiência',exact:true}).click();
  await expect(page).toHaveURL(/\/aluno\?catalogo=1$/);
 });

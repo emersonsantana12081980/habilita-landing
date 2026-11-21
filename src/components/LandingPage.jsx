@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
+import '../conversion-landing.css';
 import {
   ArrowUpRight,
   Check,
@@ -124,7 +125,7 @@ export function LandingPage({ data, error }) {
         )}
       </header>
       <main id="conteudo">
-        <section className="hero reference-hero">
+        <section className="hero reference-hero conversion-hero">
           <div className="container grid items-center gap-10 py-10 md:py-16 lg:grid-cols-[1.1fr_1fr] lg:py-20">
             <div>
               <p className="inline-flex items-center gap-2 rounded-full bg-yellow-100 px-3 py-2 text-xs font-bold text-yellow-950">
@@ -132,21 +133,20 @@ export function LandingPage({ data, error }) {
                 Aulas práticas em {data.city} e região
               </p>
               <h1 className="mt-6 text-[clamp(2.1rem,4vw,3.5rem)] font-extrabold leading-[1.08] tracking-[-.04em]">
-                Sua CNH com segurança{" "}
+                Suas aulas começam no celular.{" "}
                 <span className="text-green-700">
-                  e confiança.
+                  A prática, no ponto combinado.
                 </span>
               </h1>
               <p className="mt-5 max-w-xl text-base leading-7 text-slate-600">
-                Carro, moto ou os dois. Combine seus horários e pratique com
-                orientação próxima de um instrutor autônomo.
+                Aulas práticas de carro e moto em Caçapava. Para sua primeira CNH ou para voltar a dirigir, com orientação direta do instrutor.
               </p>
               <ul className="mt-5 grid gap-3 text-sm text-slate-700 sm:grid-cols-2">
                 {[
                   "Categorias A, B e A/B",
                   "Aulas práticas personalizadas",
                   "Veículo para exame conforme pacote",
-                  "Cadastro gratuito, sem compromisso",
+                  "Pontos de encontro com localização no Maps",
                 ].map((t) => (
                   <li key={t} className="flex items-start gap-2">
                     <Check
@@ -159,11 +159,9 @@ export function LandingPage({ data, error }) {
                 ))}
               </ul>
               <div className="mt-7 flex flex-wrap gap-3">
-                <a className="btn btn-green min-h-13 w-full sm:w-auto"
-                  ref={heroButton}
-                  href="/cadastro" onClick={() => trackLanding("signup_start", { source: "hero" })}>
-            Cadastre-se grátis <ArrowUpRight size={18} aria-hidden="true" />
-          </a>
+                <button className="btn btn-green min-h-13 w-full sm:w-auto" ref={heroButton} onClick={() => contact(undefined, "hero_whatsapp_click")}>
+                  Consultar horários e valores <MessageCircle size={18} aria-hidden="true"/>
+                </button>
                 <a href="#pacotes" className="btn btn-outline w-full sm:w-auto">
                   Ver pacotes e valores
                 </a>
@@ -175,26 +173,24 @@ export function LandingPage({ data, error }) {
             </div>
             <figure className="overflow-hidden rounded-3xl bg-[#0e213b] shadow-xl shadow-slate-900/10">
               <img
-                src="/images/hero-960.webp"
-                srcSet="/images/hero-640.webp 640w, /images/hero-960.webp 960w"
-                sizes="(min-width: 1024px) 520px, calc(100vw - 40px)"
-                width="960"
-                height="382"
+                src="/images/ENCONTRO%20.png"
+                width="1672"
+                height="941"
                 fetchPriority="high"
-                alt="Fiat Mobi prata com a identidade visual HABILITA+"
-                className="aspect-[2.51/1] w-full object-cover"
+                alt="Cena ilustrativa do instrutor recebendo uma aluna junto ao veículo Habilita+"
+                className="aspect-[16/10] w-full object-cover object-right"
               />
               <figcaption className="p-6 text-white sm:p-8">
                 <p className="text-xs font-bold uppercase tracking-widest text-green-300">
                   NO SEU RITMO, COM ORIENTAÇÃO
                 </p>
                 <p className="mt-3 text-2xl font-semibold leading-tight">
-                  Sua próxima aula começa com uma boa conversa.
+                  Seu instrutor encontra você no ponto escolhido.
                 </p>
                 <p className="mt-3 text-sm leading-6 text-slate-300">
-                  Conte o que você precisa praticar. Vamos entender seu objetivo
-                  e os próximos passos.
+                  Escolha entre os locais disponíveis para seu horário. Consulte o endereço e a localização antes da aula.
                 </p>
+                <p className="mt-3 text-xs text-slate-300">Imagem ilustrativa.</p>
               </figcaption>
             </figure>
           </div>
@@ -224,12 +220,35 @@ export function LandingPage({ data, error }) {
             ))}
           </div>
         </section>
-        <section className="container lesson-paths section-space" aria-label="Aulas para cada objetivo">
-          <p className="eyebrow">DO PRIMEIRO PASSO À CONFIANÇA</p>
-          <h2>Aulas para o seu momento.</h2>
-          <p className="section-subtitle">Escolha seu objetivo. A Habilita Mais ajuda você a seguir em frente.</p>
-          <div className="lesson-path-grid">
-            {[["01", "Primeira habilitação", "Comece suas aulas práticas de carro, moto ou ambos.", "A, B ou A/B"], ["02", "Voltar a dirigir", "Retome a prática e ganhe confiança no seu ritmo.", "Acompanhamento"], ["03", "Preparação para o exame", "Pratique os exercícios e tire suas dúvidas com o instrutor.", "Foco na prática"], ["04", "Aulas personalizadas", "Converse com a equipe sobre o que você precisa desenvolver.", "Seu objetivo"]].map(([number, title, text, tag]) => <a key={number} href="#pacotes" className="lesson-path"><span className="lesson-path-number">{number}</span><span className="lesson-path-tag">{tag}</span><h3>{title}</h3><p>{text}</p><span className="lesson-path-link">Conhecer opções <ArrowUpRight size={18}/></span></a>)}
+        <section className="container section-space" aria-label="Aulas para cada objetivo">
+          <p className="eyebrow">QUAL É O SEU MOMENTO?</p>
+          <h2>Um caminho para cada objetivo.</h2>
+          <div className="mt-7 grid gap-5 md:grid-cols-2">
+            <a href="#pacotes" className="rounded-2xl border border-slate-200 bg-white p-7 shadow-sm hover:border-green-600">
+              <span className="eyebrow">PRIMEIRA HABILITAÇÃO</span><h3 className="mt-3 text-2xl font-bold">Comece suas aulas práticas.</h3>
+              <p className="my-4 leading-7 text-slate-600">Carro, moto ou os dois. Compare os pacotes e acompanhe as etapas da sua jornada no painel.</p>
+              <span className="font-bold text-green-800">Ver pacotes para primeira CNH →</span>
+            </a>
+            <a href="/habilitados" className="rounded-2xl bg-[#0e213b] p-7 text-white shadow-sm">
+              <span className="eyebrow text-green-300!">JÁ TENHO CNH</span><h3 className="mt-3 text-2xl font-bold">Volte a dirigir com confiança.</h3>
+              <p className="my-4 leading-7 text-slate-300">Reforce manobras, estacionamento e os trajetos do dia a dia, no seu ritmo.</p>
+              <span className="font-bold text-yellow-300">Quero aulas para habilitados →</span>
+            </a>
+          </div>
+        </section>
+        <PublicPackages commercialInfo={commercialInfo} packages={data.packages} contact={contact} />
+        <section className="container section-space" aria-labelledby="online-title">
+          <div className="grid items-center gap-8 lg:grid-cols-2">
+            <figure className="overflow-hidden rounded-3xl bg-slate-50">
+              <img src="/images/MULHER%20.png" width="1672" height="941" loading="lazy" decoding="async" alt="Imagem ilustrativa de uma mulher usando o celular no sofá" className="aspect-video w-full object-cover object-right"/>
+              <figcaption className="p-3 text-xs text-slate-500">Imagem ilustrativa.</figcaption>
+            </figure>
+            <div><p className="eyebrow">MAIS FACILIDADE NO SEU DIA</p><h2 id="online-title">Agende suas aulas sem sair de casa.</h2>
+              <p className="mt-4 leading-7 text-slate-600">Pelo seu painel, consulte os horários, escolha o ponto de encontro e acompanhe suas próximas aulas. O agendamento fica disponível após a liberação do saldo e dos requisitos da sua categoria.</p>
+              <ul className="my-5 space-y-3 text-sm text-slate-700"><li>✓ Aulas, saldo e pagamentos em um só lugar.</li><li>✓ Endereço e Google Maps do ponto escolhido.</li><li>✓ Jornada com orientações para a primeira habilitação.</li></ul>
+              <a href="/cadastro" className="btn btn-green" onClick={()=>trackLanding("signup_start",{source:"online_benefit"})}>Criar conta gratuita</a>
+              <p className="mt-3 text-sm text-slate-500">Cadastro não gera cobrança nem libera créditos automaticamente.</p>
+            </div>
           </div>
         </section>
         <section id="como-funciona" className="container section-space journey-section">
@@ -271,7 +290,7 @@ export function LandingPage({ data, error }) {
             {error}
           </p>
         )}
-        <PublicPackages commercialInfo={commercialInfo} packages={data.packages} contact={contact} />
+
         <section id="condicoes" className="container section-space">
           <p className="eyebrow">CLAREZA ANTES DE CONTRATAR</p>
           <h2>Entenda exatamente o que você está contratando.</h2>
@@ -359,19 +378,6 @@ export function LandingPage({ data, error }) {
           }
         />
         <Testimonials testimonials={data.testimonials} />
-        {!data.testimonials.some((t) => t.active && t.authorized) && (
-          <section id="prova-social" className="container pb-16">
-            <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-6">
-              <p className="eyebrow">EXPERIÊNCIAS REAIS</p>
-              <h2 className="text-2xl!">Relatos de alunos, com autorização.</h2>
-              <p className="mt-3 text-sm leading-6 text-slate-600">
-                Espaço reservado para depoimentos reais e autorizados. Ainda não
-                há avaliações publicadas aqui. Conheça o perfil do instrutor e
-                tire suas dúvidas antes de contratar.
-              </p>
-            </div>
-          </section>
-        )}
         <section
           id="duvidas"
           className="container section-space border-t border-slate-100"
@@ -435,9 +441,8 @@ export function LandingPage({ data, error }) {
               aulas para recuperar a confiança. Um instrutor poderá orientar
               você sobre o pacote mais adequado.
             </p>
-            <a className="btn btn-green mt-7" href="/cadastro" onClick={() => trackLanding("signup_start", { source: "final" })}>
-              Cadastre-se grátis <ArrowUpRight size={18} aria-hidden="true" />
-            </a>
+            <button className="btn btn-green mt-7" onClick={()=>contact(undefined,"final_whatsapp_click")}>Consultar horários e valores no WhatsApp</button>
+            <a className="mt-4 block py-2 text-sm text-white underline" href="/cadastro">Prefiro criar minha conta gratuita</a>
           </div>
         </section>
       </main>
@@ -524,10 +529,9 @@ export function LandingPage({ data, error }) {
       <div
         className={`mobile-contact-bar sm:hidden ${showMobileContact ? "" : "hidden"}`}
       >
-        <a className="btn btn-green w-full"
-          href="/cadastro" onClick={() => trackLanding("signup_start", { source: "mobile" })}>
-            Cadastre-se grátis <ArrowUpRight size={18} aria-hidden="true" />
-          </a>
+        <button className="btn btn-green w-full" onClick={()=>contact(undefined,"mobile_whatsapp_click")}>
+          <MessageCircle size={18} aria-hidden="true"/> Consultar horários e valores
+        </button>
       </div>
       {notice && (
         <div

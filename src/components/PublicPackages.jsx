@@ -147,9 +147,8 @@ function PublicPackage({ pack, contact, commercialInfo }) {
           </p>
         </div>
       </details>
-      <a className="btn btn-green mt-auto w-full" href={`/cadastro?pacote=${encodeURIComponent(pack.id)}`} onClick={() => trackLanding("signup_start", { source: "package", category: pack.category, package_id: pack.id })}>
-        Cadastre-se grátis
-      </a>
+      <button className="btn btn-green mt-auto w-full" onClick={()=>contact(`Olá! Tenho interesse no ${pack.name}, categoria ${category}. Gostaria de confirmar os valores, horários e pontos de encontro.`,"package_whatsapp_click",{package_id:pack.id,category:pack.category})}>Tenho interesse neste pacote</button>
+      <a className="mt-3 py-3 text-center text-sm font-semibold text-green-800 underline" href={`/cadastro?pacote=${encodeURIComponent(pack.id)}`} onClick={() => trackLanding("signup_start", { source: "package", category: pack.category, package_id: pack.id })}>Criar conta gratuita</a>
       <p className="mt-2 text-center text-xs text-slate-500">Criar sua conta não gera cobrança.</p>
       <a className="mt-3 min-h-11 py-3 text-center text-sm font-semibold text-green-800 underline underline-offset-4" href={`/aluno?pacote=${encodeURIComponent(pack.id)}`}>Tem cupom? Aplique na área do aluno</a>
     </article>

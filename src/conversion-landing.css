@@ -1,0 +1,10 @@
+.public-landing .conversion-hero > .container {display:grid;min-height:auto;gap:36px;}
+.public-landing .conversion-hero > .container > div {width:auto;}
+.public-landing .conversion-hero h1 {font-size:clamp(2.2rem,3.7vw,3.5rem);}
+.public-landing .conversion-hero figure {position:relative;inset:auto;width:100%;border-radius:24px;border:1px solid #ffffff26;}
+.public-landing .conversion-hero figure::after {display:none;}
+.public-landing .conversion-hero figure img {height:auto;width:100%;min-height:0;aspect-ratio:16/10;object-position:right center;opacity:1;}
+.public-landing .conversion-hero figcaption {position:static;max-width:none;background:#132c46;border-radius:0;padding:24px;}
+.public-landing .conversion-hero .btn-outline {color:#fff;background:transparent;border-color:#ffffff80;}
+.public-landing .conversion-hero .btn-outline:hover {background:#ffffff12;}
+@media(max-width:639px){.public-landing .conversion-hero > .container {padding-top:32px;padding-bottom:32px;gap:24px;}.public-landing .conversion-hero figcaption {padding:18px;}}

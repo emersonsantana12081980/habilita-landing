@@ -116,7 +116,10 @@ export function InstructorSection({ instructors, city, contact }) {
           ))}
         </div>
       )}
-      <InstructorCredential />
+      <div className="mt-8 grid overflow-hidden rounded-3xl border border-slate-200 bg-slate-50 md:grid-cols-[.65fr_1fr]">
+        <img src="/images/EMERSON%20.png" width="1086" height="1448" loading="lazy" decoding="async" alt="Emerson Coelho de Santana, instrutor da Habilita+, dentro do carro" className="max-h-[480px] w-full object-cover object-top"/>
+        <div className="p-6 sm:p-8"><p className="eyebrow">CONHEÇA SEU INSTRUTOR</p><h3 className="mt-3 text-2xl font-bold">Emerson Coelho de Santana</h3><p className="mt-4 leading-7 text-slate-600">Converse diretamente sobre sua experiência, a categoria desejada e os horários em que pode praticar. Consulte também a credencial e o portal oficial da Senatran.</p><InstructorCredential/></div>
+      </div>
       {active.length > 0 && !visible.length && (
         <p className="mt-6 text-sm text-slate-600">
           Nenhum perfil encontrado. Tente outra categoria ou região.

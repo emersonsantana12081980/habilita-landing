@@ -73,7 +73,7 @@ export const faqItems = [
     "Onde as aulas são realizadas?",
     (info = commercialInfo) =>
       info.lessonLocation ||
-      "O local e o ponto de encontro precisam ser combinados com o instrutor. Confirme essas informações antes da aula.",
+    "Ao agendar pelo painel, escolha entre os pontos disponíveis para o horário e a categoria. O endereço e o link do Google Maps aparecem nos detalhes da aula. Consulte a equipe sobre os locais atendidos no seu bairro.",
   ],
   [
     "Atendem cidades além de Caçapava?",
