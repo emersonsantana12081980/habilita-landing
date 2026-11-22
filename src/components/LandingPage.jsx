@@ -12,6 +12,7 @@ import {
   ShieldCheck,
   X,
 } from "lucide-react";
+import { MeetingBenefits } from "./MeetingBenefits";
 import { Brand } from "./Brand";
 import { PublicPackages } from "./PublicPackages";
 import { InstructorSection } from "./InstructorSection";
@@ -186,20 +187,11 @@ export function LandingPage({ data, error }) {
                 <button type="button" onClick={() => setHeroVideo(v => !v)}>{heroVideo ? "Parar vídeo" : "Reproduzir vídeo"}</button>
                 <a href="https://www.youtube.com/shorts/l_OCd2l2e6E" target="_blank" rel="noopener noreferrer">Assistir no YouTube ↗</a>
               </div>
-              <figcaption className="p-6 text-white sm:p-8">
-                <p className="text-xs font-bold uppercase tracking-widest text-green-300">
-                  NO SEU RITMO, COM ORIENTAÇÃO
-                </p>
-                <p className="mt-3 text-2xl font-semibold leading-tight">
-                  Seu instrutor encontra você no ponto escolhido.
-                </p>
-                <p className="mt-3 text-sm leading-6 text-slate-300">
-                  Escolha entre os locais disponíveis para seu horário. Consulte o endereço e a localização antes da aula.
-                </p>
-              </figcaption>
+
             </figure>
           </div>
         </section>
+        <MeetingBenefits />
         <section
           aria-label="Sobre o atendimento"
           className="landing-benefits border-y border-slate-200"
@@ -242,20 +234,6 @@ export function LandingPage({ data, error }) {
           </div>
         </section>
         <PublicPackages commercialInfo={commercialInfo} packages={data.packages} contact={contact} />
-        <section className="container section-space" aria-labelledby="online-title">
-          <div className="grid items-center gap-8 lg:grid-cols-2">
-            <figure className="overflow-hidden rounded-3xl bg-slate-50">
-              <img src="/images/MULHER%20.png" width="1672" height="941" loading="lazy" decoding="async" alt="Imagem ilustrativa de uma mulher usando o celular no sofá" className="aspect-video w-full object-cover object-right"/>
-              <figcaption className="p-3 text-xs text-slate-500">Imagem ilustrativa.</figcaption>
-            </figure>
-            <div><p className="eyebrow">MAIS FACILIDADE NO SEU DIA</p><h2 id="online-title">Agende suas aulas sem sair de casa.</h2>
-              <p className="mt-4 leading-7 text-slate-600">Pelo seu painel, consulte os horários, escolha o ponto de encontro e acompanhe suas próximas aulas. O agendamento fica disponível após a liberação do saldo e dos requisitos da sua categoria.</p>
-              <ul className="my-5 space-y-3 text-sm text-slate-700"><li>✓ Aulas, saldo e pagamentos em um só lugar.</li><li>✓ Endereço e Google Maps do ponto escolhido.</li><li>✓ Jornada com orientações para a primeira habilitação.</li></ul>
-              <a href="/cadastro" className="btn btn-green" onClick={()=>trackLanding("signup_start",{source:"online_benefit"})}>Criar conta gratuita</a>
-              <p className="mt-3 text-sm text-slate-500">Cadastro não gera cobrança nem libera créditos automaticamente.</p>
-            </div>
-          </div>
-        </section>
         <section id="como-funciona" className="container section-space journey-section">
           <p className="eyebrow">DA CONVERSA À PRÁTICA</p>
           <h2>Três passos, sem complicação.</h2>

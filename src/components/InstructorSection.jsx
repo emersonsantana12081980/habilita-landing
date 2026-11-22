@@ -8,6 +8,7 @@ export function InstructorSection({ instructors, city, contact }) {
   const [category, setCategory] = useState("");
   const [region, setRegion] = useState("");
   const active = instructors.filter((i) => i.active);
+  const isEmerson = (i) => i.slug === "emerson-santana" || /emerson/i.test(i.name || "");
   const regions = [...new Set(active.map((i) => i.city || city))];
   const visible = active.filter(
     (i) =>
@@ -73,14 +74,14 @@ export function InstructorSection({ instructors, city, contact }) {
         </p>
       ) : (
         <div
-          className={`mt-8 grid gap-5 ${active.length > 1 ? "md:grid-cols-2" : "max-w-3xl"}`}
+          className={`mt-8 grid gap-5 ${active.length > 1 ? "md:grid-cols-2" : ""}`}
         >
           {visible.map((i) => (
             <article
               key={i.id}
               className="flex flex-col items-start gap-5 rounded-2xl border border-slate-200 bg-white p-6 sm:flex-row sm:p-8"
             >
-              <InstructorAvatar instructor={i} large />
+              {isEmerson(i) ? <img src="/images/EMERSON%20.png" width="1086" height="1448" loading="lazy" alt="Emerson, instrutor da Habilita+" className="w-full rounded-xl object-cover object-top sm:w-64 max-h-[420px]" /> : <InstructorAvatar instructor={i} large />}
               <div className="min-w-0 flex-1">
                 <span className="text-xs font-bold text-green-800">
                   CATEGORIA {i.category.replace("+", "/")}
@@ -111,15 +112,12 @@ export function InstructorSection({ instructors, city, contact }) {
                   <MessageCircle size={17} aria-hidden="true" />
                   Falar com este instrutor
                 </button>
+                {isEmerson(i) && <InstructorCredential />}
               </div>
             </article>
           ))}
         </div>
       )}
-      <div className="mt-8 grid overflow-hidden rounded-3xl border border-slate-200 bg-slate-50 md:grid-cols-[.65fr_1fr]">
-        <img src="/images/EMERSON%20.png" width="1086" height="1448" loading="lazy" decoding="async" alt="Emerson Coelho de Santana, instrutor da Habilita+, dentro do carro" className="max-h-[480px] w-full object-cover object-top"/>
-        <div className="p-6 sm:p-8"><p className="eyebrow">CONHEÇA SEU INSTRUTOR</p><h3 className="mt-3 text-2xl font-bold">Emerson Coelho de Santana</h3><p className="mt-4 leading-7 text-slate-600">Converse diretamente sobre sua experiência, a categoria desejada e os horários em que pode praticar. Consulte também a credencial e o portal oficial da Senatran.</p><InstructorCredential/></div>
-      </div>
       {active.length > 0 && !visible.length && (
         <p className="mt-6 text-sm text-slate-600">
           Nenhum perfil encontrado. Tente outra categoria ou região.
