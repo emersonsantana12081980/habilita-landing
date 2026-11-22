@@ -15,3 +15,9 @@
 .public-landing .conversion-hero .btn-outline:hover {background:#ffffff12;}
 @media(min-width:1100px){.public-landing .conversion-hero::before {content:"";position:absolute;inset:0;background:radial-gradient(ellipse at 85% 40%,#1d4966 0%,#0e213b 65%);pointer-events:none;}}
 @media(max-width:767px){.public-landing .conversion-hero > .container {grid-template-columns:1fr;min-height:auto;padding-top:32px;padding-bottom:32px;gap:28px;}.hero-video-frame {width:min(100%,270px);height:auto;aspect-ratio:9/16;}.public-landing .conversion-hero figcaption {text-align:center;}}
+
+/* Carro integrado ao azul, abaixo do conteudo e do video. */
+.public-landing .conversion-hero {isolation:isolate;}
+.public-landing .conversion-hero::before {content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(90deg,#0e213bf5 0%,#0e213bdb 35%,#0e213b66 70%,#0e213b80 100%),linear-gradient(0deg,#0e213b 0%,transparent 35%),url('/images/hero-960.webp') center center/cover no-repeat;pointer-events:none;}
+.hero-video-frame {box-shadow:0 18px 65px #0008;outline:1px solid #ffffff30;}
+@media(max-width:767px){.public-landing .conversion-hero::before {background:linear-gradient(180deg,#0e213bf2 0%,#0e213bd9 35%,#0e213b66 65%,#0e213bf5 100%),url('/images/hero-960.webp') center 70%/auto 70% no-repeat;}}
