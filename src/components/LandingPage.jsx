@@ -28,6 +28,7 @@ const navigation = [
 ];
 export function LandingPage({ data, error }) {
   const commercialInfo = { ...defaults, ...data.commercialInfo, packages: defaults.packages };
+  const [heroVideo, setHeroVideo] = useState(() => !window.matchMedia("(prefers-reduced-motion: reduce)").matches);
   const [menu, setMenu] = useState(false),
     [notice, setNotice] = useState("");
   const menuButton = useRef(null);
@@ -171,15 +172,20 @@ export function LandingPage({ data, error }) {
                 ser confirmadas separadamente antes da contratação.
               </p>
             </div>
-            <figure className="overflow-hidden rounded-3xl bg-[#0e213b] shadow-xl shadow-slate-900/10">
-              <img
-                src="/images/ENCONTRO%20.png"
-                width="1672"
-                height="941"
-                fetchPriority="high"
-                alt="Cena ilustrativa do instrutor recebendo uma aluna junto ao veículo Habilita+"
-                className="aspect-[16/10] w-full object-cover object-right"
-              />
+            <figure className="hero-video-scene">
+              <div className="hero-video-frame">
+                {heroVideo && <iframe
+                  src="https://www.youtube-nocookie.com/embed/l_OCd2l2e6E?autoplay=1&mute=1&loop=1&playlist=l_OCd2l2e6E&playsinline=1&controls=1&rel=0"
+                  title="Habilita+ — conheça nossas aulas"
+                  allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
+                  allowFullScreen
+                  referrerPolicy="strict-origin-when-cross-origin"
+                />}
+              </div>
+              <div className="hero-video-actions">
+                <button type="button" onClick={() => setHeroVideo(v => !v)}>{heroVideo ? "Parar vídeo" : "Reproduzir vídeo"}</button>
+                <a href="https://www.youtube.com/shorts/l_OCd2l2e6E" target="_blank" rel="noopener noreferrer">Assistir no YouTube ↗</a>
+              </div>
               <figcaption className="p-6 text-white sm:p-8">
                 <p className="text-xs font-bold uppercase tracking-widest text-green-300">
                   NO SEU RITMO, COM ORIENTAÇÃO
@@ -190,7 +196,6 @@ export function LandingPage({ data, error }) {
                 <p className="mt-3 text-sm leading-6 text-slate-300">
                   Escolha entre os locais disponíveis para seu horário. Consulte o endereço e a localização antes da aula.
                 </p>
-                <p className="mt-3 text-xs text-slate-300">Imagem ilustrativa.</p>
               </figcaption>
             </figure>
           </div>

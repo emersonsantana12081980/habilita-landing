@@ -13,7 +13,11 @@ test('landing destaca somente um básico por categoria e leva filtros ao portal'
  await page.goto('/');const section=page.locator('#pacotes');
  await expect(page.getByRole('heading',{level:1})).toContainText('Suas aulas começam no celular');
  await expect(page.getByRole('link',{name:/Quero aulas para habilitados/})).toHaveAttribute('href','/habilitados');
- for(const file of ['ENCONTRO','MULHER','EMERSON']){
+ await expect(page.locator('.hero-video-frame iframe')).toHaveAttribute('src',/embed\/l_OCd2l2e6E/);
+ await page.getByRole('button',{name:'Parar vídeo',exact:true}).click();
+ await expect(page.locator('.hero-video-frame iframe')).toHaveCount(0);
+ await page.getByRole('button',{name:'Reproduzir vídeo',exact:true}).click();
+ for(const file of ['MULHER','EMERSON']){
    const photo=page.locator(`img[src="/images/${file}%20.png"]`);
    await photo.scrollIntoViewIfNeeded();
    await expect.poll(()=>photo.evaluate(img=>img.complete&&img.naturalWidth>0)).toBe(true);
