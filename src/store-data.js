@@ -108,6 +108,7 @@ export function normalizeState(value) {
       .map((i) => ({
         id: i.id,
         name: i.name.trim(),
+        slug: typeof i.slug === "string" ? i.slug : "",
         category: i.category,
         city: typeof i.city === "string" ? i.city : "",
         bio: typeof i.bio === "string" ? i.bio : "",

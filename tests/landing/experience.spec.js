@@ -19,6 +19,11 @@ test('landing destaca somente um básico por categoria e leva filtros ao portal'
  await page.getByRole('button',{name:'Reproduzir vídeo',exact:true}).click();
  await expect(page.getByRole('heading',{name:'Seu instrutor encontra você no ponto escolhido.'})).toHaveCount(1);
  await expect(page.locator('#instrutores article')).toHaveCount(1);
+ await page.locator('#instrutores').getByRole('button',{name:'Ver perfil',exact:true}).click();
+ await expect(page.getByRole('dialog')).toBeVisible();
+ await expect(page.getByRole('dialog').getByRole('link',{name:'Ver credencial do instrutor',exact:true})).toBeVisible();
+ await page.getByRole('button',{name:'Fechar perfil',exact:true}).click();
+ await expect(page.getByRole('dialog')).toHaveCount(0);
  for(const file of ['MULHER','ENCONTRO','EMERSON']){
    const photo=page.locator(`img[src="/images/${file}%20.png"]`);
    await photo.scrollIntoViewIfNeeded();

@@ -1,14 +1,15 @@
 import React, { useState } from "react";
-import { MapPin, MessageCircle } from "lucide-react";
+import { MapPin } from "lucide-react";
 import { InstructorAvatar } from "./InstructorAvatar";
-import { InstructorCredential } from "./InstructorCredential";
+import { InstructorProfile } from "./InstructorProfile";
 import { teachesCategory } from "../store-data";
 
 export function InstructorSection({ instructors, city, contact }) {
+  const [selected, setSelected] = useState(null);
   const [category, setCategory] = useState("");
   const [region, setRegion] = useState("");
   const active = instructors.filter((i) => i.active);
-  const isEmerson = (i) => i.slug === "emerson-santana" || /emerson/i.test(i.name || "");
+  const isEmerson = (i) => i.slug === "emerson-santana";
   const regions = [...new Set(active.map((i) => i.city || city))];
   const visible = active.filter(
     (i) =>
@@ -74,15 +75,15 @@ export function InstructorSection({ instructors, city, contact }) {
         </p>
       ) : (
         <div
-          className={`mt-8 grid gap-5 ${active.length > 1 ? "md:grid-cols-2" : ""}`}
+          className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3"
         >
           {visible.map((i) => (
             <article
               key={i.id}
-              className="flex flex-col items-start gap-5 rounded-2xl border border-slate-200 bg-white p-6 sm:flex-row sm:p-8"
+              className="flex flex-col items-start gap-4 rounded-2xl border border-slate-200 bg-white p-6"
             >
-              {isEmerson(i) ? <img src="/images/EMERSON%20.png" width="1086" height="1448" loading="lazy" alt="Emerson, instrutor da Habilita+" className="w-full rounded-xl object-cover object-top sm:w-64 max-h-[420px]" /> : <InstructorAvatar instructor={i} large />}
-              <div className="min-w-0 flex-1">
+              {isEmerson(i) ? <img src="/images/EMERSON%20.png" width="1086" height="1448" loading="lazy" alt="Emerson, instrutor da Habilita+" className="h-24 w-24 rounded-xl object-cover object-top" /> : <InstructorAvatar instructor={i} large />}
+              <div className="min-w-0 flex flex-1 flex-col w-full">
                 <span className="text-xs font-bold text-green-800">
                   CATEGORIA {i.category.replace("+", "/")}
                 </span>
@@ -93,26 +94,11 @@ export function InstructorSection({ instructors, city, contact }) {
                   <MapPin size={15} aria-hidden="true" />
                   {i.city || city}
                 </p>
-                <p className="mt-4 whitespace-pre-line break-words text-sm leading-7 text-slate-600">
+                <p className="mt-4 line-clamp-3 break-words text-sm leading-7 text-slate-600">
                   {i.bio ||
                     "Converse com o instrutor para conhecer sua experiência e o atendimento."}
                 </p>
-                <p className="mt-3 text-sm text-slate-600">
-                  Horários: confirme a disponibilidade no atendimento.
-                </p>
-                <button
-                  className="btn btn-green mt-5"
-                  onClick={() =>
-                    contact(
-                      "Olá! Vim pelo site da HABILITA+ e gostaria de conhecer as aulas e a disponibilidade.",
-                      i,
-                    )
-                  }
-                >
-                  <MessageCircle size={17} aria-hidden="true" />
-                  Falar com este instrutor
-                </button>
-                {isEmerson(i) && <InstructorCredential />}
+                <button className="btn btn-green mt-5" onClick={() => setSelected(i)}>Ver perfil</button>
               </div>
             </article>
           ))}
@@ -123,6 +109,7 @@ export function InstructorSection({ instructors, city, contact }) {
           Nenhum perfil encontrado. Tente outra categoria ou região.
         </p>
       )}
+      {selected && <InstructorProfile instructor={selected} city={city} contact={contact} onClose={() => setSelected(null)} />}
     </section>
   );
 }
