@@ -80,6 +80,7 @@ export function InstructorSection({ instructors, city, contact }) {
           {visible.map((i) => (
             <article
               key={i.id}
+              id={`instrutor-${i.id}`}
               className="flex flex-col items-start gap-4 rounded-2xl border border-slate-200 bg-white p-6"
             >
               {isEmerson(i) ? <img src="/images/EMERSON%20.png" width="1086" height="1448" loading="lazy" alt="Emerson, instrutor da Habilita+" className="h-24 w-24 rounded-xl object-cover object-top" /> : <InstructorAvatar instructor={i} large />}

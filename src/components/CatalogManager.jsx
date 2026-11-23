@@ -74,6 +74,7 @@ export function CatalogManager({ initialKind = "packages", instructorsOnly = fal
   return (
     <section className="space-y-4">
       <h2 className="text-2xl font-bold">{instructorsOnly ? "Instrutores" : "Catálogo do site"}</h2>
+      {kind === "instructors" && <div className="my-4 rounded-xl bg-blue-50 p-4 text-sm leading-6"><p><strong>Onde aparece:</strong> página inicial → Instrutores. Cada cadastro ativo gera um card com foto, nome, categoria, cidade e apresentação curta. “Ver perfil” abre a apresentação completa e a consulta de credencial.</p><p className="mt-2">Preencha os dados abaixo e mantenha “Ativo no site” marcado. O acesso com e-mail e senha é separado da exibição pública.</p><a href="/#instrutores" target="_blank" rel="noopener noreferrer" className="mt-2 inline-block font-semibold text-green-800 underline">Ver seção de instrutores no site</a></div>}
       <p>
         Alterações salvas aparecem na página pública ao abrir ou atualizar o
         site.
@@ -137,7 +138,7 @@ export function CatalogManager({ initialKind = "packages", instructorsOnly = fal
                 throw new Error(
                   "Confira categoria, aulas e valores. Não foi possível salvar.",
                 );
-              let savedMessage = "Catálogo atualizado no banco.";
+              let savedMessage = kind === "instructors" ? (payload.active ? "Instrutor salvo e disponível na página inicial, na seção Instrutores." : "Instrutor salvo como inativo. Não aparece na página pública.") : "Catálogo atualizado no banco.";
               if (kind === "instructors" && createAccess && !form.id) {
                 setForm(payload);
                 try { savedMessage = await createInstructorAccount(payload, accountEmail, initialPassword); }
@@ -367,6 +368,7 @@ export function CatalogManager({ initialKind = "packages", instructorsOnly = fal
               Editar
             </button>
             {kind === "instructors" && <InstructorAccess instructor={r} />}
+            {kind === "instructors" && <div className="mt-3 text-sm"><p className={r.active ? 'text-green-800' : 'text-slate-500'}>{r.active ? 'Exibição: página inicial → Instrutores' : 'Oculto da página pública'}</p>{r.active && <a className="inline-block py-2 font-semibold text-green-800 underline" href={`/#instrutor-${r.id}`} target="_blank" rel="noopener noreferrer">Ver card no site</a>}</div>}
             <div className="mt-4"><DeleteRegistration kind={kind} record={r} disabled={busy} onDeleted={async () => {
               if (form?.id === r.id) { setForm(null); setPhotoFile(null); }
               await load(); setMessage("Cadastro excluído.");
