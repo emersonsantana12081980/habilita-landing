@@ -512,6 +512,11 @@ export function CloudAdminPanel() {
                       balance={balance}
                       onEdit={setEditingStudent}
                       onHistory={setHistoryStudent}
+                      onBook={(student) => {
+                        setTab("Agenda"); setDay(today); setAgendaCategory("");
+                        setBooking({student:student.id,slot:""}); setBookingPoint("");
+                        setMessage(""); window.scrollTo({top:0,behavior:"smooth"});
+                      }}
                       onStatus={(student, active) => {
                         setEditingStudent(undefined);
                         setHistoryStudent(null);
@@ -751,6 +756,73 @@ export function CloudAdminPanel() {
                 )}
                 {tab === "Agenda" && (
                   <>
+                    <form
+                      className="admin-card mt-6 space-y-4"
+                      onSubmit={(e) => {
+                        e.preventDefault();
+                        act(
+                          () =>
+                            supabase.rpc("book_lesson", {
+                              p_student: booking.student,
+                              p_slot: booking.slot,
+                              p_point: bookingPoint,
+                            }),
+                          "Aula agendada com o crédito do aluno.",
+                        );
+                      }}
+                    >
+                      <h2 className="text-xl font-bold">
+                        Agendar para um aluno
+                      </h2>
+                      <p className="text-sm text-slate-600">Escolha a data acima, o aluno, o horário e o ponto de encontro. A aula aparecerá na agenda do aluno e do instrutor.</p>
+                      <label>
+                        Aluno
+                        <select
+                          required
+                          value={booking.student}
+                          onChange={(e) =>
+                            { setBooking({ student: e.target.value, slot: "" }); setBookingPoint(""); }
+                          }
+                        >
+                          <option value="">Selecione</option>
+                          {data.students
+                            .filter((s) => s.active)
+                            .map((s) => (
+                              <option key={s.id} value={s.id}>
+                                {s.name}
+                              </option>
+                            ))}
+                        </select>
+                      </label>
+                      <label>
+                        Horário livre
+                        <select
+                          required
+                          value={booking.slot}
+                          onChange={(e) =>
+                            { setBooking((b) => ({ ...b, slot: e.target.value })); setBookingPoint(""); }
+                          }
+                        >
+                          <option value="">Selecione</option>
+                          {freeSlots.map((s) => (
+                            <option key={s.id} value={s.id}>
+                              {time(s.starts_at)} · {s.category} ·{" "}
+                              {name(data.instructors, s.instructor_id)}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+                      <p className="text-sm text-slate-500">
+                        A confirmação depende de crédito disponível da
+                        categoria.
+                      </p>
+                      {booking.student && <p className="rounded-lg bg-green-50 p-3 text-sm">Saldo disponível: {balance(booking.student, "A")} aulas de moto · {balance(booking.student, "B")} aulas de carro.</p>}
+                      {!freeSlots.length && <p className="text-sm text-amber-800">Nenhum horário livre nesta data. Escolha outro dia ou cadastre horários no painel.</p>}
+                      <MeetingPointPicker slot={booking.slot} value={bookingPoint} onChange={setBookingPoint}/>
+                      <button className="btn btn-green" disabled={busy || !booking.student || !booking.slot || !bookingPoint}>
+                        Confirmar agendamento
+                      </button>
+                    </form>
                     <section className="space-y-4">
                       {ownDay.map((l) => (
                         <article className="admin-card" key={l.id}>
@@ -833,70 +905,7 @@ export function CloudAdminPanel() {
                         </p>
                       )}
                     </section>
-                    <form
-                      className="admin-card mt-6 space-y-4"
-                      onSubmit={(e) => {
-                        e.preventDefault();
-                        act(
-                          () =>
-                            supabase.rpc("book_lesson", {
-                              p_student: booking.student,
-                              p_slot: booking.slot,
-                              p_point: bookingPoint,
-                            }),
-                          "Aula agendada com o crédito do aluno.",
-                        );
-                      }}
-                    >
-                      <h2 className="text-xl font-bold">
-                        Agendar para um aluno
-                      </h2>
-                      <label>
-                        Aluno
-                        <select
-                          required
-                          value={booking.student}
-                          onChange={(e) =>
-                            setBooking({ student: e.target.value, slot: "" })
-                          }
-                        >
-                          <option value="">Selecione</option>
-                          {data.students
-                            .filter((s) => s.active)
-                            .map((s) => (
-                              <option key={s.id} value={s.id}>
-                                {s.name}
-                              </option>
-                            ))}
-                        </select>
-                      </label>
-                      <label>
-                        Horário livre
-                        <select
-                          required
-                          value={booking.slot}
-                          onChange={(e) =>
-                            setBooking((b) => ({ ...b, slot: e.target.value }))
-                          }
-                        >
-                          <option value="">Selecione</option>
-                          {freeSlots.map((s) => (
-                            <option key={s.id} value={s.id}>
-                              {time(s.starts_at)} · {s.category} ·{" "}
-                              {name(data.instructors, s.instructor_id)}
-                            </option>
-                          ))}
-                        </select>
-                      </label>
-                      <p className="text-sm text-slate-500">
-                        A confirmação depende de crédito disponível da
-                        categoria.
-                      </p>
-                      <MeetingPointPicker slot={booking.slot} value={bookingPoint} onChange={setBookingPoint}/>
-                      <button className="btn btn-green" disabled={!bookingPoint}>
-                        Confirmar agendamento
-                      </button>
-                    </form>
+
                   </>
                 )}
               </fieldset>

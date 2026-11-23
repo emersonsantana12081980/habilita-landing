@@ -5,7 +5,7 @@ import { registrationPeriod } from '../lib/registration-period';
 
 const normalize = (value) => String(value || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
 
-export function StudentList({ students, balance, onEdit, onHistory, onStatus, onDeleted, filters, setFilters }) {
+export function StudentList({ students, balance, onEdit, onHistory, onStatus, onDeleted, onBook, filters, setFilters }) {
   const { search, status, category } = filters;
   const {period='all',dateFrom='',dateTo=''}=filters;
   const dates=registrationPeriod(filters);
@@ -66,6 +66,7 @@ export function StudentList({ students, balance, onEdit, onHistory, onStatus, on
         <div className="flex flex-wrap gap-2 text-sm">
           <button disabled={!!student.deletion_pending || !!student.deleted_at} className="rounded-lg border px-3 py-2 font-semibold" onClick={() => onEdit(student)}>Editar aluno</button>
           <button className="rounded-lg border px-3 py-2" onClick={() => onHistory(student)}>Ver ficha</button>
+          {onBook && student.active && !student.deleted_at && !student.deletion_pending && <button className="rounded-lg bg-green-700 px-3 py-2 font-semibold text-white" onClick={() => onBook(student)}>Agendar aula</button>}
           <DeleteRegistration kind="students" record={student} onDeleted={onDeleted} />
           <button disabled={!!student.deletion_pending || !!student.deleted_at} className={`rounded-lg px-3 py-2 font-semibold ${student.active ? "bg-red-50 text-red-800" : "bg-green-50 text-green-800"}`} onClick={() => {
             if (window.confirm(student.active
