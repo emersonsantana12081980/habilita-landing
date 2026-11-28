@@ -80,6 +80,7 @@ export function CloudAdminPanel() {
     duration: 50,
     interval: 10,
   });
+  const [recordTab, setRecordTab] = useState("Resumo");
   const [booking, setBooking] = useState({ student: "", slot: "" });
   const [bookingPoint,setBookingPoint]=useState('');
   const generation = useRef(0);
@@ -500,7 +501,7 @@ export function CloudAdminPanel() {
                         }}
                       />
                     )}
-                    {historyStudent && <StudentRecord student={historyStudent} data={data} onAdded={async message=>{setHistoryStudent(null);await load();setMessage(message);}} onClose={()=>setHistoryStudent(null)} onEdit={student=>{setHistoryStudent(null);setEditingStudent(student);}} onStatus={(student,active)=>{
+                    {historyStudent && <StudentRecord initialTab={recordTab} student={historyStudent} data={data} onAdded={async message=>{setHistoryStudent(null);await load();setMessage(message);}} onClose={()=>setHistoryStudent(null)} onEdit={student=>{setHistoryStudent(null);setEditingStudent(student);}} onStatus={(student,active)=>{
                       setHistoryStudent(null);setEditingStudent(undefined);
                       act(()=>supabase.from("students").update({active}).eq("id",student.id).select("id").single(), active ? "Cadastro restaurado." : "Cadastro enviado ao arquivo morto.");
                     }} />}
@@ -511,7 +512,8 @@ export function CloudAdminPanel() {
                       students={data.students}
                       balance={balance}
                       onEdit={setEditingStudent}
-                      onHistory={setHistoryStudent}
+                      onHistory={student => { setRecordTab("Resumo"); setHistoryStudent(student); }}
+                      onCredits={student => { setRecordTab("Adicionar aulas"); setHistoryStudent(student); }}
                       onBook={(student) => {
                         setTab("Agenda"); setDay(today); setAgendaCategory("");
                         setBooking({student:student.id,slot:""}); setBookingPoint("");

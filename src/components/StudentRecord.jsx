@@ -9,9 +9,9 @@ import { StudentRegistrationDate } from './StudentRegistrationDate';
 const date = value => value ? new Date(value).toLocaleString("pt-BR", {timeZone:"America/Sao_Paulo",dateStyle:"short",timeStyle:"short"}) : "Data não registrada";
 const labels = {scheduled:"Agendada",completed:"Realizada",missed:"Falta",cancelled:"Cancelada"};
 
-export function StudentRecord({student, data, onClose, onEdit, onStatus, onAdded}) {
+export function StudentRecord({student, data, onClose, onEdit, onStatus, onAdded, initialTab = "Resumo"}) {
   const dialog=useRef(null);
-  const [tab,setTab]=useState("Resumo");
+  const [tab,setTab]=useState(initialTab);
   useEffect(()=>{
     const previous=document.activeElement, overflow=document.body.style.overflow;
     const element=dialog.current;
