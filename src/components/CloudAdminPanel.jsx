@@ -1,3 +1,4 @@
+import { AdminBookingDialog } from "./AdminBookingDialog";
 import { PortalNavIcon } from "./PortalNavIcon";
 import { SiteSettings } from "./SiteSettings";
 import {MeetingPointManager} from './MeetingPointManager';
@@ -81,6 +82,7 @@ export function CloudAdminPanel() {
     interval: 10,
   });
   const [recordTab, setRecordTab] = useState("Resumo");
+  const [bookingOpen, setBookingOpen] = useState(false);
   const [booking, setBooking] = useState({ student: "", slot: "" });
   const [bookingPoint,setBookingPoint]=useState('');
   const generation = useRef(0);
@@ -223,6 +225,7 @@ export function CloudAdminPanel() {
       if (result.error) throw result.error;
       await load();
       setMessage(success);
+      return true;
     } catch (error) {
       setMessage(
         error.code === "PGRST202"
@@ -251,7 +254,7 @@ export function CloudAdminPanel() {
   const freeSlots = daySlots.filter(
     (s) =>
       (!agendaCategory || s.category === agendaCategory) &&
-      s.active &&
+      s.active && !s.manually_blocked &&
       new Date(s.starts_at) > new Date() &&
       !data.lessons.some(
         (l) =>
@@ -516,7 +519,7 @@ export function CloudAdminPanel() {
                       onCredits={student => { setRecordTab("Adicionar aulas"); setHistoryStudent(student); }}
                       onBook={(student) => {
                         setTab("Agenda"); setDay(today); setAgendaCategory("");
-                        setBooking({student:student.id,slot:""}); setBookingPoint("");
+                        setBooking({student:student.id,slot:""}); setBookingPoint(""); setBookingOpen(true);
                         setMessage(""); window.scrollTo({top:0,behavior:"smooth"});
                       }}
                       onStatus={(student, active) => {
@@ -563,6 +566,7 @@ export function CloudAdminPanel() {
                     onView={setViewingLesson}
                     day={day}
                     onDay={setDay}
+                    onBook={(date, slotId = "") => {setDay(date);setBooking(b=>({...b,slot:slotId}));setBookingPoint("");setMessage("");setBookingOpen(true);}}
                     category={agendaCategory}
                     students={data.students}
                     instructors={data.instructors}
@@ -758,11 +762,13 @@ export function CloudAdminPanel() {
                 )}
                 {tab === "Agenda" && (
                   <>
+                    <button className="btn btn-green mb-5" onClick={()=>{setBookingOpen(true);setBookingPoint("");}}>Agendar para um aluno</button>
+                    {bookingOpen && <AdminBookingDialog day={day} busy={busy} onClose={()=>setBookingOpen(false)}>
                     <form
                       className="admin-card mt-6 space-y-4"
-                      onSubmit={(e) => {
+                      onSubmit={async (e) => {
                         e.preventDefault();
-                        act(
+                        const saved = await act(
                           () =>
                             supabase.rpc("book_lesson", {
                               p_student: booking.student,
@@ -771,6 +777,7 @@ export function CloudAdminPanel() {
                             }),
                           "Aula agendada com o crédito do aluno.",
                         );
+                        if(saved){setBookingOpen(false);setBooking(b=>({...b,slot:""}));setBookingPoint("");}
                       }}
                     >
                       <h2 className="text-xl font-bold">
@@ -825,6 +832,8 @@ export function CloudAdminPanel() {
                         Confirmar agendamento
                       </button>
                     </form>
+                    {message && <p role="status" className="mt-4">{message}</p>}
+                    </AdminBookingDialog>}
                     <section className="space-y-4">
                       {ownDay.map((l) => (
                         <article className="admin-card" key={l.id}>

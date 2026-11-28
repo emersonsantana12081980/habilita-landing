@@ -18,6 +18,7 @@ const time = (v) =>
 export function WeeklyCalendar({
   day,
   onDay,
+  onBook,
   onView,
   students,
   instructors,
@@ -111,11 +112,11 @@ export function WeeklyCalendar({
         </span>
         &nbsp;·&nbsp;
         <span className="inline-flex items-center gap-2">
-          <span className="h-3 w-3 rounded-full bg-blue-400" /> Aula
+          <span className="h-3 w-3 rounded-full bg-blue-400" /> Ocupado
         </span>
         &nbsp;·&nbsp;
         <span className="inline-flex items-center gap-2">
-          <span className="h-3 w-3 rounded-full bg-slate-400" /> Bloqueado
+          <span className="h-3 w-3 rounded-full bg-slate-400" /> Indisponível
         </span>
       </p>
       {loading && <p role="status">Atualizando semana…</p>}
@@ -128,7 +129,7 @@ export function WeeklyCalendar({
           >
             <button
               className="mb-3 w-full text-left font-bold"
-              onClick={() => onDay(d)}
+              onClick={() => onBook ? onBook(d) : onDay(d)}
             >
               <div className="text-sm text-slate-500">
                 {new Date(d + "T12:00:00Z").toLocaleDateString("pt-BR", {
@@ -138,6 +139,7 @@ export function WeeklyCalendar({
                   timeZone: "UTC",
                 })}
               </div>
+              <span className="text-xs font-normal text-green-800">Ver horários e agendar</span>
             </button>
             {blocked.some((b) => b.day === d) && (
               <p className="mb-2 rounded-lg bg-amber-50 p-2 text-xs">
@@ -211,7 +213,7 @@ export function WeeklyCalendar({
                   return (
                     <div
                       key={s.id}
-                      className={`flex items-start justify-between rounded-lg p-2 text-xs ${free ? "bg-green-50 text-green-900" : "bg-slate-100 text-slate-500"}`}
+                      className={`flex flex-wrap items-start justify-between gap-1 rounded-lg border-l-4 p-2 text-xs ${free ? "border-green-500 bg-green-50 text-green-900" : occupied ? "border-blue-500 bg-blue-50 text-blue-950" : "border-slate-400 bg-slate-100 text-slate-500"}`}
                     >
                       <div>
                         <div className="font-semibold">
@@ -222,16 +224,16 @@ export function WeeklyCalendar({
                             ? "Livre"
                             : occupied
                               ? "Ocupado"
-                              : "Bloqueado / encerrado"}
+                              : "Indisponível"}
                         </div>
                       </div>
                       <div className="flex flex-col items-end gap-1">
-                        <button
+                        {free && <button
                           className="text-sm text-slate-700 underline"
-                          onClick={() => onDay(d)}
+                          onClick={() => onBook ? onBook(d, s.id) : onDay(d)}
                         >
-                          Selecionar
-                        </button>
+                          Agendar
+                        </button>}
                       </div>
                     </div>
                   );
